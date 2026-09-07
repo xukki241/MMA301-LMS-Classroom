@@ -1,0 +1,3 @@
+# JWT tự phát hành, MongoDB Docker, Firebase để sau MVP
+
+MVP cần REST Express tách Auth/Core đúng ADR-0001 và CSDL được môn cho phép. Firebase Auth/Firestore rút ngắn identity nhưng làm mờ biên giới service và lệch yêu cầu “JWT nhà làm”. Quyết định: Auth Service phát hành JWT (bcrypt + shared secret); MongoDB một container, hai database `lms_auth` / `lms_core`; Firebase chỉ chuẩn bị rules/config cho Firestore, Crashlytics hoặc App Distribution khi build APK — không phải nguồn sự thật của User/Class ở MVP. Firestore chỉ được bật **sau khi demo MVP trên Mongo chạy** (Class/Post/Exercise), không dual-write song song lúc này.

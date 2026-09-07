@@ -83,9 +83,15 @@ Header bắt buộc với API được bảo vệ: `Authorization: Bearer <acces
 | Teacher | teacher@lms.local | Demo123! |
 | Student | student@lms.local | Demo123! |
 
-## 6.7. Nhiều thành viên và Render
+## 6.7. nginx / chat realtime / Render (sau cùng)
 
-Xem [09-nginx-va-render.md](./09-nginx-va-render.md): `docker compose up -d --build` (nginx `:8080`) cho LAN; Render dùng `render.yaml` (hai Web Service, không nginx).
+**Chưa triển khai code.** Chỉ có task trên Notion:
+
+- LMS-18 nginx concurrent  
+- LMS-19 Deploy Render  
+- LMS-21 Chat WebSocket (chưa gán thành viên)  
+
+MVP hiện tại: mobile gọi thẳng Auth `:4001` và Core `:4002`.
 
 ## 6.8. Nộp bài / bảo vệ
 

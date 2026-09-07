@@ -80,15 +80,9 @@ export function HomeDashboard({ role }: { role: "teacher" | "student" }) {
           onPress={() => router.push(isTeacher ? "/(teacher)/classes" : "/(student)/classes")}
         />
         <QuickAction
-          icon="chatbubbles-outline"
-          label="Chat"
-          delay={140}
-          onPress={() => router.push(isTeacher ? "/(teacher)/chat" : "/(student)/chat")}
-        />
-        <QuickAction
           icon="person-circle-outline"
           label="Hồ sơ"
-          delay={200}
+          delay={140}
           onPress={() => router.push(isTeacher ? "/(teacher)/profile" : "/(student)/profile")}
         />
       </View>

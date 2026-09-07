@@ -4,26 +4,30 @@
 
 | Lớp | Công nghệ | Lý do chọn |
 |-----|-----------|------------|
-| Mobile | React Native + Expo | Đúng bắt buộc môn học; tốc độ dựng UI; Android |
-| Ngôn ngữ | JavaScript/TypeScript | Phù hợp Express + RN |
-| Backend | Node.js + Express | Nhẹ, phổ biến, đủ cho REST CRUD |
-| Auth | JWT + Auth Service riêng | Tách trách nhiệm xác thực; học được biên giới service mà không phình hệ thống |
+| Mobile | React Native + Expo (Expo Go) | Đúng bắt buộc môn; APK sau này bằng EAS, chưa cần Dev Client |
+| Ngôn ngữ | TypeScript | Backend Express + RN cùng ngôn ngữ, dễ contract |
+| Backend | Node.js + Express (TypeScript) | Auth Service + Core API, REST JSON |
+| Auth | JWT tự phát hành (bcrypt) | Firebase Auth **không** dùng ở MVP |
 | API nghiệp vụ | Core API (Express) | Một process cho toàn bộ domain LMS |
-| CSDL | MongoDB **hoặc** MySQL | Đúng danh mục môn cho phép; nhóm chốt một loại khi bắt đầu Sprint DB |
+| CSDL MVP | MongoDB 7 (Docker) | Hai database: `lms_auth`, `lms_core` |
+| Firebase | Placeholder rules | Firestore/Crashlytics/App Distribution **sau** MVP; không phải DB chính |
 | Tài liệu API | Swagger/OpenAPI (khuyến nghị) | Đồng bộ contract mobile–backend |
 
 ## 4.2. Cấu trúc thư mục repository
 
 ```text
 lms-classroom-app/
-├── apps/mobile/           # Expo React Native
+├── apps/mobile/           # Expo React Native (Expo Go)
 ├── services/
-│   ├── auth-service/      # Cổng xác thực
-│   └── core-api/          # Nghiệp vụ LMS
-├── docs/                  # Báo cáo + hướng dẫn (bộ tài liệu này)
-├── CONTEXT.md             # Thuật ngữ miền (glossary)
-├── SCOPE.md               # Phạm vi MVP tóm tắt
-└── README.md              # Điểm vào cho người chấm / dev mới
+│   ├── auth-service/      # JWT TypeScript
+│   └── core-api/          # Nghiệp vụ LMS TypeScript
+├── infra/mongo/           # Init + mô tả index
+├── firebase/              # Rules placeholder, chưa bật MVP
+├── docker-compose.yml
+├── docs/                  # Báo cáo + tracking Kiên
+├── CONTEXT.md
+├── SCOPE.md
+└── README.md
 ```
 
 ## 4.3. Nhật ký quyết định kiến trúc (ADR)
@@ -32,6 +36,8 @@ lms-classroom-app/
 |----|------------|---------|
 | ADR-0001 | Greenfield + Auth sidecar | Không salvage monorepo microservices cũ; chỉ Auth tách riêng khỏi Core API |
 | ADR-0002 | Docs/repo độc lập với 30Shine | Hai đề tài song song, tài liệu và GitHub tách biệt |
+| ADR-0003 | JWT + Mongo; Firebase sau | Identity nhà làm; Firestore không phải source of truth MVP |
+| ADR-0004 | Một Mongo, hai DB | Auth/Core không share collection User |
 
 Chi tiết: thư mục `docs/adr/`.
 

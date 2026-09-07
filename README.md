@@ -30,10 +30,11 @@ cd services/core-api && npm i && npm run dev
 cd apps/mobile && npm i && npx expo start
 ```
 
-Nhiều thành viên cùng một API (nginx LAN `:8080`) và checklist Render: [docs/09-nginx-va-render.md](./docs/09-nginx-va-render.md).
+Nhiều thành viên LAN: trỏ `EXPO_PUBLIC_*` về IP máy host (`:4001` / `:4002`).  
+nginx + WebSocket chat + Render: **chưa làm** — xem task Notion LMS-18 / LMS-19 / LMS-21 (làm sau cùng).
 
 ```bash
-docker compose up -d --build
+docker compose up -d mongo
 ```
 
 Chi tiết dev: [docs/06-huong-dan-phat-trien.md](./docs/06-huong-dan-phat-trien.md).

@@ -9,7 +9,6 @@ type IconName = ComponentProps<typeof Ionicons>["name"];
 const screens: { name: string; title: string; icon: IconName; iconOn: IconName }[] = [
   { name: "index", title: "Trang chủ", icon: "home-outline", iconOn: "home" },
   { name: "classes", title: "Lớp học", icon: "albums-outline", iconOn: "albums" },
-  { name: "chat", title: "Chat", icon: "chatbubbles-outline", iconOn: "chatbubbles" },
   { name: "profile", title: "Tôi", icon: "person-outline", iconOn: "person" },
 ];
 

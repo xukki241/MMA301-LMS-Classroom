@@ -38,5 +38,5 @@
 
 ## 5.5. Liên kết quản lý
 
-- Notion hub: https://app.notion.com/p/3751a3267e3e8086b82ecc06d6f23e3a  
-- GitHub: https://github.com/xukki241/MMA301-LMS-Classroom  
+- Tracking Kiên: `docs/08-kien-progress.md`  
+- Checklist Huy: `docs/checklists/huy-lms-13-14.md`  

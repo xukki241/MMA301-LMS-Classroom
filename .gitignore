@@ -7,3 +7,11 @@ build/
 .expo/
 *.log
 .DS_Store
+google-services.json
+GoogleService-Info.plist
+*.jks
+*.keystore
+coverage/
+.cursor/hooks/state/*.json
+.cursor/hooks/state/*.jsonl
+.cursor/hooks/evidence/*.md

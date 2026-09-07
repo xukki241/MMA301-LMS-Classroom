@@ -9,12 +9,12 @@ Hệ thống theo mô hình **client–server**:
 | `apps/mobile` | Ứng dụng React Native (Expo) — giao diện Teacher / Student |
 | `services/auth-service` | Đăng ký, đăng nhập, phát hành JWT |
 | `services/core-api` | Nghiệp vụ LMS (Class, Post, Material, Exercise, …) |
-| Database | Lưu trữ bền vững (MongoDB hoặc MySQL — chốt một loại khi triển khai) |
+| Database | MongoDB Docker — `lms_auth` (Auth) và `lms_core` (Core API) |
 
 ```text
-[Mobile App] --REST/JSON--> [Auth Service]
-[Mobile App] --REST/JSON + Bearer JWT--> [Core API] --> [Database]
-[Core API] --xác thực token (REST nội bộ / middleware)--> [Auth Service]
+[Mobile App] --REST/JSON--> [Auth Service] --> [lms_auth]
+[Mobile App] --REST/JSON + Bearer JWT--> [Core API] --> [lms_core]
+[Core API] --verify JWT (shared secret, issuer/audience)--> không gọi Auth mỗi request
 ```
 
 **Nguyên tắc:** Chỉ tách Auth thành service riêng; toàn bộ nghiệp vụ lớp học nằm trong một Core API. Không dùng gRPC/Redis cho MVP.

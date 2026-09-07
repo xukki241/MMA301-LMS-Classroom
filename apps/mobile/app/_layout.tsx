@@ -55,14 +55,6 @@ export default function RootLayout() {
                   animation: "slide_from_right",
                 }}
               />
-              <Stack.Screen
-                name="chat/[id]"
-                options={{
-                  headerShown: true,
-                  title: "Tin nhắn",
-                  animation: "slide_from_right",
-                }}
-              />
             </Stack>
           </ThemeProvider>
         </AuthProvider>
