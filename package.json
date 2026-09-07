@@ -1,0 +1,15 @@
+﻿{
+  "name": "lms-classroom",
+  "private": true,
+  "description": "LMS Classroom Shub-lite — MMA301",
+  "scripts": {
+    "docker:mongo": "docker compose up -d mongo",
+    "docker:stack": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "dev:auth": "npm run dev --prefix services/auth-service",
+    "dev:core": "npm run dev --prefix services/core-api",
+    "dev:mobile": "npm start --prefix apps/mobile",
+    "seed": "npm run seed --prefix services/auth-service",
+    "sync-indexes": "npm run sync-indexes --prefix services/core-api"
+  }
+}

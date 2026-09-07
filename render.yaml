@@ -1,0 +1,49 @@
+# Blueprint Render — CHƯA tạo service cho đến khi nhóm bấm Apply trên Dashboard.
+# Mongo không chạy trên disk Render (filesystem ephemeral). Dùng MongoDB Atlas.
+# Mỗi Web Service = một Dockerfile; bind 0.0.0.0:$PORT (Render inject PORT).
+# Nginx chỉ dùng local/LAN (docker compose). Mobile trỏ 2 URL Render.
+
+services:
+  - type: web
+    name: lms-auth-service
+    runtime: docker
+    region: singapore
+    dockerfilePath: ./services/auth-service/Dockerfile
+    dockerContext: ./services/auth-service
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: JSON_BODY_LIMIT
+        value: 10mb
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGO_URI
+        sync: false
+
+  - type: web
+    name: lms-core-api
+    runtime: docker
+    region: singapore
+    dockerfilePath: ./services/core-api/Dockerfile
+    dockerContext: ./services/core-api
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: JSON_BODY_LIMIT
+        value: 10mb
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGO_URI
+        sync: false
