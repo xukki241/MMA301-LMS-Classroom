@@ -24,9 +24,8 @@ lms-classroom-app/
 ├── infra/mongo/           # Init + mô tả index
 ├── firebase/              # Rules placeholder, chưa bật MVP
 ├── docker-compose.yml
-├── docs/                  # Báo cáo + tracking Kiên
-├── CONTEXT.md
-├── SCOPE.md
+├── docs/                  # Báo cáo + ADR
+├── CONTEXT.md             # Thuật ngữ miền
 └── README.md
 ```
 
@@ -35,7 +34,6 @@ lms-classroom-app/
 | Mã | Quyết định | Tóm tắt |
 |----|------------|---------|
 | ADR-0001 | Greenfield + Auth sidecar | Không salvage monorepo microservices cũ; chỉ Auth tách riêng khỏi Core API |
-| ADR-0002 | Docs/repo độc lập với 30Shine | Hai đề tài song song, tài liệu và GitHub tách biệt |
 | ADR-0003 | JWT + Mongo; Firebase sau | Identity nhà làm; Firestore không phải source of truth MVP |
 | ADR-0004 | Một Mongo, hai DB | Auth/Core không share collection User |
 

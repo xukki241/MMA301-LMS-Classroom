@@ -38,5 +38,4 @@
 
 ## 5.5. Liên kết quản lý
 
-- Tracking Kiên: `docs/08-kien-progress.md`  
-- Checklist Huy: `docs/checklists/huy-lms-13-14.md`  
+- Tracking / Kanban: [Notion LMS](https://app.notion.com/p/3751a3267e3e8086b82ecc06d6f23e3a)

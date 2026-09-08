@@ -1,6 +1,6 @@
 # Phụ lục A — Thuật ngữ miền (LMS Classroom)
 
-> Dùng trong báo cáo và khi code. Chỉ ghi khái niệm nghiệp vụ — không ghi chi tiết triển khai. Bản mô tả đề tài đầy đủ: `docs/00-muc-luc-bao-cao.md`.
+> Dùng trong báo cáo và khi code. Chỉ ghi khái niệm nghiệp vụ — không ghi chi tiết triển khai. Mục lục: `docs/00-muc-luc-bao-cao.md`. Phạm vi MVP: xem Chương 1.
 
 Ứng dụng quản lý lớp học cho giáo viên và học sinh: tạo/tham gia lớp, bảng tin, tài liệu và bài tập. Phạm vi MVP hẹp, phù hợp môn React Native + REST API.
 

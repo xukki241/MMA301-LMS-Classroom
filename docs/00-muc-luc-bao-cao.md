@@ -18,12 +18,10 @@ Bộ tài liệu này đóng vai trò kép:
 | 4 | [04-cong-nghe.md](./04-cong-nghe.md) | Stack, ADR, lý do greenfield |
 | 5 | [05-phan-cong-nhom.md](./05-phan-cong-nhom.md) | Phân công 5 thành viên, DoD |
 | 6 | [06-huong-dan-phat-trien.md](./06-huong-dan-phat-trien.md) | Chạy dự án, Git, API khung, onboarding |
-| 7 | [07-backlog-tracking.md](./07-backlog-tracking.md) | Backlog Kanban đồng bộ Notion |
-| 8 | [08-kien-progress.md](./08-kien-progress.md) | Tracking phần Kiên + việc Console |
-| — | [checklists/huy-lms-13-14.md](./checklists/huy-lms-13-14.md) | Checklist Huy LMS-13/14 |
 | Phụ lục A | [../CONTEXT.md](../CONTEXT.md) | Thuật ngữ miền (ubiquitous language) |
-| Phụ lục B | [../SCOPE.md](../SCOPE.md) | Phạm vi MVP rút gọn |
-| Phụ lục C | [./adr/](./adr/) | Architecture Decision Records |
+| Phụ lục B | [./adr/](./adr/) | Architecture Decision Records |
+
+Backlog / Kanban: chỉ trên [Notion](https://app.notion.com/p/3751a3267e3e8086b82ecc06d6f23e3a) — không nhân bản trong repo.
 
 **Cách đọc gợi ý**
 
