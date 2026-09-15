@@ -6,13 +6,13 @@ import { openApiSpec } from "../docs/openapi.js";
 
 export const docsRouter = Router();
 
-// Endpoint cung cap raw OpenAPI JSON specification
+// Endpoint cung cấp raw OpenAPI JSON specification
 docsRouter.get("/openapi.json", (_req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.json(openApiSpec);
 });
 
-// Helper lay token tu Auth Service hoac fallback JWT
+// Helper lấy token từ Auth Service hoặc fallback JWT
 async function getOrGenerateToken(role: "teacher" | "student") {
   const email = role === "teacher" ? "teacher@lms.local" : "student@lms.local";
   const password = "Demo123!";
@@ -33,7 +33,7 @@ async function getOrGenerateToken(role: "teacher" | "student") {
       };
     }
   } catch {
-    // Auth Service chua khoi dong, fallback tao JWT hop le voi cung secret
+    // Auth Service chưa khởi động, fallback tạo JWT hợp lệ với cùng secret
   }
 
   const fallbackSub = role === "teacher" ? "teacher_seed_id_01" : "student_seed_id_01";
@@ -58,7 +58,7 @@ async function getOrGenerateToken(role: "teacher" | "student") {
   };
 }
 
-// Endpoint lay token Giao vien (Teacher) 1-Click
+// Endpoint lấy token Giáo viên (Teacher) 1-Click
 docsRouter.post("/docs/tokens/teacher", async (_req, res) => {
   const result = await getOrGenerateToken("teacher");
   res.status(200).json({
@@ -67,11 +67,11 @@ docsRouter.post("/docs/tokens/teacher", async (_req, res) => {
     token: result.token,
     user: result.user,
     source: result.source,
-    huongDanSuDung: "1. Sao chep gia tri 'token' o tren. 2. Nhap vao nut 'Authorize' goc tren giao dien Scalar. 3. Dan token vao o BearerAuth de goi cac API danh cho Giao vien.",
+    huongDanSuDung: "1. Sao chép giá trị 'token' ở trên. 2. Nhấp vào nút 'Authorize' góc trên giao diện Scalar. 3. Dán token vào ô BearerAuth để gọi các API dành cho Giáo viên.",
   });
 });
 
-// Endpoint lay token Hoc sinh (Student) 1-Click
+// Endpoint lấy token Học sinh (Student) 1-Click
 docsRouter.post("/docs/tokens/student", async (_req, res) => {
   const result = await getOrGenerateToken("student");
   res.status(200).json({
@@ -80,11 +80,11 @@ docsRouter.post("/docs/tokens/student", async (_req, res) => {
     token: result.token,
     user: result.user,
     source: result.source,
-    huongDanSuDung: "1. Sao chep gia tri 'token' o tren. 2. Nhap vao nut 'Authorize' goc tren giao dien Scalar. 3. Dan token vao o BearerAuth de goi cac API danh cho Hoc sinh.",
+    huongDanSuDung: "1. Sao chép giá trị 'token' ở trên. 2. Nhấp vào nút 'Authorize' góc trên giao diện Scalar. 3. Dán token vào ô BearerAuth để gọi các API dành cho Học sinh.",
   });
 });
 
-// Proxy endpoint dang nhap qua Auth Service
+// Proxy endpoint đăng nhập qua Auth Service
 docsRouter.post("/auth/login", async (req, res) => {
   try {
     const authRes = await fetch("http://127.0.0.1:4001/auth/login", {
@@ -98,17 +98,17 @@ docsRouter.post("/auth/login", async (req, res) => {
     res.status(503).json({
       error: {
         code: "AUTH_SERVICE_UNAVAILABLE",
-        message: "Auth Service (cong 4001) chua duoc bat. Hay dung endpoint /docs/tokens/teacher hoac /docs/tokens/student de lay token test.",
+        message: "Auth Service (cổng 4001) chưa được bật. Hãy dùng endpoint /docs/tokens/teacher hoặc /docs/tokens/student để lấy token test.",
       },
     });
   }
 });
 
-// Giao dien Scalar API Reference
+// Giao diện Scalar API Reference
 docsRouter.use(
   "/docs",
   apiReference({
-    pageTitle: "MMA301 LMS - Core API Reference (Nguyen Anh Tu)",
+    pageTitle: "MMA301 LMS - Core API Reference (Nguyễn Anh Tú)",
     theme: "purple",
     spec: {
       content: openApiSpec,

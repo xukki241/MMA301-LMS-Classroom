@@ -1,90 +1,94 @@
 export const openApiSpec = {
   openapi: "3.1.0",
   info: {
-    title: "MMA301 LMS Classroom - Core API (Nguyen Anh Tu)",
+    title: "MMA301 LMS Classroom - Core API (Nguyễn Anh Tú)",
     version: "1.0.0",
-    description: `## Tai lieu API Phan he Quan ly Lop hoc (Task LMS-05)
+    description: `## Tài liệu API Phân hệ Quản lý Lớp học (Task LMS-05)
 
-Phu trach: Nguyen Anh Tu  
+Phụ trách: Nguyễn Anh Tú  
 Email: dambautv2005@gmail.com
 
 ---
 
-### Huong dan lay Token va Test truc tiep tren Scalar
+### Hướng dẫn lấy Token và Test trực tiếp trên Scalar
 
-De test cac API ben duoi, ban can JWT Bearer Token tuong ung voi vai tro (Teacher hoac Student):
+Để test các API bên dưới, bạn cần JWT Bearer Token tương ứng với vai trò (Teacher hoặc Student):
 
-1. **Cach lay Token 1-Click (Tien loi nhat):**
-   - Vao nhom API **Authentication & Lay Token** ngay ben duoi.
-   - Chon endpoint **POST /docs/tokens/teacher** (danh cho Giao vien) hoac **POST /docs/tokens/student** (danh cho Hoc sinh).
-   - Nhan nut **Test Request** (hoac **Send**).
-   - Copy toan bo chuoi trong truong \`token\` cua ket qua tra ve.
+1. **Cách lấy Token 1-Click (Tiện lợi nhất):**
+   - Vào nhóm API **Authentication & Lấy Token** ngay bên dưới.
+   - Chọn endpoint **POST /docs/tokens/teacher** (dành cho Giáo viên) hoặc **POST /docs/tokens/student** (dành cho Học sinh).
+   - Nhấn nút **Test Request** (hoặc **Send**).
+   - Copy toàn bộ chuỗi trong trường \`token\` của kết quả trả về.
 
-2. **Cach kich hoat Token tren giao dien:**
-   - Nhan nut **Authorize** o goc tren giao dien Scalar.
-   - Dan token vua copy vao o gia tri cua **BearerAuth**.
-   - Nhan **Save** / **Close**.
-   - Tu luc nay, moi request gui tu trinh duyet se tu dong kem header \`Authorization: Bearer <token>\`.
+2. **Cách kích hoạt Token trên giao diện:**
+   - Nhấn nút **Authorize** ở góc trên giao diện Scalar.
+   - Dán token vừa copy vào ô giá trị của **BearerAuth**.
+   - Nhấn **Save** / **Close**.
+   - Từ lúc này, mọi request gửi từ trình duyệt sẽ tự động kèm header \`Authorization: Bearer <token>\`.
 
-3. **Cach dang nhap qua Auth Service thu cong:**
-   - Su dung endpoint **POST /auth/login** voi body:
-     - Giao vien: \`{"email": "teacher@lms.local", "password": "Demo123!"}\`
-     - Sinh vien: \`{"email": "student@lms.local", "password": "Demo123!"}\`
+3. **Cách đăng nhập qua Auth Service thủ công:**
+   - Sử dụng endpoint **POST /auth/login** với body:
+     - Giáo viên: \`{"email": "teacher@lms.local", "password": "Demo123!"}\`
+     - Sinh viên: \`{"email": "student@lms.local", "password": "Demo123!"}\`
 
 ---
 
-### Tong hop cac Quy tac Nghiep vu va Validate
+### Tổng hợp các Quy tắc Nghiệp vụ và Validate
 
-1. **Phan quyen theo Role:**
-   - Giao vien (\`role: teacher\`): Duoc tao lop, xem danh sach lop dang day, cap nhat ten lop do minh tao, xoa lop do minh tao.
-   - Sinh vien (\`role: student\`): Duoc xem danh sach lop da tham gia, tham gia lop moi bang ma code 6 ky tu.
-   - Thanh vien trong lop (\`roleInClass: teacher | student\`): Duoc xem thong tin chi tiet lop va danh sach thanh vien cua lop do.
+1. **Phân quyền theo Role:**
+   - Giáo viên (\`role: teacher\`): Được tạo lớp, xem danh sách lớp đang dạy, cập nhật tên lớp do mình tạo, xóa lớp do mình tạo.
+   - Sinh viên (\`role: student\`): Được xem danh sách lớp đã tham gia, tham gia lớp mới bằng mã code 6 ký tự.
+   - Thành viên trong lớp (\`roleInClass: teacher | student\`): Được xem thông tin chi tiết lớp và danh sách thành viên của lớp đó.
 
-2. **Quy tac Validate Input:**
-   - \`name\` (Ten lop): Kieu chuoi, do dai tu 1 den 100 ky tu, khong duoc de trong hoac chi chua khoang trang. Tra ve loi 422 neu khong hop le.
-   - \`code\` (Ma lop): Chuoi dung 6 ky tu gom chu in hoa va so (A-Z, 0-9). Tra ve loi 422 neu khac 6 ky tu.
-   - \`id\` (ID lop): Dinh dang MongoDB ObjectId hop le (chuoi 24 ky tu hex). Tra ve loi 400 neu sai dinh dang.
+2. **Quy tắc Validate Input:**
+   - \`name\` (Tên lớp): Kiểu chuỗi, độ dài từ 1 đến 100 ký tự, không được để trống hoặc chỉ chứa khoảng trắng. Trả về lỗi 422 nếu không hợp lệ.
+   - \`code\` (Mã lớp): Chuỗi đúng 6 ký tự gồm chữ in hoa và số (A-Z, 0-9). Trả về lỗi 422 nếu khác 6 ký tự.
+   - \`id\` (ID lớp): Định dạng MongoDB ObjectId hợp lệ (chuỗi 24 ký tự hex). Trả về lỗi 400 nếu sai định dạng.
 
-3. **Dac thu Nghiep vu quan trong:**
-   - **Sinh ma ngau nhien duy nhat:** Khi tao lop, he thong tu sinh ma 6 ky tu khong trung lap. Neu trung se tu thu lai toi da 5 lan.
-   - **Tu dong ghi nhan chu lop:** Khi giao vien tao lop, he thong tu dong them giao vien do vao bang \`ClassMember\` voi vai tro \`roleInClass: teacher\`.
-   - **Kiem tra trung lap khi Join:** Sinh vien da tham gia lop roi thi khong the join lai lan nua (tra ve loi 403 ALREADY_JOINED).
-   - **Kiem tra Quyen so huu (Ownership):** Chi giao vien da tao ra lop hoc (\`cls.teacherId === user.id\`) moi co quyen sua ten hoac xoa lop. Giao vien khac khong co quyen (tra ve loi 403 FORBIDDEN).
-   - **Xoa theo day chuyen (Cascade Delete):** Khi xoa lop hoc, he thong tu dong xoa toan bo cac ban ghi thanh vien lien quan trong \`ClassMember\` de tranh rac du lieu.`,
+3. **Đặc thù Nghiệp vụ quan trọng:**
+   - **Sinh mã ngẫu nhiên duy nhất:** Khi tạo lớp, hệ thống tự sinh mã 6 ký tự không trùng lặp. Nếu trùng sẽ tự thử lại tối đa 5 lần.
+   - **Tự động ghi nhận chủ lớp:** Khi giáo viên tạo lớp, hệ thống tự động thêm giáo viên đó vào bảng \`ClassMember\` với vai trò \`roleInClass: teacher\`.
+   - **Kiểm tra trùng lặp khi Join:** Sinh viên đã tham gia lớp rồi thì không thể join lại lần nữa (trả về lỗi 403 ALREADY_JOINED).
+   - **Kiểm tra Quyền sở hữu (Ownership):** Chỉ giáo viên đã tạo ra lớp học (\`cls.teacherId === user.id\`) mới có quyền sửa tên hoặc xóa lớp. Giáo viên khác không có quyền (trả về lỗi 403 FORBIDDEN).
+   - **Xóa theo dây chuyền (Cascade Delete):** Khi xóa lớp học, hệ thống tự động xóa toàn bộ các bản ghi thành viên liên quan trong \`ClassMember\` để tránh rác dữ liệu.`,
   },
   servers: [
     {
       url: "http://localhost:4002",
-      description: "Core API Server (Local)",
+      description: "Core API (Cổng 4002)",
+    },
+    {
+      url: "http://localhost:4001",
+      description: "Auth Service (Cổng 4001)",
     },
   ],
   tags: [
     {
-      name: "Authentication & Lay Token",
-      description: "Cac endpoint ho tro lay JWT Token nhanh de kiem thu",
+      name: "Authentication & Lấy Token",
+      description: "Các endpoint hỗ trợ lấy JWT Token nhanh để kiểm thử",
     },
     {
-      name: "Quan ly Lop hoc (LMS-05)",
-      description: "Cac API nghiep vu quan ly lop hoc do Nguyen Anh Tu xay dung",
+      name: "Quản lý Lớp học (LMS-05)",
+      description: "Các API nghiệp vụ quản lý lớp học do Nguyễn Anh Tú xây dựng",
     },
     {
-      name: "He thong & Thong tin ca nhan",
-      description: "Kiem tra suc khoe Core API va thong tin nguoi dung tu JWT",
+      name: "Hệ thống & Thông tin cá nhân",
+      description: "Kiểm tra sức khỏe Core API và thông tin người dùng từ JWT",
     },
   ],
   paths: {
     "/docs/tokens/teacher": {
       post: {
-        tags: ["Authentication & Lay Token"],
-        summary: "Lay Token Giao vien 1-Click (Demo Teacher)",
-        description: `Endpoint tien ich phuc vu viec test API.
-Tra ve JWT Token cua tai khoan Giao vien (\`teacher@lms.local\`).
-Neu Auth Service (:4001) dang bat, he thong se lay token chuan tu Auth Service. Neu chua bat, he thong se tu ky token hop le bang JWT_SECRET.
+        tags: ["Authentication & Lấy Token"],
+        summary: "Lấy Token Giáo viên 1-Click (Demo Teacher)",
+        description: `Endpoint tiện ích phục vụ việc test API.
+Trả về JWT Token của tài khoản Giáo viên (\`teacher@lms.local\`).
+Nếu Auth Service (:4001) đang bật, hệ thống sẽ lấy token chuẩn từ Auth Service. Nếu chưa bật, hệ thống sẽ tự ký token hợp lệ bằng JWT_SECRET.
 
-Cach dung: Nhan **Test Request**, sau do copy gia tri \`token\` va dan vao nut **Authorize** tren giao dien Scalar.`,
+Cách dùng: Nhấn **Test Request**, sau đó copy giá trị \`token\` và dán vào nút **Authorize** trên giao diện Scalar.`,
         responses: {
           "200": {
-            description: "Lay token thanh cong",
+            description: "Lấy token thành công",
             content: {
               "application/json": {
                 schema: {
@@ -104,15 +108,15 @@ Cach dung: Nhan **Test Request**, sau do copy gia tri \`token\` va dan vao nut *
     },
     "/docs/tokens/student": {
       post: {
-        tags: ["Authentication & Lay Token"],
-        summary: "Lay Token Sinh vien 1-Click (Demo Student)",
-        description: `Endpoint tien ich phuc vu viec test API.
-Tra ve JWT Token cua tai khoan Sinh vien (\`student@lms.local\`).
+        tags: ["Authentication & Lấy Token"],
+        summary: "Lấy Token Sinh viên 1-Click (Demo Student)",
+        description: `Endpoint tiện ích phục vụ việc test API.
+Trả về JWT Token của tài khoản Sinh viên (\`student@lms.local\`).
 
-Cach dung: Nhan **Test Request**, sau do copy gia tri \`token\` va dan vao nut **Authorize** tren giao dien Scalar de kiem thu cac tinh nang Sinh vien (tham gia lop, xem lop da tham gia).`,
+Cách dùng: Nhấn **Test Request**, sau đó copy giá trị \`token\` và dán vào nút **Authorize** trên giao diện Scalar để kiểm thử các tính năng Sinh viên (tham gia lớp, xem lớp đã tham gia).`,
         responses: {
           "200": {
-            description: "Lay token thanh cong",
+            description: "Lấy token thành công",
             content: {
               "application/json": {
                 schema: {
@@ -132,14 +136,24 @@ Cach dung: Nhan **Test Request**, sau do copy gia tri \`token\` va dan vao nut *
     },
     "/auth/login": {
       post: {
-        tags: ["Authentication & Lay Token"],
-        summary: "Dang nhap tai khoan qua Auth Service",
-        description: `Goi truc tiep den Auth Service de xac thuc email va password.
-Tra ve JWT token va thong tin tai khoan.
+        servers: [
+          {
+            url: "http://localhost:4001",
+            description: "Auth Service (Cổng 4001)",
+          },
+          {
+            url: "http://localhost:4002",
+            description: "Core API Proxy (Cổng 4002)",
+          },
+        ],
+        tags: ["Authentication & Lấy Token"],
+        summary: "Đăng nhập tài khoản qua Auth Service",
+        description: `Gọi trực tiếp đến Auth Service để xác thực email và password.
+Trả về JWT token và thông tin tài khoản.
 
-Tai khoan seed mac dinh:
-- Giao vien: \`teacher@lms.local\` / \`Demo123!\`
-- Sinh vien: \`student@lms.local\` / \`Demo123!\``,
+Tài khoản seed mặc định:
+- Giáo viên: \`teacher@lms.local\` / \`Demo123!\`
+- Sinh viên: \`student@lms.local\` / \`Demo123!\``,
         requestBody: {
           required: true,
           content: {
@@ -157,7 +171,7 @@ Tai khoan seed mac dinh:
         },
         responses: {
           "200": {
-            description: "Dang nhap thanh cong",
+            description: "Đăng nhập thành công",
             content: {
               "application/json": {
                 schema: {
@@ -179,7 +193,7 @@ Tai khoan seed mac dinh:
             },
           },
           "401": {
-            description: "Sai email hoac mat khau",
+            description: "Sai email hoặc mật khẩu",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -191,20 +205,20 @@ Tai khoan seed mac dinh:
     },
     "/classes": {
       post: {
-        tags: ["Quan ly Lop hoc (LMS-05)"],
-        summary: "1. Tao lop hoc moi (Chi Giao vien)",
-        description: `Tao mot lop hoc moi trong he thong.
+        tags: ["Quản lý Lớp học (LMS-05)"],
+        summary: "1. Tạo lớp học mới (Chỉ Giáo viên)",
+        description: `Tạo một lớp học mới trong hệ thống.
 
-**Yeu cau Quyen:**
-- Bắt buộc token co \`role: teacher\`. Neu la \`student\` se bi chan voi ma loi **403 FORBIDDEN**.
+**Yêu cầu Quyền:**
+- Bắt buộc token có \`role: teacher\`. Nếu là \`student\` sẽ bị chặn với mã lỗi **403 FORBIDDEN**.
 
-**Quy tac Validate Body:**
-- \`name\`: Bat buoc, kieu chuoi tu 1 den 100 ky tu. Neu de trong hoac vuot qua 100 ky tu se tra ve **422 VALIDATION_ERROR**.
+**Quy tắc Validate Body:**
+- \`name\`: Bắt buộc, kiểu chuỗi từ 1 đến 100 ký tự. Nếu để trống hoặc vượt quá 100 ký tự sẽ trả về **422 VALIDATION_ERROR**.
 
-**Dac thu Nghiep vu:**
-- He thong tu dong sinh mot ma moi gom 6 ky tu in hoa (chu va so) duy nhat.
-- Tu dong tao ban ghi \`ClassMember\` cho chinh giao vien tao lop voi \`roleInClass: "teacher"\`.
-- Luu \`teacherId\` cua giao vien vao lop de kiem tra quyen so huu (Ownership) khi sua/xoa.`,
+**Đặc thù Nghiệp vụ:**
+- Hệ thống tự động sinh một mã mời gồm 6 ký tự in hoa (chữ và số) duy nhất.
+- Tự động tạo bản ghi \`ClassMember\` cho chính giáo viên tạo lớp với \`roleInClass: "teacher"\`.
+- Lưu \`teacherId\` của giáo viên vào lớp để kiểm tra quyền sở hữu (Ownership) khi sửa/xóa.`,
         security: [{ BearerAuth: [] }],
         requestBody: {
           required: true,
@@ -218,8 +232,8 @@ Tai khoan seed mac dinh:
                     type: "string",
                     minLength: 1,
                     maxLength: 100,
-                    example: "Lap trinh Di dong MMA301",
-                    description: "Ten lop hoc (1 - 100 ky tu)",
+                    example: "Lập trình Di động MMA301",
+                    description: "Tên lớp học (1 - 100 ký tự)",
                   },
                 },
               },
@@ -228,13 +242,13 @@ Tai khoan seed mac dinh:
         },
         responses: {
           "201": {
-            description: "Tao lop hoc thanh cong",
+            description: "Tạo lớp học thành công",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tao lop hoc thanh cong" },
+                    message: { type: "string", example: "Tạo lớp học thành công" },
                     class: { $ref: "#/components/schemas/Class" },
                   },
                 },
@@ -249,20 +263,20 @@ Tai khoan seed mac dinh:
     },
     "/classes/teaching": {
       get: {
-        tags: ["Quan ly Lop hoc (LMS-05)"],
-        summary: "2. Danh sach lop dang day (Chi Giao vien)",
-        description: `Lay toan bo danh sach lop hoc do chinh giao vien dang dang nhap tao ra.
+        tags: ["Quản lý Lớp học (LMS-05)"],
+        summary: "2. Danh sách lớp đang dạy (Chỉ Giáo viên)",
+        description: `Lấy toàn bộ danh sách lớp học do chính giáo viên đang đăng nhập tạo ra.
 
-**Yeu cau Quyen:**
-- Bat buoc token co \`role: teacher\`. Neu la \`student\` se tra ve **403 FORBIDDEN**.
+**Yêu cầu Quyền:**
+- Bắt buộc token có \`role: teacher\`. Nếu là \`student\` sẽ trả về **403 FORBIDDEN**.
 
-**Dac thu Nghiep vu:**
-- Loc trong co so du lieu theo dieu kien \`teacherId === user.id\`.
-- Ket qua duoc sap xep theo thoi gian tao moi nhat len dau.`,
+**Đặc thù Nghiệp vụ:**
+- Lọc trong cơ sở dữ liệu theo điều kiện \`teacherId === user.id\`.
+- Kết quả được sắp xếp theo thời gian tạo mới nhất lên đầu.`,
         security: [{ BearerAuth: [] }],
         responses: {
           "200": {
-            description: "Danh sach lop dang day",
+            description: "Danh sách lớp đang dạy",
             content: {
               "application/json": {
                 schema: {
@@ -284,20 +298,20 @@ Tai khoan seed mac dinh:
     },
     "/classes/enrolled": {
       get: {
-        tags: ["Quan ly Lop hoc (LMS-05)"],
-        summary: "3. Danh sach lop da tham gia (Chi Sinh vien)",
-        description: `Lay toan bo danh sach cac lop hoc ma sinh vien dang dang nhap da tham gia.
+        tags: ["Quản lý Lớp học (LMS-05)"],
+        summary: "3. Danh sách lớp đã tham gia (Chỉ Sinh viên)",
+        description: `Lấy toàn bộ danh sách các lớp học mà sinh viên đang đăng nhập đã tham gia.
 
-**Yeu cau Quyen:**
-- Bat buoc token co \`role: student\`. Neu la \`teacher\` se tra ve **403 FORBIDDEN**.
+**Yêu cầu Quyền:**
+- Bắt buộc token có \`role: student\`. Nếu là \`teacher\` sẽ trả về **403 FORBIDDEN**.
 
-**Dac thu Nghiep vu:**
-- Tra cuu trong bang \`ClassMember\` voi \`userId === user.id\` va \`roleInClass: "student"\`.
-- Sau do lay day du thong tin chi tiet cua tung lop hoc tuong ung.`,
+**Đặc thù Nghiệp vụ:**
+- Tra cứu trong bảng \`ClassMember\` với \`userId === user.id\` và \`roleInClass: "student"\`.
+- Sau đó lấy đầy đủ thông tin chi tiết của từng lớp học tương ứng.`,
         security: [{ BearerAuth: [] }],
         responses: {
           "200": {
-            description: "Danh sach lop hoc da tham gia",
+            description: "Danh sách lớp học đã tham gia",
             content: {
               "application/json": {
                 schema: {
@@ -319,20 +333,20 @@ Tai khoan seed mac dinh:
     },
     "/classes/join": {
       post: {
-        tags: ["Quan ly Lop hoc (LMS-05)"],
-        summary: "4. Tham gia lop bang ma moi (Chi Sinh vien)",
-        description: `Sinh vien nhap ma code 6 ky tu de tham gia vao lop hoc.
+        tags: ["Quản lý Lớp học (LMS-05)"],
+        summary: "4. Tham gia lớp bằng mã mời (Chỉ Sinh viên)",
+        description: `Sinh viên nhập mã code 6 ký tự để tham gia vào lớp học.
 
-**Yeu cau Quyen:**
-- Bat buoc token co \`role: student\`. Neu la \`teacher\` se tra ve **403 FORBIDDEN**.
+**Yêu cầu Quyền:**
+- Bắt buộc token có \`role: student\`. Nếu là \`teacher\` sẽ trả về **403 FORBIDDEN**.
 
-**Quy tac Validate Body:**
-- \`code\`: Bat buoc, kieu chuoi dung 6 ky tu. He thong tu dong chuyen thanh chu in hoa (uppercase). Sai dinh dang tra ve **422 VALIDATION_ERROR**.
+**Quy tắc Validate Body:**
+- \`code\`: Bắt buộc, kiểu chuỗi đúng 6 ký tự. Hệ thống tự động chuyển thành chữ in hoa (uppercase). Sai định dạng trả về **422 VALIDATION_ERROR**.
 
-**Dac thu Nghiep vu:**
-- Kiem tra ma lop co ton tai hay khong. Neu khong ton tai tra ve **404 CLASS_NOT_FOUND**.
-- Kiem tra xem sinh vien da la thanh vien cua lop nay chua. Neu da tham gia roi se tra ve **403 ALREADY_JOINED**.
-- Khi hop le, he thong them ban ghi vao \`ClassMember\` voi \`roleInClass: "student"\`.`,
+**Đặc thù Nghiệp vụ:**
+- Kiểm tra mã lớp có tồn tại hay không. Nếu không tồn tại trả về **404 CLASS_NOT_FOUND**.
+- Kiểm tra xem sinh viên đã là thành viên của lớp này chưa. Nếu đã tham gia rồi sẽ trả về **403 ALREADY_JOINED**.
+- Khi hợp lệ, hệ thống thêm bản ghi vào \`ClassMember\` với \`roleInClass: "student"\`.`,
         security: [{ BearerAuth: [] }],
         requestBody: {
           required: true,
@@ -347,7 +361,7 @@ Tai khoan seed mac dinh:
                     minLength: 6,
                     maxLength: 6,
                     example: "A8K92Z",
-                    description: "Ma moi 6 ky tu in hoa (vi du: A8K92Z)",
+                    description: "Mã mời 6 ký tự in hoa (ví dụ: A8K92Z)",
                   },
                 },
               },
@@ -356,13 +370,13 @@ Tai khoan seed mac dinh:
         },
         responses: {
           "200": {
-            description: "Tham gia lop hoc thanh cong",
+            description: "Tham gia lớp học thành công",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tham gia lop hoc thanh cong" },
+                    message: { type: "string", example: "Tham gia lớp học thành công" },
                     class: { $ref: "#/components/schemas/Class" },
                     membership: { $ref: "#/components/schemas/ClassMember" },
                   },
@@ -372,7 +386,7 @@ Tai khoan seed mac dinh:
           },
           "401": { $ref: "#/components/responses/Unauthorized" },
           "403": {
-            description: "Da la thanh vien cua lop hoac nguoi goi khong phai la Sinh vien",
+            description: "Đã là thành viên của lớp hoặc người gọi không phải là Sinh viên",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -380,7 +394,7 @@ Tai khoan seed mac dinh:
             },
           },
           "404": {
-            description: "Khong tim thay lop hoc voi ma code da nhap",
+            description: "Không tìm thấy lớp học với mã code đã nhập",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -393,33 +407,33 @@ Tai khoan seed mac dinh:
     },
     "/classes/{id}": {
       get: {
-        tags: ["Quan ly Lop hoc (LMS-05)"],
-        summary: "5. Xem chi tiet lop hoc (Thanh vien trong lop)",
-        description: `Xem thong tin chi tiet cua mot lop hoc.
+        tags: ["Quản lý Lớp học (LMS-05)"],
+        summary: "5. Xem chi tiết lớp học (Thành viên trong lớp)",
+        description: `Xem thông tin chi tiết của một lớp học.
 
-**Yeu cau Quyen:**
-- Nguoi goi (Teacher hoac Student) bat buoc phai la thanh vien da tham gia lop hoc nay.
-- Neu nguoi dung chua tham gia lop se tra ve ma loi **403 FORBIDDEN** (\`Ban khong phai la thanh vien cua lop hoc nay\`).
+**Yêu cầu Quyền:**
+- Người gọi (Teacher hoặc Student) bắt buộc phải là thành viên đã tham gia lớp học này.
+- Nếu người dùng chưa tham gia lớp sẽ trả về mã lỗi **403 FORBIDDEN** (\`Bạn không phải là thành viên của lớp học này\`).
 
-**Quy tac Validate Param:**
-- \`id\`: Bat buoc la MongoDB ObjectId hop le (chuoi 24 ky tu hex). Neu truyen chuoi bat ky khong hop le se tra ve **400 INVALID_ID**.
+**Quy tắc Validate Param:**
+- \`id\`: Bắt buộc là MongoDB ObjectId hợp lệ (chuỗi 24 ký tự hex). Nếu truyền chuỗi bất kỳ không hợp lệ sẽ trả về **400 INVALID_ID**.
 
-**Dac thu Nghiep vu:**
-- Kiem tra su ton tai cua lop trong database (neu bi xoa tra ve **404 CLASS_NOT_FOUND**).
-- Phan hoi tra ve bao gom thong tin lop va truong \`roleInClass\` ('teacher' hoac 'student') de phia Frontend biet nguoi dung dang la giao vien hay hoc sinh trong lop do.`,
+**Đặc thù Nghiệp vụ:**
+- Kiểm tra sự tồn tại của lớp trong database (nếu bị xóa trả về **404 CLASS_NOT_FOUND**).
+- Phản hồi trả về bao gồm thông tin lớp và trường \`roleInClass\` ('teacher' hoặc 'student') để phía Frontend biết người dùng đang là giáo viên hay học sinh trong lớp đó.`,
         security: [{ BearerAuth: [] }],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
-            description: "MongoDB ObjectId cua lop hoc (24 ky tu hex)",
+            description: "MongoDB ObjectId của lớp học (24 ký tự hex)",
             schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
           },
         ],
         responses: {
           "200": {
-            description: "Thong tin chi tiet lop hoc",
+            description: "Thông tin chi tiết lớp học",
             content: {
               "application/json": {
                 schema: {
@@ -439,24 +453,24 @@ Tai khoan seed mac dinh:
         },
       },
       patch: {
-        tags: ["Quan ly Lop hoc (LMS-05)"],
-        summary: "7. Cap nhat ten lop (Chi Giao vien tao lop)",
-        description: `Thay doi ten cua mot lop hoc.
+        tags: ["Quản lý Lớp học (LMS-05)"],
+        summary: "7. Cập nhật tên lớp (Chỉ Giáo viên tạo lớp)",
+        description: `Thay đổi tên của một lớp học.
 
-**Yeu cau Quyen & Kiem tra So huu (Ownership Check):**
-- Nguoi goi bat buoc phai la Giao vien (\`role: teacher\`).
-- **QUAN TRONG:** Giao vien do phai la nguoi truc tiep tao ra lop hoc nay (\`cls.teacherId === user.id\`). Giao vien khac trong he thong khong duoc phep sua lop cua nguoi khac (tra ve **403 FORBIDDEN**).
+**Yêu cầu Quyền & Kiểm tra Sở hữu (Ownership Check):**
+- Người gọi bắt buộc phải là Giáo viên (\`role: teacher\`).
+- **QUAN TRỌNG:** Giáo viên đó phải là người trực tiếp tạo ra lớp học này (\`cls.teacherId === user.id\`). Giáo viên khác trong hệ thống không được phép sửa lớp của người khác (trả về **403 FORBIDDEN**).
 
-**Quy tac Validate:**
-- \`id\`: MongoDB ObjectId hop le. Neu sai tra ve **400 INVALID_ID**.
-- \`name\` (Body): Chuoi tu 1 den 100 ky tu. Neu de trong tra ve **422 VALIDATION_ERROR**.`,
+**Quy tắc Validate:**
+- \`id\`: MongoDB ObjectId hợp lệ. Nếu sai trả về **400 INVALID_ID**.
+- \`name\` (Body): Chuỗi từ 1 đến 100 ký tự. Nếu để trống trả về **422 VALIDATION_ERROR**.`,
         security: [{ BearerAuth: [] }],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
-            description: "MongoDB ObjectId cua lop hoc",
+            description: "MongoDB ObjectId của lớp học",
             schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
           },
         ],
@@ -472,8 +486,8 @@ Tai khoan seed mac dinh:
                     type: "string",
                     minLength: 1,
                     maxLength: 100,
-                    example: "Lap trinh Di dong MMA301 - Hoc ky 2",
-                    description: "Ten moi cua lop hoc",
+                    example: "Lập trình Di động MMA301 - Học kỳ 2",
+                    description: "Tên mới của lớp học",
                   },
                 },
               },
@@ -482,13 +496,13 @@ Tai khoan seed mac dinh:
         },
         responses: {
           "200": {
-            description: "Cap nhat thanh cong",
+            description: "Cập nhật thành công",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cap nhat lop hoc thanh cong" },
+                    message: { type: "string", example: "Cập nhật lớp học thành công" },
                     class: { $ref: "#/components/schemas/Class" },
                   },
                 },
@@ -503,39 +517,39 @@ Tai khoan seed mac dinh:
         },
       },
       delete: {
-        tags: ["Quan ly Lop hoc (LMS-05)"],
-        summary: "8. Xoa lop hoc (Chi Giao vien tao lop)",
-        description: `Xoa hoan toan mot lop hoc khoi he thong.
+        tags: ["Quản lý Lớp học (LMS-05)"],
+        summary: "8. Xóa lớp học (Chỉ Giáo viên tạo lớp)",
+        description: `Xóa hoàn toàn một lớp học khỏi hệ thống.
 
-**Yeu cau Quyen & Kiem tra So huu (Ownership Check):**
-- Bat buoc la Giao vien tao lop (\`teacherId === user.id\`).
-- Neu giao vien khac hoac sinh vien goi se bi tu choi voi ma loi **403 FORBIDDEN**.
+**Yêu cầu Quyền & Kiểm tra Sở hữu (Ownership Check):**
+- Bắt buộc là Giáo viên tạo lớp (\`teacherId === user.id\`).
+- Nếu giáo viên khác hoặc sinh viên gọi sẽ bị từ chối với mã lỗi **403 FORBIDDEN**.
 
-**Quy tac Validate Param:**
-- \`id\`: MongoDB ObjectId hop le. Sai dinh dang tra ve **400 INVALID_ID**.
+**Quy tắc Validate Param:**
+- \`id\`: MongoDB ObjectId hợp lệ. Sai định dạng trả về **400 INVALID_ID**.
 
-**Dac thu Nghiep vu (Cascade Delete):**
-- He thong se xoa ban ghi trong bang \`Class\`.
-- Dong thoi tu dong xoa toan bo cac ban ghi thanh vien lien quan trong bang \`ClassMember\` (Cascade Delete) de khong de lai du lieu rac.`,
+**Đặc thù Nghiệp vụ (Cascade Delete):**
+- Hệ thống sẽ xóa bản ghi trong bảng \`Class\`.
+- Đồng thời tự động xóa toàn bộ các bản ghi thành viên liên quan trong bảng \`ClassMember\` (Cascade Delete) để không để lại dữ liệu rác.`,
         security: [{ BearerAuth: [] }],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
-            description: "MongoDB ObjectId cua lop hoc",
+            description: "MongoDB ObjectId của lớp học",
             schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
           },
         ],
         responses: {
           "200": {
-            description: "Xoa lop hoc thanh cong",
+            description: "Xóa lớp học thành công",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Xoa lop hoc thanh cong" },
+                    message: { type: "string", example: "Xóa lớp học thành công" },
                   },
                 },
               },
@@ -550,31 +564,31 @@ Tai khoan seed mac dinh:
     },
     "/classes/{id}/members": {
       get: {
-        tags: ["Quan ly Lop hoc (LMS-05)"],
-        summary: "6. Danh sach thanh vien trong lop (Thanh vien trong lop)",
-        description: `Lay toan bo danh sach thanh vien (bao gom ca Giao vien va Sinh vien) cua lop hoc do.
+        tags: ["Quản lý Lớp học (LMS-05)"],
+        summary: "6. Danh sách thành viên trong lớp (Thành viên trong lớp)",
+        description: `Lấy toàn bộ danh sách thành viên (bao gồm cả Giáo viên và Sinh viên) của lớp học đó.
 
-**Yeu cau Quyen:**
-- Nguoi goi bat buoc phai la thanh vien thuoc lop hoc do (\`ClassMember\`). Neu chua tham gia se tra ve **403 FORBIDDEN**.
+**Yêu cầu Quyền:**
+- Người gọi bắt buộc phải là thành viên thuộc lớp học đó (\`ClassMember\`). Nếu chưa tham gia sẽ trả về **403 FORBIDDEN**.
 
-**Quy tac Validate Param:**
-- \`id\`: MongoDB ObjectId hop le (24 ky tu hex). Sai dinh dang tra ve **400 INVALID_ID**.
+**Quy tắc Validate Param:**
+- \`id\`: MongoDB ObjectId hợp lệ (24 ký tự hex). Sai định dạng trả về **400 INVALID_ID**.
 
-**Dac thu Nghiep vu:**
-- Danh sach thanh vien duoc sap xep theo thoi gian tham gia tu truoc den sau (\`createdAt: 1\`).`,
+**Đặc thù Nghiệp vụ:**
+- Danh sách thành viên được sắp xếp theo thời gian tham gia từ trước đến sau (\`createdAt: 1\`).`,
         security: [{ BearerAuth: [] }],
         parameters: [
           {
             name: "id",
             in: "path",
             required: true,
-            description: "MongoDB ObjectId cua lop hoc",
+            description: "MongoDB ObjectId của lớp học",
             schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
           },
         ],
         responses: {
           "200": {
-            description: "Danh sach thanh vien trong lop",
+            description: "Danh sách thành viên trong lớp",
             content: {
               "application/json": {
                 schema: {
@@ -598,12 +612,12 @@ Tai khoan seed mac dinh:
     },
     "/health": {
       get: {
-        tags: ["He thong & Thong tin ca nhan"],
-        summary: "Kiem tra trang thai song Core API",
-        description: "Kiem tra trang thai hoat dong cua Core API va ket noi co so du lieu MongoDB.",
+        tags: ["Hệ thống & Thông tin cá nhân"],
+        summary: "Kiểm tra trạng thái sống Core API",
+        description: "Kiểm tra trạng thái hoạt động của Core API và kết nối cơ sở dữ liệu MongoDB.",
         responses: {
           "200": {
-            description: "He thong hoat dong binh thuong",
+            description: "Hệ thống hoạt động bình thường",
             content: {
               "application/json": {
                 schema: {
@@ -622,13 +636,13 @@ Tai khoan seed mac dinh:
     },
     "/me": {
       get: {
-        tags: ["He thong & Thong tin ca nhan"],
-        summary: "Xem thong tin nguoi dung tu Token",
-        description: "Giai ma token hien tai va tra ve thong tin sub (User ID), email, role.",
+        tags: ["Hệ thống & Thông tin cá nhân"],
+        summary: "Xem thông tin người dùng từ Token",
+        description: "Giải mã token hiện tại và trả về thông tin sub (User ID), email, role.",
         security: [{ BearerAuth: [] }],
         responses: {
           "200": {
-            description: "Thong tin payload nguoi dung",
+            description: "Thông tin payload người dùng",
             content: {
               "application/json": {
                 schema: {
@@ -658,7 +672,7 @@ Tai khoan seed mac dinh:
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
-        description: "Dan JWT Token vao day. Ban co the lay token bang cach goi endpoint POST /docs/tokens/teacher hoac POST /docs/tokens/student.",
+        description: "Dán JWT Token vào đây. Bạn có thể lấy token bằng cách gọi endpoint POST /docs/tokens/teacher hoặc POST /docs/tokens/student.",
       },
     },
     schemas: {
@@ -666,9 +680,9 @@ Tai khoan seed mac dinh:
         type: "object",
         properties: {
           _id: { type: "string", example: "66e6b4f73a1b5c0012a45678", description: "MongoDB ObjectId" },
-          name: { type: "string", example: "Lap trinh Di dong MMA301", description: "Ten lop hoc" },
-          code: { type: "string", example: "A8K92Z", description: "Ma moi 6 ky tu in hoa duy nhat" },
-          teacherId: { type: "string", example: "66e6b4f73a1b5c0012a40001", description: "ID giao vien so huu" },
+          name: { type: "string", example: "Lập trình Di động MMA301", description: "Tên lớp học" },
+          code: { type: "string", example: "A8K92Z", description: "Mã mời 6 ký tự in hoa duy nhất" },
+          teacherId: { type: "string", example: "66e6b4f73a1b5c0012a40001", description: "ID giáo viên sở hữu" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },
@@ -691,7 +705,7 @@ Tai khoan seed mac dinh:
             type: "object",
             properties: {
               code: { type: "string", example: "FORBIDDEN" },
-              message: { type: "string", example: "Chi giao vien moi co the tao lop hoc" },
+              message: { type: "string", example: "Chỉ giáo viên mới có thể tạo lớp học" },
             },
           },
         },
@@ -699,7 +713,7 @@ Tai khoan seed mac dinh:
     },
     responses: {
       Unauthorized: {
-        description: "401 UNAUTHENTICATED / INVALID_TOKEN: Chua truyen token hoac token khong hop le / het han",
+        description: "401 UNAUTHENTICATED / INVALID_TOKEN: Chưa truyền token hoặc token không hợp lệ / hết hạn",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -707,7 +721,7 @@ Tai khoan seed mac dinh:
         },
       },
       ForbiddenTeacherOnly: {
-        description: "403 FORBIDDEN: Chi giao vien moi co quyen thuc hien thao tac nay",
+        description: "403 FORBIDDEN: Chỉ giáo viên mới có quyền thực hiện thao tác này",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -715,7 +729,7 @@ Tai khoan seed mac dinh:
         },
       },
       ForbiddenStudentOnly: {
-        description: "403 FORBIDDEN: Chi hoc sinh moi co quyen thuc hien thao tac nay",
+        description: "403 FORBIDDEN: Chỉ học sinh mới có quyền thực hiện thao tác này",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -723,7 +737,7 @@ Tai khoan seed mac dinh:
         },
       },
       ForbiddenOwnerOnly: {
-        description: "403 FORBIDDEN: Chi giao vien tao ra lop hoc nay moi co quyen cap nhat hoac xoa",
+        description: "403 FORBIDDEN: Chỉ giáo viên tạo ra lớp học này mới có quyền cập nhật hoặc xóa",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -731,7 +745,7 @@ Tai khoan seed mac dinh:
         },
       },
       ForbiddenNotMember: {
-        description: "403 FORBIDDEN: Ban khong phai la thanh vien cua lop hoc nay",
+        description: "403 FORBIDDEN: Bạn không phải là thành viên của lớp học này",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -739,7 +753,7 @@ Tai khoan seed mac dinh:
         },
       },
       NotFound: {
-        description: "404 NOT_FOUND: Khong tim thay ban ghi tuong ung trong co so du lieu",
+        description: "404 NOT_FOUND: Không tìm thấy bản ghi tương ứng trong cơ sở dữ liệu",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -747,7 +761,7 @@ Tai khoan seed mac dinh:
         },
       },
       InvalidId: {
-        description: "400 INVALID_ID: Dinh dang ID khong phai la MongoDB ObjectId hop le (24 ky tu hex)",
+        description: "400 INVALID_ID: Định dạng ID không phải là MongoDB ObjectId hợp lệ (24 ký tự hex)",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -755,7 +769,7 @@ Tai khoan seed mac dinh:
         },
       },
       ValidationError: {
-        description: "422 VALIDATION_ERROR: Du lieu truyen vao body khong thoa man dieu kien kiem tra Zod",
+        description: "422 VALIDATION_ERROR: Dữ liệu truyền vào body không thỏa mãn điều kiện kiểm tra Zod",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
