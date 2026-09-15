@@ -1,0 +1,14 @@
+$kind: "http-request"
+name: "1. Create Class (Teacher)"
+description: "Teacher tạo lớp học mới. Hệ thống sinh mã code 6 ký tự ngẫu nhiên. Tự động lưu `class_id` và `class_code` vào Environment."
+url: "{{core_url}}/classes"
+method: "POST"
+headers:
+  Content-Type: "application/json"
+  Authorization: "Bearer {{teacher_token}}"
+body:
+  type: "json"
+  content: "{\n  \"name\": \"Lập trình Di động MMA301\"\n}"
+scripts:
+  - {"type":"afterResponse","code":"const jsonData = pm.response.json();\nif (jsonData.class) {\n    if (jsonData.class._id) pm.environment.set(\"class_id\", jsonData.class._id);\n    if (jsonData.class.code) pm.environment.set(\"class_code\", jsonData.class.code);\n    console.log(\"Class ID:\", jsonData.class._id, \"Class Code:\", jsonData.class.code);\n}","language":"text/javascript"}
+order: 1000

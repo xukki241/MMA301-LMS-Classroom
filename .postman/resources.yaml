@@ -2,6 +2,12 @@
 workspace:
   id: 8f622d93-e649-4645-89f3-4606cab17a7f
 
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/MMA301 - LMS Classroom API: 0208d4f2-7154-42d4-ba9d-f9ffb4fb6cf5
+
 # All resources in the `postman/` folder are automatically registered in Local View.
 # Point to additional files outside the `postman/` folder to register them individually. Example:
 #localResources:

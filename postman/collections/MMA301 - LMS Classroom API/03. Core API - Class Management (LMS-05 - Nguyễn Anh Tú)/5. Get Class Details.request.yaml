@@ -1,0 +1,8 @@
+$kind: "http-request"
+name: "5. Get Class Details"
+description: "Xem thông tin chi tiết của 1 lớp học (chỉ thành viên trong lớp mới có quyền xem). Trả về roleInClass."
+url: "{{core_url}}/classes/{{class_id}}"
+method: "GET"
+headers:
+  Authorization: "Bearer {{teacher_token}}"
+order: 5000

@@ -1,0 +1,12 @@
+$kind: "http-request"
+name: "1. Create Post (Classes)"
+description: "Tạo bài đăng mới trong lớp học."
+url: "{{core_url}}/classes/{{class_id}}/posts"
+method: "POST"
+headers:
+  Content-Type: "application/json"
+  Authorization: "Bearer {{teacher_token}}"
+body:
+  type: "json"
+  content: "{\n  \"content\": \"Chào mừng các bạn đến với lớp MMA301!\"\n}"
+order: 1000

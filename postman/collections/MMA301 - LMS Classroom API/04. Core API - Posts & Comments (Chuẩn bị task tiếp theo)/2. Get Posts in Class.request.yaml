@@ -1,0 +1,8 @@
+$kind: "http-request"
+name: "2. Get Posts in Class"
+description: "Lấy danh sách các bài đăng trong lớp học."
+url: "{{core_url}}/classes/{{class_id}}/posts"
+method: "GET"
+headers:
+  Authorization: "Bearer {{student_token}}"
+order: 2000

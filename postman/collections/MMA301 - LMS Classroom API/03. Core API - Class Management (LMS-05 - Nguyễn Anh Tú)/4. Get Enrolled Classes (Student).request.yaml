@@ -1,0 +1,8 @@
+$kind: "http-request"
+name: "4. Get Enrolled Classes (Student)"
+description: "Lấy danh sách các lớp học sinh viên hiện tại đã tham gia."
+url: "{{core_url}}/classes/enrolled"
+method: "GET"
+headers:
+  Authorization: "Bearer {{student_token}}"
+order: 4000

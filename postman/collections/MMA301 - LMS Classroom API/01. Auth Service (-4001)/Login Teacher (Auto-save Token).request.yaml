@@ -1,0 +1,13 @@
+$kind: "http-request"
+name: "Login Teacher (Auto-save Token)"
+description: "Đăng nhập bằng tài khoản Teacher và tự động lưu `teacher_token` vào Environment."
+url: "{{auth_url}}/auth/login"
+method: "POST"
+headers:
+  Content-Type: "application/json"
+body:
+  type: "json"
+  content: "{\n  \"email\": \"{{teacher_email}}\",\n  \"password\": \"{{teacher_password}}\"\n}"
+scripts:
+  - {"type":"afterResponse","code":"const jsonData = pm.response.json();\nif (jsonData.token) {\n    pm.environment.set(\"teacher_token\", jsonData.token);\n    console.log(\"Teacher token auto-saved:\", jsonData.token);\n}","language":"text/javascript"}
+order: 2000
