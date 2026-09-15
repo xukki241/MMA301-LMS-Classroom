@@ -23,7 +23,7 @@ async function generateUniqueClassCode(): Promise<string> {
     }
     attempts++;
   }
-  throw new HttpError(500, "Failed to generate a unique class code", "CODE_GENERATION_FAILED");
+  throw new HttpError(500, "Không thể tạo mã lớp học duy nhất", "CODE_GENERATION_FAILED");
 }
 
 export class ClassService {
@@ -79,7 +79,7 @@ export class ClassService {
     const cls = await ClassModel.findOne({ code: uppercaseCode });
 
     if (!cls) {
-      throw new HttpError(404, "Class with this code does not exist", "CLASS_NOT_FOUND");
+      throw new HttpError(404, "Không tồn tại lớp học có mã này", "CLASS_NOT_FOUND");
     }
 
     // Check duplicate membership
@@ -89,7 +89,7 @@ export class ClassService {
     });
 
     if (existingMember) {
-      throw new HttpError(403, "You are already a member of this class", "ALREADY_JOINED");
+      throw new HttpError(403, "Bạn đã là thành viên của lớp học này", "ALREADY_JOINED");
     }
 
     const membership = await ClassMember.create({
@@ -106,7 +106,7 @@ export class ClassService {
    */
   static async getClassDetails(userId: string, classId: string) {
     if (!mongoose.Types.ObjectId.isValid(classId)) {
-      throw new HttpError(400, "Invalid class ID format", "INVALID_ID");
+      throw new HttpError(400, "Định dạng ID lớp học không hợp lệ", "INVALID_ID");
     }
 
     const membership = await ClassMember.findOne({
@@ -115,12 +115,12 @@ export class ClassService {
     });
 
     if (!membership) {
-      throw new HttpError(403, "You are not a member of this class", "FORBIDDEN");
+      throw new HttpError(403, "Bạn không phải là thành viên của lớp học này", "FORBIDDEN");
     }
 
     const cls = await ClassModel.findById(classId);
     if (!cls) {
-      throw new HttpError(404, "Class not found", "CLASS_NOT_FOUND");
+      throw new HttpError(404, "Không tìm thấy lớp học", "CLASS_NOT_FOUND");
     }
 
     return {
@@ -134,7 +134,7 @@ export class ClassService {
    */
   static async getClassMembers(userId: string, classId: string) {
     if (!mongoose.Types.ObjectId.isValid(classId)) {
-      throw new HttpError(400, "Invalid class ID format", "INVALID_ID");
+      throw new HttpError(400, "Định dạng ID lớp học không hợp lệ", "INVALID_ID");
     }
 
     const membership = await ClassMember.findOne({
@@ -143,7 +143,7 @@ export class ClassService {
     });
 
     if (!membership) {
-      throw new HttpError(403, "You are not a member of this class", "FORBIDDEN");
+      throw new HttpError(403, "Bạn không phải là thành viên của lớp học này", "FORBIDDEN");
     }
 
     const members = await ClassMember.find({ classId }).sort({ createdAt: 1 });
@@ -155,16 +155,16 @@ export class ClassService {
    */
   static async updateClass(teacherId: string, classId: string, name: string) {
     if (!mongoose.Types.ObjectId.isValid(classId)) {
-      throw new HttpError(400, "Invalid class ID format", "INVALID_ID");
+      throw new HttpError(400, "Định dạng ID lớp học không hợp lệ", "INVALID_ID");
     }
 
     const cls = await ClassModel.findById(classId);
     if (!cls) {
-      throw new HttpError(404, "Class not found", "CLASS_NOT_FOUND");
+      throw new HttpError(404, "Không tìm thấy lớp học", "CLASS_NOT_FOUND");
     }
 
     if (cls.teacherId !== teacherId) {
-      throw new HttpError(403, "Only the class owner can update this class", "FORBIDDEN");
+      throw new HttpError(403, "Chỉ giáo viên tạo lớp mới có thể cập nhật lớp học này", "FORBIDDEN");
     }
 
     cls.name = name;
@@ -178,21 +178,21 @@ export class ClassService {
    */
   static async deleteClass(teacherId: string, classId: string) {
     if (!mongoose.Types.ObjectId.isValid(classId)) {
-      throw new HttpError(400, "Invalid class ID format", "INVALID_ID");
+      throw new HttpError(400, "Định dạng ID lớp học không hợp lệ", "INVALID_ID");
     }
 
     const cls = await ClassModel.findById(classId);
     if (!cls) {
-      throw new HttpError(404, "Class not found", "CLASS_NOT_FOUND");
+      throw new HttpError(404, "Không tìm thấy lớp học", "CLASS_NOT_FOUND");
     }
 
     if (cls.teacherId !== teacherId) {
-      throw new HttpError(403, "Only the class owner can delete this class", "FORBIDDEN");
+      throw new HttpError(403, "Chỉ giáo viên tạo lớp mới có thể xóa lớp học này", "FORBIDDEN");
     }
 
     await ClassModel.deleteOne({ _id: classId });
     await ClassMember.deleteMany({ classId });
 
-    return { message: "Class deleted successfully" };
+    return { message: "Xóa lớp học thành công" };
   }
 }

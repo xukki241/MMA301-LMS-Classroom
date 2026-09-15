@@ -67,7 +67,7 @@ async function testE2E() {
   const membersData = await membersRes.json();
   console.log("   Members count:", membersData.members.length);
 
-  console.log("✅ ALL LMS-05 E2E TESTS PASSED!");
+  console.log("ALL LMS-05 E2E TESTS PASSED!");
 }
 
 testE2E().catch(console.error);
