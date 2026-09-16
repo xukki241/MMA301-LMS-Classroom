@@ -1,0 +1,3 @@
+$kind: "collection"
+name: "MMA301 - LMS Classroom API"
+description: "Bộ API tài liệu và kiểm thử tự động cho dự án MMA301 LMS Classroom.\nPhân hệ Core API Class do Nguyễn Anh Tú phụ trách (LMS-05)."

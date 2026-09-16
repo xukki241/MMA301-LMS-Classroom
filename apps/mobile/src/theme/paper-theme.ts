@@ -3,7 +3,11 @@ import {
   MD3LightTheme,
   type MD3Theme,
 } from "react-native-paper";
-import { DarkTheme as NavDark, DefaultTheme as NavLight, type Theme as NavTheme } from "@react-navigation/native";
+import {
+  DarkTheme as NavDark,
+  DefaultTheme as NavLight,
+  type Theme as NavTheme,
+} from "expo-router/react-navigation";
 import { darkPalette, palette, radius } from "./tokens";
 
 export const lightPaperTheme: MD3Theme = {

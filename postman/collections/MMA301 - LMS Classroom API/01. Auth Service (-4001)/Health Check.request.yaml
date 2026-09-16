@@ -1,0 +1,6 @@
+$kind: "http-request"
+name: "Health Check"
+description: "Kiểm tra trạng thái hoạt động của Auth Service và kết nối MongoDB."
+url: "{{auth_url}}/health"
+method: "GET"
+order: 1000

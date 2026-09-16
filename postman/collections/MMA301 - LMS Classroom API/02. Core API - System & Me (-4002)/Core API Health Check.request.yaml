@@ -1,0 +1,6 @@
+$kind: "http-request"
+name: "Core API Health Check"
+description: "Kiểm tra trạng thái hoạt động của Core API và MongoDB."
+url: "{{core_url}}/health"
+method: "GET"
+order: 1000

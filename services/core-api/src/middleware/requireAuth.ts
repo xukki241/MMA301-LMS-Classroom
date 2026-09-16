@@ -49,7 +49,8 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
 
     req.user = { id: decoded.sub, email: decoded.email, role: decoded.role };
     next();
-  } catch {
+  } catch (err) {
+    console.error("requireAuth JWT Error:", err);
     next(new HttpError(401, "Invalid or expired token", "INVALID_TOKEN"));
   }
 }

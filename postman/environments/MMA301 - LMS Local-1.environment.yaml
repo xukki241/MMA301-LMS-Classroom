@@ -1,0 +1,23 @@
+name: MMA301 - LMS Local
+values:
+  - key: auth_url
+    value: 'http://localhost:4001'
+  - key: core_url
+    value: 'http://localhost:4002'
+  - key: teacher_email
+    value: teacher@lms.local
+  - key: teacher_password
+    value: Demo123!
+  - key: student_email
+    value: student@lms.local
+  - key: student_password
+    value: Demo123!
+  - key: teacher_token
+    value: ''
+  - key: student_token
+    value: ''
+  - key: class_id
+    value: ''
+  - key: class_code
+    value: ''
+color: 180
