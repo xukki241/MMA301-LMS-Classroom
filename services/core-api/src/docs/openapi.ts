@@ -72,8 +72,20 @@ Email: dambautv2005@gmail.com
       description: "Các API nghiệp vụ quản lý lớp học do Nguyễn Anh Tú xây dựng",
     },
     {
+      name: "Bảng tin & Tương tác (LMS-06)",
+      description: "Các API Bảng tin (Post, Comment, Reaction) do Nguyễn Anh Tú xây dựng",
+    },
+    {
       name: "Hệ thống & Thông tin cá nhân",
       description: "Kiểm tra sức khỏe Core API và thông tin người dùng từ JWT",
+    },
+  ],
+  security: [
+    {
+      BearerAuth: [],
+    },
+    {
+      HeaderAuth: [],
     },
   ],
   paths: {
@@ -665,6 +677,605 @@ Tài khoản seed mặc định:
         },
       },
     },
+    "/classes/{classId}/posts": {
+      get: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Lấy danh sách bài đăng trong lớp (Hỗ trợ realtime polling)",
+        description: `Thành viên lớp (Giáo viên hoặc Sinh viên) xem danh sách các bài đăng trong lớp học.
+Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile client thực hiện long-polling lấy các bài đăng được tạo hoặc sửa đổi sau mốc thời gian này.`,
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token xác thực dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            description: "ID lớp học (MongoDB ObjectId)",
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "updatedAfter",
+            in: "query",
+            required: false,
+            description: "Thời điểm ISO để lọc các bài đăng mới hơn (Realtime Long Polling)",
+            schema: { type: "string", format: "date-time", example: "2026-09-16T10:00:00.000Z" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Lấy danh sách bài đăng thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    posts: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Post" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+        },
+      },
+      post: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Giáo viên đăng bài trong lớp",
+        description: "Chỉ Giáo viên sở hữu hoặc giảng dạy trong lớp mới có quyền tạo bài đăng mới trên bảng tin.",
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token Giáo viên dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            description: "ID lớp học (MongoDB ObjectId)",
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["content"],
+                properties: {
+                  content: {
+                    type: "string",
+                    example: "Chào mừng các bạn đến với học phần MMA301! Lớp học sẽ diễn ra vào sáng thứ 4 hàng tuần.",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Đăng bài thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Tạo bài đăng thành công" },
+                    post: { $ref: "#/components/schemas/Post" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenTeacherOnly" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+        },
+      },
+    },
+    "/classes/{classId}/posts/{postId}": {
+      patch: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Chỉnh sửa bài đăng (Chỉ tác giả)",
+        description: "Chỉ người tạo bài đăng (tác giả) mới có quyền chỉnh sửa nội dung bài đăng.",
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token Tác giả dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "postId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["content"],
+                properties: {
+                  content: { type: "string", example: "Nội dung bài đăng đã được cập nhật." },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Cập nhật bài đăng thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Cập nhật bài đăng thành công" },
+                    post: { $ref: "#/components/schemas/Post" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+        },
+      },
+      delete: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Xóa bài đăng (Tác giả hoặc Giáo viên lớp)",
+        description: "Tác giả của bài đăng hoặc Giáo viên trong lớp có quyền xóa bài đăng (Soft delete: đánh dấu isDeleted=true).",
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token Tác giả hoặc Giáo viên dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "postId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Xóa bài đăng thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Xóa bài đăng thành công" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+        },
+      },
+    },
+    "/classes/{classId}/posts/{postId}/comments": {
+      get: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Lấy danh sách bình luận của bài đăng",
+        description: "Thành viên trong lớp có thể xem danh sách tất cả các bình luận của bài đăng theo thứ tự thời gian tăng dần.",
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token xác thực dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "postId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Lấy danh sách bình luận thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    comments: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Comment" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+        },
+      },
+      post: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Thêm bình luận vào bài đăng",
+        description: "Mọi thành viên trong lớp (cả Giáo viên và Sinh viên) đều có thể gửi bình luận vào bài đăng.",
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token thành viên dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "postId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["content"],
+                properties: {
+                  content: { type: "string", example: "Em đã nhận thông báo rồi ạ!" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Tạo bình luận thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Tạo bình luận thành công" },
+                    comment: { $ref: "#/components/schemas/Comment" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+        },
+      },
+    },
+    "/classes/{classId}/posts/{postId}/comments/{commentId}": {
+      patch: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Chỉnh sửa bình luận (Chỉ tác giả)",
+        description: "Chỉ người viết bình luận mới có quyền sửa đổi nội dung bình luận.",
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token Tác giả dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "postId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          },
+          {
+            name: "commentId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a48888" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["content"],
+                properties: {
+                  content: { type: "string", example: "Bình luận đã được sửa." },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Cập nhật bình luận thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Cập nhật bình luận thành công" },
+                    comment: { $ref: "#/components/schemas/Comment" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+        },
+      },
+      delete: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Xóa bình luận (Tác giả hoặc Giáo viên lớp)",
+        description: "Tác giả của bình luận hoặc Giáo viên của lớp có quyền xóa bình luận (Soft delete).",
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token Tác giả hoặc Giáo viên dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "postId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          },
+          {
+            name: "commentId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a48888" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Xóa bình luận thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Xóa bình luận thành công" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+        },
+      },
+    },
+    "/classes/{classId}/posts/{postId}/reactions": {
+      get: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Lấy thống kê biểu cảm của bài đăng",
+        description: "Xem tổng số lượng biểu cảm, chi tiết từng loại biểu cảm (summary count) và biểu cảm hiện tại của người dùng gọi API.",
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token thành viên dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "postId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Lấy thống kê biểu cảm thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    postId: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+                    total: { type: "integer", example: 5 },
+                    summary: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          emoji: { type: "string", example: "👍" },
+                          count: { type: "integer", example: 4 },
+                        },
+                      },
+                    },
+                    userReaction: { type: "string", nullable: true, example: "👍" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+        },
+      },
+      post: {
+        tags: ["Bảng tin & Tương tác (LMS-06)"],
+        summary: "Thả / Đổi / Hủy biểu cảm trên bài đăng",
+        description: `Thành viên lớp tương tác biểu cảm:
+- Nếu chưa có biểu cảm: Thêm biểu cảm mới (action: "added", 201 Created).
+- Nếu đã có và bấm biểu cảm khác: Đổi sang biểu cảm mới (action: "changed", 200 OK).
+- Nếu bấm lại chính biểu cảm đang chọn: Hủy biểu cảm (action: "removed", 200 OK).`,
+        security: [{ BearerAuth: [] }, { HeaderAuth: [] }],
+        parameters: [
+          {
+            name: "Authorization",
+            in: "header",
+            required: false,
+            description: "Token thành viên dạng 'Bearer <token>'. Dán token vào đây nếu muốn điền trực tiếp trong Headers.",
+            schema: { type: "string", example: "Bearer eyJhbGciOi..." },
+          },
+          {
+            name: "classId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          },
+          {
+            name: "postId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["emoji"],
+                properties: {
+                  emoji: { type: "string", example: "👍", description: "Icon emoji (ví dụ: 👍, ❤️, 😂, 🎉)" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Đổi hoặc hủy biểu cảm thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    action: { type: "string", enum: ["changed", "removed"] },
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "201": {
+            description: "Thêm biểu cảm thành công",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    action: { type: "string", example: "added" },
+                    message: { type: "string", example: "Đã thêm biểu cảm" },
+                    reaction: { $ref: "#/components/schemas/Reaction" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/InvalidId" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/ForbiddenNotMember" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -672,7 +1283,13 @@ Tài khoản seed mặc định:
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
-        description: "Dán JWT Token vào đây. Bạn có thể lấy token bằng cách gọi endpoint POST /docs/tokens/teacher hoặc POST /docs/tokens/student.",
+        description: "Dán JWT Token vào đây (Scalar sẽ tự thêm tiền tố 'Bearer '). Lấy token từ POST /docs/tokens/teacher hoặc POST /docs/tokens/student.",
+      },
+      HeaderAuth: {
+        type: "apiKey",
+        in: "header",
+        name: "Authorization",
+        description: "Dán trực tiếp 'Bearer <token>' vào đây nếu muốn điền thủ công qua Header Authorization.",
       },
     },
     schemas: {
@@ -694,6 +1311,43 @@ Tài khoản seed mặc định:
           classId: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
           userId: { type: "string", example: "66e6b4f73a1b5c0012a40002" },
           roleInClass: { type: "string", enum: ["teacher", "student"], example: "student" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+      Post: {
+        type: "object",
+        properties: {
+          _id: { type: "string", example: "66e6b4f73a1b5c0012a47777", description: "MongoDB ObjectId" },
+          classId: { type: "string", example: "66e6b4f73a1b5c0012a45678" },
+          authorId: { type: "string", example: "66e6b4f73a1b5c0012a40001" },
+          content: { type: "string", example: "Thông báo kiểm tra tiến độ môn MMA301 tuần này" },
+          isDeleted: { type: "boolean", example: false },
+          deletedAt: { type: "string", format: "date-time", nullable: true },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+      Comment: {
+        type: "object",
+        properties: {
+          _id: { type: "string", example: "66e6b4f73a1b5c0012a48888" },
+          postId: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          authorId: { type: "string", example: "66e6b4f73a1b5c0012a40002" },
+          content: { type: "string", example: "Thưa thầy, nhóm em đã hoàn thành bảng tin ạ!" },
+          isDeleted: { type: "boolean", example: false },
+          deletedAt: { type: "string", format: "date-time", nullable: true },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+      Reaction: {
+        type: "object",
+        properties: {
+          _id: { type: "string", example: "66e6b4f73a1b5c0012a49999" },
+          postId: { type: "string", example: "66e6b4f73a1b5c0012a47777" },
+          userId: { type: "string", example: "66e6b4f73a1b5c0012a40002" },
+          emoji: { type: "string", example: "👍" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },
