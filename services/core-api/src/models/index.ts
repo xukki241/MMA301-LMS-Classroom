@@ -5,5 +5,6 @@ export { Exercise } from "./Exercise.js";
 export { Grade } from "./Grade.js";
 export { Material } from "./Material.js";
 export { Post } from "./Post.js";
+export { Reaction } from "./Reaction.js";
 export { Submission } from "./Submission.js";
 export { syncCoreIndexes } from "./registry.js";

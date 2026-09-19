@@ -5,6 +5,7 @@ import { Exercise } from "./Exercise.js";
 import { Grade } from "./Grade.js";
 import { Material } from "./Material.js";
 import { Post } from "./Post.js";
+import { Reaction } from "./Reaction.js";
 import { Submission } from "./Submission.js";
 
 export const coreModels = [
@@ -16,6 +17,7 @@ export const coreModels = [
   Exercise,
   Submission,
   Grade,
+  Reaction,
 ];
 
 export async function syncCoreIndexes(): Promise<void> {

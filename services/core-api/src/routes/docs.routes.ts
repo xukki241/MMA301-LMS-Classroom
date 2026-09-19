@@ -113,5 +113,8 @@ docsRouter.use(
     spec: {
       content: openApiSpec,
     },
+    authentication: {
+      preferredSecurityScheme: "BearerAuth",
+    },
   })
 );
