@@ -9,6 +9,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "sync-indexes": "tsx src/scripts/syncIndexes.ts",
+    "test:lms05": "tsx src/scripts/test-lms05.ts",
+    "test:lms06": "tsx src/scripts/test-lms06.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
