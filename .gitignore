@@ -19,3 +19,7 @@ coverage/
 .cursor/hooks/state/*.json
 .cursor/hooks/state/*.jsonl
 .cursor/hooks/evidence/*.md
+
+# Local Claude Code state
+.claude/settings.local.json
+.claude/worktrees/

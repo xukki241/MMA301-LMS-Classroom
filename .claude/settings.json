@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(claude mcp list)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "PowerShell(npm view chrome-devtools-mcp name version)",
+      "PowerShell(npm view firebase-tools name version)",
+      "PowerShell(npm view @notionhq/notion-mcp-server name version)",
+      "PowerShell(npm view mongodb-mcp-server name version)",
+      "PowerShell(npm view @postman/mcp-server name version)",
+      "PowerShell(npm view @modelcontextprotocol/server-github name version)",
+      "PowerShell(npm search postman mcp --json)",
+      "PowerShell(npm view mongodb-mcp-server readme --json)",
+      "PowerShell(npm view @postman/postman-mcp-server readme --json)",
+      "PowerShell(npm view firebase-tools readme --json)"
+    ]
+  }
+}
