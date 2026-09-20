@@ -53,12 +53,12 @@ export async function login(input: { email: string; password: string }): Promise
   const email = input.email.toLowerCase().trim();
   const user = await User.findOne({ email });
   if (!user) {
-    throw new HttpError(401, "Invalid email or password", "INVALID_CREDENTIALS");
+    throw new HttpError(401, "Email hoặc mật khẩu không đúng", "INVALID_CREDENTIALS");
   }
 
   const ok = await bcrypt.compare(input.password, user.passwordHash);
   if (!ok) {
-    throw new HttpError(401, "Invalid email or password", "INVALID_CREDENTIALS");
+    throw new HttpError(401, "Email hoặc mật khẩu không đúng", "INVALID_CREDENTIALS");
   }
 
   return toAuthResponse({

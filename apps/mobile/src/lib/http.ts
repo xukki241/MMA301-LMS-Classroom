@@ -142,6 +142,9 @@ async function requestOnce<T>(url: string, options: HttpOptions, method: HttpMet
     if (isAbortError(error)) {
       throw new Error(options.signal?.aborted ? "Aborted" : "Hết thời gian chờ máy chủ");
     }
+    if (error instanceof TypeError) {
+      throw new Error("Không kết nối được máy chủ. Kiểm tra mạng hoặc API.");
+    }
     throw error;
   } finally {
     clearTimeout(timer);

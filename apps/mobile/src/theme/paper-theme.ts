@@ -7,7 +7,7 @@ import {
   DarkTheme as NavDark,
   DefaultTheme as NavLight,
   type Theme as NavTheme,
-} from "expo-router/react-navigation";
+} from "expo-router";
 import { darkPalette, palette, radius } from "./tokens";
 
 export const lightPaperTheme: MD3Theme = {

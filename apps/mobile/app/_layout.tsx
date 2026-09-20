@@ -1,9 +1,8 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
-import { ThemeProvider } from "expo-router/react-navigation";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import "react-native-reanimated";
 
@@ -34,7 +33,7 @@ export default function RootLayout() {
         }}
       >
         <AuthProvider>
-          <ThemeProvider value={navTheme}>
+          <ThemeProvider value={navTheme as unknown as ReactNavigation.Theme}>
             <Stack
               screenOptions={{
                 headerShown: false,
