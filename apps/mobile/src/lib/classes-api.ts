@@ -1,65 +1,95 @@
+import type { AuthUser } from "./api";
 import { CORE_URL } from "./config";
-import { http } from "./http";
+import { http, HttpError } from "./http";
 
-export type LmsClass = {
-  id: string;
+type ClassRole = AuthUser["role"];
+
+/** LMS-05 serializes Mongo documents with _id (see Core OpenAPI Class schema). */
+interface ClassResponse {
+  _id: string;
   name: string;
   code: string;
   teacherId: string;
-  createdAt?: string;
-};
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export function normalizeClass(raw: unknown): LmsClass {
-  const obj = asRecord(raw);
-  const inner = asRecord(obj?.class) ?? asRecord(obj?.data) ?? obj;
-  if (!inner) throw new Error("Dữ liệu lớp không hợp lệ");
-  const id = String(inner.id ?? inner._id ?? "");
-  if (!id) throw new Error("Lớp thiếu id");
+export type LmsClass = Omit<ClassResponse, "_id"> & { id: string };
+
+export interface ClassMember {
+  _id: string;
+  classId: string;
+  userId: string;
+  roleInClass: ClassRole;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClassDetail {
+  class: LmsClass;
+  roleInClass: ClassRole;
+}
+
+function invalidResponse(): never {
+  throw new HttpError("Dữ liệu lớp học không hợp lệ", 502, "INVALID_RESPONSE");
+}
+
+function normalizeClass(raw: ClassResponse): LmsClass {
+  if (!raw || [raw._id, raw.name, raw.code, raw.teacherId, raw.createdAt, raw.updatedAt]
+    .some((value) => typeof value !== "string" || !value)) {
+    return invalidResponse();
+  }
   return {
-    id,
-    name: String(inner.name ?? "Lớp học"),
-    code: String(inner.code ?? ""),
-    teacherId: String(inner.teacherId ?? inner.teacher_id ?? ""),
-    createdAt: inner.createdAt ? String(inner.createdAt) : undefined,
+    id: raw._id, name: raw.name, code: raw.code, teacherId: raw.teacherId,
+    createdAt: raw.createdAt, updatedAt: raw.updatedAt,
   };
 }
 
-function normalizeClassList(raw: unknown): LmsClass[] {
-  if (Array.isArray(raw)) return raw.map(normalizeClass);
-  const obj = asRecord(raw);
-  const list = obj?.classes ?? obj?.items ?? obj?.data;
-  if (Array.isArray(list)) return list.map(normalizeClass);
-  return [];
+export async function listClasses(token: string, role: ClassRole, signal?: AbortSignal): Promise<LmsClass[]> {
+  const path = role === "teacher" ? "teaching" : "enrolled";
+  const result = await http<{ classes: ClassResponse[] }>(`${CORE_URL}/classes/${path}`, { token, signal });
+  if (!Array.isArray(result?.classes)) return invalidResponse();
+  return result.classes.map(normalizeClass);
 }
 
-export async function listClasses(token: string, signal?: AbortSignal): Promise<LmsClass[]> {
-  return normalizeClassList(await http(`${CORE_URL}/classes`, { token, signal }));
+export async function getClass(token: string, id: string, signal?: AbortSignal): Promise<ClassDetail> {
+  const result = await http<{ class: ClassResponse; roleInClass: ClassRole }>(
+    `${CORE_URL}/classes/${encodeURIComponent(id)}`, { token, signal }
+  );
+  if (!result || !["teacher", "student"].includes(result.roleInClass)) return invalidResponse();
+  return { class: normalizeClass(result.class), roleInClass: result.roleInClass };
 }
 
-export async function getClass(token: string, id: string, signal?: AbortSignal): Promise<LmsClass> {
-  return normalizeClass(await http(`${CORE_URL}/classes/${id}`, { token, signal }));
+export async function getClassMembers(token: string, id: string, signal?: AbortSignal): Promise<ClassMember[]> {
+  const result = await http<{ members: ClassMember[] }>(
+    `${CORE_URL}/classes/${encodeURIComponent(id)}/members`, { token, signal }
+  );
+  if (!Array.isArray(result?.members) || result.members.some((member) =>
+    !member || [member._id, member.classId, member.userId, member.createdAt, member.updatedAt]
+      .some((value) => typeof value !== "string" || !value)
+    || !["teacher", "student"].includes(member.roleInClass)
+  )) return invalidResponse();
+  return result.members;
 }
 
 export async function createClass(token: string, name: string): Promise<LmsClass> {
-  return normalizeClass(
-    await http(`${CORE_URL}/classes`, {
-      method: "POST",
-      token,
-      body: { name },
-    })
-  );
+  const value = name.trim();
+  if (!value || value.length > 100) {
+    throw new HttpError("Tên lớp học phải có từ 1 đến 100 ký tự.", 422, "VALIDATION_ERROR");
+  }
+  const result = await http<{ message: string; class: ClassResponse }>(`${CORE_URL}/classes`, {
+    method: "POST", token, body: { name: value },
+  });
+  return normalizeClass(result?.class);
 }
 
 export async function joinClass(token: string, code: string): Promise<LmsClass> {
-  return normalizeClass(
-    await http(`${CORE_URL}/classes/join`, {
-      method: "POST",
-      token,
-      body: { code },
-    })
+  const value = code.trim().toUpperCase();
+  if (value.length !== 6) {
+    throw new HttpError("Mã lớp học phải có đúng 6 ký tự.", 422, "VALIDATION_ERROR");
+  }
+  const result = await http<{ message: string; class: ClassResponse; membership: ClassMember }>(
+    `${CORE_URL}/classes/join`, { method: "POST", token, body: { code: value } }
   );
+  return normalizeClass(result?.class);
 }

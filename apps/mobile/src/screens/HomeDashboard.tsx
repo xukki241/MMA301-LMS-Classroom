@@ -10,7 +10,7 @@ import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { Screen } from "@/src/components/ui/Screen";
 import { ClassCard } from "@/src/components/ui/ClassCard";
 import { EmptyState } from "@/src/components/ui/EmptyState";
-import { isNotFound } from "@/src/lib/http";
+import { ClassRequestError } from "@/src/components/ui/ClassRequestError";
 import { elevation, radius, spacing, typography } from "@/src/theme/tokens";
 import { impactLight } from "@/src/lib/haptics";
 
@@ -89,34 +89,26 @@ export function HomeDashboard({ role }: { role: "teacher" | "student" }) {
 
       <Text style={[typography.subtitle, styles.section]}>Lớp gần đây</Text>
       {classesQuery.isPending ? <ClassListSkeleton /> : null}
-      {classesQuery.isError && !isNotFound(classesQuery.error) ? (
-        <EmptyState
-          icon="cloud-offline-outline"
-          title="Không tải được lớp"
-          subtitle={classesQuery.error.message}
-          actionLabel="Thử lại"
-          onAction={() => void classesQuery.refetch()}
-        />
+      {classesQuery.isError ? (
+        <ClassRequestError error={classesQuery.error} operation="list" onRetry={() => void classesQuery.refetch()} />
       ) : null}
-      {!classesQuery.isPending && (classes.length === 0 || isNotFound(classesQuery.error)) ? (
+      {classesQuery.isSuccess && classes.length === 0 ? (
         <EmptyState
           icon="school-outline"
           title="Chưa có lớp nào"
           subtitle={
-            isNotFound(classesQuery.error)
-              ? "API lớp chưa sẵn sàng trên Core. Giao diện list/detail đã sẵn."
-              : isTeacher
+            isTeacher
                 ? "Tạo lớp đầu tiên từ tab Lớp học."
                 : "Nhập mã lớp ở tab Lớp học để tham gia."
           }
         />
       ) : null}
-      {classes.slice(0, 3).map((item, index) => (
+      {!classesQuery.isError && classes.slice(0, 3).map((item, index) => (
         <ClassCard
           key={item.id}
           item={item}
           index={index}
-          onPress={() => router.push({ pathname: "/class/[id]", params: { id: item.id, name: item.name, code: item.code } })}
+          onPress={() => router.push({ pathname: "/class/[id]", params: { id: item.id } })}
         />
       ))}
     </Screen>
