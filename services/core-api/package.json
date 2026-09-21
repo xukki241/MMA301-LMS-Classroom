@@ -11,6 +11,7 @@
     "sync-indexes": "tsx src/scripts/syncIndexes.ts",
     "test:lms05": "tsx src/scripts/test-lms05.ts",
     "test:lms06": "tsx src/scripts/test-lms06.ts",
+    "test:lms08": "tsx src/scripts/test-lms08.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
