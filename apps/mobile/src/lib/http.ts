@@ -34,7 +34,7 @@ function isAbortError(error: unknown) {
 }
 
 function retryableStatus(status: number) {
-  return status === 429 || status >= 500;
+  return status === 0 || status === 429 || status >= 500;
 }
 
 function parseMessage(body: unknown, status: number) {

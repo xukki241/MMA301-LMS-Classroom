@@ -64,6 +64,7 @@ function AuthenticatedStack() {
       </Stack.Protected>
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="class/[id]" options={{ headerShown: true, title: "Chi tiết lớp", animation: "slide_from_right" }} />
+        <Stack.Screen name="class/[id]/stream" options={{ headerShown: true, title: "Bảng tin", animation: "slide_from_right" }} />
       </Stack.Protected>
     </Stack>
   );

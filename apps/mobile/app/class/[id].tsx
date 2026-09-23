@@ -1,6 +1,6 @@
-import { useFocusEffect, useLocalSearchParams, useNavigation } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, type ComponentProps } from "react";
-import { RefreshControl, StyleSheet, View } from "react-native";
+import { Pressable, RefreshControl, StyleSheet, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ActivityIndicator, Text, useTheme } from "react-native-paper";
@@ -45,6 +45,7 @@ function ModuleCard({
 export default function ClassDetailScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
+  const router = useRouter();
   const { token, user } = useAuth();
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const classId = Array.isArray(id) ? id[0] : id;
@@ -144,7 +145,10 @@ export default function ClassDetailScreen() {
       </View>
 
       <Animated.View entering={FadeInDown.delay(80).springify()} style={styles.modules}>
-        <ModuleCard icon="newspaper-outline" title="Bảng tin" subtitle="Post + comment — chờ contract stream" />
+        <Pressable accessibilityRole="button" accessibilityLabel="Mở bảng tin lớp học"
+          onPress={() => router.push({ pathname: "/class/[id]/stream", params: { id: classId } })}>
+          <ModuleCard icon="newspaper-outline" title="Bảng tin" subtitle="Thông báo và bình luận của lớp" />
+        </Pressable>
         <ModuleCard icon="document-text-outline" title="Tài liệu" subtitle="Material list/add — LMS-14" />
         <ModuleCard icon="create-outline" title="Bài tập" subtitle="Exercise → nộp → chấm điểm" />
       </Animated.View>
