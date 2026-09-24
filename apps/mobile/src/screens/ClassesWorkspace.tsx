@@ -35,6 +35,7 @@ export function ClassesWorkspace() {
   }, []);
 
   const mutation = useMutation({
+    networkMode: "always",
     mutationFn: async (value: string) => {
       if (!token || !user) throw new HttpError("Phiên đăng nhập đã hết hạn.", 401);
       return user.role === "teacher" ? createClass(token, value) : joinClass(token, value);

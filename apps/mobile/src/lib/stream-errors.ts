@@ -5,6 +5,7 @@ export function streamAccessDenied(error: unknown): boolean {
 }
 export function streamErrorMessage(error: unknown): string {
   if (error instanceof HttpError) {
+    if (error.code === "OFFLINE_WRITE" || error.code === "OFFLINE_NO_CACHE") return error.message;
     if (error.code === "INVALID_RESPONSE") return "Dữ liệu bảng tin chưa hợp lệ. Vui lòng thử lại sau.";
     if (error.code === "TIMEOUT") return "Máy chủ phản hồi quá lâu. Vui lòng thử lại.";
     if (error.status === 0) return "Không thể kết nối máy chủ. Kiểm tra mạng và thử lại.";
