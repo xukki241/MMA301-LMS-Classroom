@@ -8,7 +8,7 @@ async function main() {
   await syncCoreIndexes();
   const app = createApp();
   app.listen(env.PORT, "0.0.0.0", () => {
-    console.log(`core-api on ${env.PORT}`);
+    console.log(`core-api on ${env.PORT} (materials enabled)`);
   });
 }
 

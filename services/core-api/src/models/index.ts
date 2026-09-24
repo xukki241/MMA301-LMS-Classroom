@@ -1,3 +1,4 @@
+export { Assignment } from "./Assignment.js";
 export { ClassModel } from "./Class.js";
 export { ClassMember } from "./ClassMember.js";
 export { Comment } from "./Comment.js";

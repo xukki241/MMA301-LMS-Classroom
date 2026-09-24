@@ -14,10 +14,11 @@ export function useMeQuery() {
 }
 
 export function useClassesQuery() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const role = user?.role ?? "student";
   return useQuery({
     queryKey: queryKeys.classes,
-    enabled: Boolean(token),
-    queryFn: ({ signal }) => listClasses(token!, signal),
+    enabled: Boolean(token && user),
+    queryFn: ({ signal }) => listClasses(token!, role as "teacher" | "student", signal),
   });
 }

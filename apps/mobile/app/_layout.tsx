@@ -54,6 +54,14 @@ export default function RootLayout() {
                   animation: "slide_from_right",
                 }}
               />
+              <Stack.Screen
+                name="class/[id]/materials"
+                options={{
+                  headerShown: true,
+                  title: "Tài liệu học tập",
+                  animation: "slide_from_right",
+                }}
+              />
             </Stack>
           </ThemeProvider>
         </AuthProvider>

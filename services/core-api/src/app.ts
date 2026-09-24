@@ -7,6 +7,8 @@ import { healthRouter } from "./routes/health.routes.js";
 import { meRouter } from "./routes/me.routes.js";
 import { classRouter } from "./routes/class.routes.js";
 import { postRouter } from "./routes/post.routes.js";
+import { materialRouter } from "./routes/material.routes.js";
+import { assignmentRouter } from "./routes/assignment.routes.js";
 import { docsRouter } from "./routes/docs.routes.js";
 
 function corsOptions(origin: string): cors.CorsOptions {
@@ -39,6 +41,8 @@ export function createApp() {
   app.use(meRouter);
   app.use(classRouter);
   app.use(postRouter);
+  app.use(materialRouter);
+  app.use(assignmentRouter);
   app.use(errorHandler);
   return app;
 }

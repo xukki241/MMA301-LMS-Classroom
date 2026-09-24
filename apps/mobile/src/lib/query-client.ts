@@ -25,4 +25,6 @@ export const queryKeys = {
   me: ["me"] as const,
   classes: ["classes"] as const,
   class: (id: string) => ["classes", id] as const,
+  materials: (classId: string) => ["materials", classId] as const,
+  assignments: (classId: string) => ["assignments", classId] as const,
 };

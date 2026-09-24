@@ -36,8 +36,13 @@ function normalizeClassList(raw: unknown): LmsClass[] {
   return [];
 }
 
-export async function listClasses(token: string, signal?: AbortSignal): Promise<LmsClass[]> {
-  return normalizeClassList(await http(`${CORE_URL}/classes`, { token, signal }));
+export async function listClasses(
+  token: string,
+  role: "teacher" | "student",
+  signal?: AbortSignal,
+): Promise<LmsClass[]> {
+  const endpoint = role === "teacher" ? "/classes/teaching" : "/classes/enrolled";
+  return normalizeClassList(await http(`${CORE_URL}${endpoint}`, { token, signal }));
 }
 
 export async function getClass(token: string, id: string, signal?: AbortSignal): Promise<LmsClass> {
