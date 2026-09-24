@@ -12,6 +12,11 @@ const createSchema = z.object({
 const deadlineSchema = z.string().datetime({ offset: true });
 
 export class ExerciseController {
+  static async listExercises(req: Request, res: Response): Promise<void> {
+    const exercises = await ExerciseService.listExercises(req.user!, req.params.classId);
+    res.status(200).json({ exercises });
+  }
+
   static async createExercise(req: Request, res: Response): Promise<void> {
     const parsed = createSchema.safeParse(req.body);
     if (!parsed.success) {

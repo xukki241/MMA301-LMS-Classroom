@@ -6,3 +6,4 @@ import { requireAuth } from "../middleware/requireAuth.js";
 export const exerciseRouter = Router();
 
 exerciseRouter.post("/classes/:classId/exercises", requireAuth, asyncHandler(ExerciseController.createExercise));
+exerciseRouter.get("/classes/:classId/exercises", requireAuth, asyncHandler(ExerciseController.listExercises));

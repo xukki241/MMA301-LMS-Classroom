@@ -1,0 +1,522 @@
+{
+  "clientName": "Thunder Client",
+  "collectionName": "LMS-08 Core API Exercise",
+  "collectionId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+  "dateExported": "2026-09-21T04:33:25.473Z",
+  "version": "1.4",
+  "folders": [],
+  "requests": [
+    {
+      "_id": "d9e80ec8-2859-4dfd-af72-637a0b5101e3",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "01 Login teacher",
+      "url": "{{authUrl}}/auth/login",
+      "method": "POST",
+      "sortNum": 10000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 200. Copy response token to teacherToken in local environment."
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"{{teacherEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "b19de467-a0d6-4b72-93df-7df552f7cbd3",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "02 Login student",
+      "url": "{{authUrl}}/auth/login",
+      "method": "POST",
+      "sortNum": 20000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 200. Copy response token to studentToken."
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "fb9db363-abd7-4ff0-9789-3bc88507f59d",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "03 Create class",
+      "url": "{{coreUrl}}/classes",
+      "method": "POST",
+      "sortNum": 30000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{teacherToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "201"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 201. Copy class._id to classId and class.code to classCode."
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"name\": \"LMS-08 Thunder Client {{#guid}}\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "a24372d9-68e4-437b-9f0b-d6af0bff7e07",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "04 Student outside class cannot list",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "GET",
+      "sortNum": 40000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{studentToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "403"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 403. "
+      ]
+    },
+    {
+      "_id": "c546aa03-6387-4d37-86c2-7c4feb8a056a",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "05 Join class",
+      "url": "{{coreUrl}}/classes/join",
+      "method": "POST",
+      "sortNum": 50000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{studentToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 200. "
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"code\": \"{{classCode}}\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "66b1c52e-ceed-4546-8c96-0db7b8fe6393",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "06 Empty exercise list",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "GET",
+      "sortNum": 60000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{studentToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 200. Expect exercises: []."
+      ]
+    },
+    {
+      "_id": "ed07e06d-6840-4f29-9bbe-ad75f04a617b",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "07 Teacher creates exercise",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "POST",
+      "sortNum": 70000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{teacherToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "201"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 201. Verify classId, createdBy and future dueAt."
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"title\": \"Bài tập 1\",\n  \"description\": \"Nộp báo cáo\",\n  \"dueAt\": \"{{#dateISO, {day: 1}}}\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "e9d6289c-2f90-47f3-baab-bec4662e769e",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "08 Student lists persisted exercise",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "GET",
+      "sortNum": 80000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{studentToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 200. Expect the exercise from request 07."
+      ]
+    },
+    {
+      "_id": "59ca4711-f8df-4056-96e3-4e99b76bd1bf",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "09 Student cannot create",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "POST",
+      "sortNum": 90000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{studentToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "403"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 403. "
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"title\": \"Bài tập 1\",\n  \"description\": \"Nộp báo cáo\",\n  \"dueAt\": \"{{#dateISO, {day: 1}}}\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "54d6f707-0b9a-45f4-82fd-fda74e637833",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "10 Past deadline",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "POST",
+      "sortNum": 100000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{teacherToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "400"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 400. "
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"title\": \"Bài tập 1\",\n  \"description\": \"Nộp báo cáo\",\n  \"dueAt\": \"2000-01-01T00:00:00Z\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "aa43ff75-8d4b-47d1-a4c7-12a60d79a7c0",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "11 Missing JWT",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "GET",
+      "sortNum": 110000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "401"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 401. "
+      ]
+    },
+    {
+      "_id": "68f28ae1-c817-4566-a5da-76d2070aaf40",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "12 Empty title",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "POST",
+      "sortNum": 120000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{teacherToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "422"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 422. "
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"title\": \"   \",\n  \"description\": \"Nộp báo cáo\",\n  \"dueAt\": \"{{#dateISO, {day: 1}}}\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "a1b7466d-8a8c-410f-8b1f-815e2eaa238b",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "13 Deadline missing timezone",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "POST",
+      "sortNum": 130000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{teacherToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "400"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 400. "
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"title\": \"Bài tập 1\",\n  \"description\": \"Nộp báo cáo\",\n  \"dueAt\": \"2099-01-01T12:00:00\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "05e499a8-f38e-48b2-82e4-036e10a67419",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "14 Cannot spoof createdBy",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "POST",
+      "sortNum": 140000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{teacherToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "422"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 422. "
+      ],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"title\": \"Bài tập 1\",\n  \"description\": \"Nộp báo cáo\",\n  \"dueAt\": \"{{#dateISO, {day: 1}}}\",\n  \"createdBy\": \"another-user\"\n}",
+        "form": []
+      }
+    },
+    {
+      "_id": "2f742092-5128-4914-999a-ab98695efd13",
+      "colId": "b70f3add-d6f1-455e-864c-6856d55892e8",
+      "containerId": "",
+      "name": "15 Teacher lists exercises",
+      "url": "{{coreUrl}}/classes/{{classId}}/exercises",
+      "method": "GET",
+      "sortNum": 150000,
+      "created": "2026-09-21T04:33:25.473Z",
+      "modified": "2026-09-21T04:33:25.473Z",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{teacherToken}}"
+        }
+      ],
+      "params": [],
+      "tests": [
+        {
+          "type": "res-code",
+          "custom": "",
+          "action": "equal",
+          "value": "200"
+        }
+      ],
+      "docs": [
+        "Expected HTTP 200. Exactly one exercise after this sequence."
+      ]
+    }
+  ]
+}

@@ -10,6 +10,11 @@ export interface CreateExerciseInput {
 }
 
 export class ExerciseService {
+  static async listExercises(user: AuthUser, classId: string) {
+    await this.assertClassMember(user.id, classId);
+    return Exercise.find({ classId }).sort({ dueAt: 1, _id: 1 });
+  }
+
   private static async assertClassMember(userId: string, classId: string) {
     if (!mongoose.isObjectIdOrHexString(classId)) {
       throw new HttpError(400, "Định dạng ID lớp học không hợp lệ", "INVALID_ID");

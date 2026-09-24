@@ -12,6 +12,7 @@
     "test:lms05": "tsx src/scripts/test-lms05.ts",
     "test:lms06": "tsx src/scripts/test-lms06.ts",
     "test:lms08": "tsx src/scripts/test-lms08.ts",
+    "test:lms08:permissions": "tsx src/scripts/test-lms08-permissions.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
