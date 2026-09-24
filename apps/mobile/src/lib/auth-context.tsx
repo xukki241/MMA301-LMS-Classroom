@@ -39,19 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedToken = await authStorage.getItem(TOKEN_KEY);
         const storedUser = await authStorage.getItem(USER_KEY);
         if (!cancelled && storedToken && storedUser) {
-          const parsedUser = JSON.parse(storedUser) as AuthUser;
           setToken(storedToken);
-          setUser(parsedUser);
+          setUser(JSON.parse(storedUser) as AuthUser);
         }
-      } catch (error) {
-        console.warn("Could not restore the saved session", error);
+      } catch (e) {
+        console.warn("Could not restore session", e);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const value = useMemo<AuthState>(
@@ -60,16 +57,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       user,
       login: async (email, password) => {
-        const result = await loginApi(email, password);
-        await persist(result.token, result.user);
-        setToken(result.token);
-        setUser(result.user);
+        const r = await loginApi(email, password);
+        await persist(r.token, r.user);
+        setToken(r.token);
+        setUser(r.user);
       },
       register: async (input) => {
-        const result = await registerApi(input);
-        await persist(result.token, result.user);
-        setToken(result.token);
-        setUser(result.user);
+        const r = await registerApi(input);
+        await persist(r.token, r.user);
+        setToken(r.token);
+        setUser(r.user);
       },
       logout: async () => {
         await authStorage.removeItem(TOKEN_KEY);
@@ -87,8 +84,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
