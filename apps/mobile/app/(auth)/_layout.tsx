@@ -4,6 +4,7 @@ export default function AuthLayout() {
   return (
     <Stack
       screenOptions={{
+        headerShown: false,
         animation: "slide_from_right",
         gestureEnabled: true,
         headerShadowVisible: false,
@@ -11,6 +12,7 @@ export default function AuthLayout() {
     >
       <Stack.Screen name="login" options={{ title: "Đăng nhập" }} />
       <Stack.Screen name="register" options={{ title: "Đăng ký" }} />
+      <Stack.Screen name="forgot-password" options={{ title: "Khôi phục mật khẩu" }} />
     </Stack>
   );
 }

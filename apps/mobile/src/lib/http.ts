@@ -23,6 +23,12 @@ export type HttpOptions = {
   dedupe?: boolean;
 };
 
+let onUnauthorizedCallback: (() => void) | null = null;
+
+export function setOnUnauthorized(callback: (() => void) | null) {
+  onUnauthorizedCallback = callback;
+}
+
 const inflight = new Map<string, Promise<unknown>>();
 
 function sleep(ms: number) {
@@ -137,6 +143,13 @@ async function requestOnce<T>(url: string, options: HttpOptions, method: HttpMet
 
     const body = await parseBody(res);
     if (!res.ok) {
+      if (res.status === 401) {
+        try {
+          onUnauthorizedCallback?.();
+        } catch (err) {
+          console.warn("[http] onUnauthorized error:", err);
+        }
+      }
       const code = body && typeof body === "object" && "code" in body && typeof body.code === "string"
         ? body.code : undefined;
       throw new HttpError(parseMessage(body, res.status), res.status, code);
