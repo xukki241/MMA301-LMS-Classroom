@@ -20,12 +20,12 @@ export const submissionSchemas = {
     type: "object", additionalProperties: false,
     description: "Ít nhất content hoặc url phải có giá trị sau trim. PUT thay thế cả hai trường; trường bỏ qua thành chuỗi rỗng.",
     properties: { content: { type: "string", maxLength: 10000, default: "" }, url: { type: "string", maxLength: 2048, default: "", description: "Rỗng hoặc URL HTTP(S)" } },
-    example: { content: "Bài làm của em", url: "" },
+    example: { content: "My homework submission", url: "" },
   },
   GradeInput: {
     type: "object", additionalProperties: false, required: ["score"],
     properties: { score: { type: "number", minimum: 0, maximum: 10 }, feedback: { type: "string", maxLength: 10000, default: "" } },
-    example: { score: 8.5, feedback: "Giải thích tốt" },
+    example: { score: 8.5, feedback: "Good explanation" },
   },
   Submission: {
     type: "object", required: ["_id", "exerciseId", "studentId", "content", "url", "submittedAt"],

@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import { HttpError } from "../lib/httpError.js";
+import { assertClassMembership } from "../lib/classGuards.js";
 import type { AuthUser } from "../middleware/requireAuth.js";
-import { ClassModel, ClassMember, Exercise, Submission, Grade } from "../models/index.js";
+import { Exercise, Submission, Grade } from "../models/index.js";
 
 export interface SubmissionInput {
   content: string;
@@ -16,45 +17,41 @@ export interface GradeInput {
 export class SubmissionService {
   private static validateId(id: string) {
     if (!mongoose.isObjectIdOrHexString(id)) {
-      throw new HttpError(400, "Định dạng ID không hợp lệ", "INVALID_ID");
+      throw new HttpError(400, "Invalid ID format", "INVALID_ID");
     }
   }
 
   // Every operation checks the class membership and the exercise's parent class.
   private static async getContext(user: AuthUser, classId: string, exerciseId: string) {
-    this.validateId(classId);
+    const { cls, membership } = await assertClassMembership(user.id, classId);
     this.validateId(exerciseId);
-    const cls = await ClassModel.findById(classId);
-    if (!cls) throw new HttpError(404, "Không tìm thấy lớp học", "CLASS_NOT_FOUND");
-    const membership = await ClassMember.findOne({ classId, userId: user.id });
-    if (!membership) throw new HttpError(403, "Bạn không phải thành viên lớp", "FORBIDDEN");
     const exercise = await Exercise.findOne({ _id: exerciseId, classId });
-    if (!exercise) throw new HttpError(404, "Không tìm thấy bài tập trong lớp", "EXERCISE_NOT_FOUND");
+    if (!exercise) throw new HttpError(404, "Exercise not found in this class", "EXERCISE_NOT_FOUND");
     return { cls, membership, exercise };
   }
 
   private static assertStudent(user: AuthUser, roleInClass: string) {
     if (user.role !== "student" || roleInClass !== "student") {
-      throw new HttpError(403, "Chỉ học sinh trong lớp được nộp bài", "FORBIDDEN");
+      throw new HttpError(403, "Only enrolled students can submit exercises", "FORBIDDEN");
     }
   }
 
   private static assertBeforeDeadline(dueAt: Date) {
     if (Date.now() >= dueAt.getTime()) {
-      throw new HttpError(400, "Đã hết hạn nộp bài", "DEADLINE_PASSED");
+      throw new HttpError(400, "Deadline has passed", "DEADLINE_PASSED");
     }
   }
 
   private static assertOwner(user: AuthUser, teacherId: string, roleInClass: string) {
     if (user.role !== "teacher" || roleInClass !== "teacher" || teacherId !== user.id) {
-      throw new HttpError(403, "Chỉ giáo viên sở hữu lớp được xem và chấm bài", "FORBIDDEN");
+      throw new HttpError(403, "Only the class owner can view and grade submissions", "FORBIDDEN");
     }
   }
 
   private static async findSubmission(exerciseId: string, submissionId: string) {
     this.validateId(submissionId);
     const submission = await Submission.findOne({ _id: submissionId, exerciseId });
-    if (!submission) throw new HttpError(404, "Không tìm thấy bài nộp trong bài tập", "SUBMISSION_NOT_FOUND");
+    if (!submission) throw new HttpError(404, "Submission not found in this exercise", "SUBMISSION_NOT_FOUND");
     return submission;
   }
 
@@ -62,7 +59,7 @@ export class SubmissionService {
     const { membership } = await this.getContext(user, classId, exerciseId);
     this.assertStudent(user, membership.roleInClass);
     const submission = await Submission.findOne({ exerciseId, studentId: user.id });
-    if (!submission) throw new HttpError(404, "Chưa có bài nộp", "SUBMISSION_NOT_FOUND");
+    if (!submission) throw new HttpError(404, "No submission found", "SUBMISSION_NOT_FOUND");
     const grade = await Grade.findOne({ submissionId: submission._id });
     return { submission, grade };
   }
@@ -74,7 +71,7 @@ export class SubmissionService {
       this.assertOwner(user, cls.teacherId, membership.roleInClass);
     } else {
       this.assertStudent(user, membership.roleInClass);
-      if (submission.studentId !== user.id) throw new HttpError(403, "Không được xem bài của học sinh khác", "FORBIDDEN");
+      if (submission.studentId !== user.id) throw new HttpError(403, "Cannot view another student's submission", "FORBIDDEN");
     }
     const grade = await Grade.findOne({ submissionId: submission._id });
     return { submission, grade };
@@ -94,7 +91,7 @@ export class SubmissionService {
     this.assertOwner(user, cls.teacherId, membership.roleInClass);
     const submission = await this.findSubmission(exerciseId, submissionId);
     if (Date.now() < exercise.dueAt.getTime()) {
-      throw new HttpError(400, "Chỉ chấm điểm sau hạn nộp bài", "GRADING_NOT_OPEN");
+      throw new HttpError(400, "Grading is only allowed after the deadline", "GRADING_NOT_OPEN");
     }
     const filter = { submissionId: submission._id };
     const update = { $set: { score: input.score, feedback: input.feedback, gradedBy: user.id, gradedAt: new Date(Date.now()) } };
@@ -120,7 +117,7 @@ export class SubmissionService {
       });
     } catch (error) {
       if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
-        throw new HttpError(409, "Đã nộp bài; dùng PUT để sửa trước hạn", "SUBMISSION_EXISTS");
+        throw new HttpError(409, "Submission already exists; use PUT to update before the deadline", "SUBMISSION_EXISTS");
       }
       throw error;
     }
@@ -135,7 +132,7 @@ export class SubmissionService {
       { $set: { content: input.content, url: input.url, submittedAt: new Date(Date.now()) } },
       { new: true, runValidators: true },
     );
-    if (!submission) throw new HttpError(404, "Chưa có bài nộp", "SUBMISSION_NOT_FOUND");
+    if (!submission) throw new HttpError(404, "No submission found", "SUBMISSION_NOT_FOUND");
     return submission;
   }
 }

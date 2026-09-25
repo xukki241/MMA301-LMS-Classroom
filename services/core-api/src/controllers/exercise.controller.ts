@@ -24,13 +24,13 @@ export class ExerciseController {
     }
     const deadline = deadlineSchema.safeParse(parsed.data.dueAt);
     if (!deadline.success) {
-      throw new HttpError(400, "dueAt phải là thời gian ISO 8601 có múi giờ", "INVALID_DUE_AT");
+      throw new HttpError(400, "dueAt must be a valid ISO 8601 string with timezone", "INVALID_DUE_AT");
     }
     const exercise = await ExerciseService.createExercise(req.user!, req.params.classId, {
       title: parsed.data.title,
       description: parsed.data.description,
       dueAt: deadline.data,
     });
-    res.status(201).json({ message: "Tạo bài tập thành công", exercise });
+    res.status(201).json({ message: "Exercise created successfully", exercise });
   }
 }
