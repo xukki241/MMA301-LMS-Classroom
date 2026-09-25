@@ -1,0 +1,45 @@
+{
+  "clientName": "Thunder Client",
+  "environmentName": "LMS-08 local",
+  "environmentId": "a4e6b2f0-8f3c-4d80-9759-675fc448068e",
+  "dateExported": "2026-09-21T04:33:25.473Z",
+  "version": "1.2",
+  "variables": [
+    {
+      "name": "authUrl",
+      "value": "http://127.0.0.1:4001"
+    },
+    {
+      "name": "coreUrl",
+      "value": "http://127.0.0.1:4002"
+    },
+    {
+      "name": "teacherEmail",
+      "value": "teacher@lms.local"
+    },
+    {
+      "name": "studentEmail",
+      "value": "student@lms.local"
+    },
+    {
+      "name": "password",
+      "value": "Demo123!"
+    },
+    {
+      "name": "teacherToken",
+      "value": ""
+    },
+    {
+      "name": "studentToken",
+      "value": ""
+    },
+    {
+      "name": "classId",
+      "value": ""
+    },
+    {
+      "name": "classCode",
+      "value": ""
+    }
+  ]
+}
