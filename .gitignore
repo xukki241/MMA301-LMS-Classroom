@@ -1,4 +1,4 @@
-﻿# IDE
+# IDE
 .idea/
 .vscode/
 
@@ -19,3 +19,4 @@ coverage/
 .cursor/hooks/state/*.json
 .cursor/hooks/state/*.jsonl
 .cursor/hooks/evidence/*.md
+.claude/

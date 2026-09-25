@@ -1,40 +1,29 @@
 import mongoose from "mongoose";
 import { HttpError } from "../lib/httpError.js";
-import { ClassModel, ClassMember, Post, Reaction } from "../models/index.js";
+import { assertClassMembership } from "../lib/classGuards.js";
+import { Post, Reaction } from "../models/index.js";
 
 export class ReactionService {
   /**
-   * Helper kiểm tra thành viên lớp và sự tồn tại của bài đăng
+   * Helper to verify class membership and post existence
    */
   private static async assertMemberAndPost(userId: string, classId: string, postId: string) {
-    if (!mongoose.Types.ObjectId.isValid(classId)) {
-      throw new HttpError(400, "Định dạng ID lớp học không hợp lệ", "INVALID_ID");
-    }
+    const { cls, membership } = await assertClassMembership(userId, classId);
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
-      throw new HttpError(400, "Định dạng ID bài đăng không hợp lệ", "INVALID_ID");
-    }
-
-    const cls = await ClassModel.findById(classId);
-    if (!cls) {
-      throw new HttpError(404, "Không tìm thấy lớp học", "CLASS_NOT_FOUND");
-    }
-
-    const membership = await ClassMember.findOne({ classId, userId });
-    if (!membership) {
-      throw new HttpError(403, "Bạn không phải là thành viên của lớp học này", "FORBIDDEN");
+      throw new HttpError(400, "Invalid post ID format", "INVALID_ID");
     }
 
     const post = await Post.findOne({ _id: postId, classId, isDeleted: false });
     if (!post) {
-      throw new HttpError(404, "Không tìm thấy bài đăng trong lớp học", "POST_NOT_FOUND");
+      throw new HttpError(404, "Post not found in this class", "POST_NOT_FOUND");
     }
 
     return { cls, membership, post };
   }
 
   /**
-   * Thả cảm xúc / Đổi cảm xúc / Bỏ cảm xúc (Toggle reaction)
+   * Toggle reaction on post (Add / Update / Remove)
    */
   static async toggleReaction(userId: string, classId: string, postId: string, emoji: string) {
     await this.assertMemberAndPost(userId, classId, postId);
@@ -43,26 +32,26 @@ export class ReactionService {
 
     if (existing) {
       if (existing.emoji === emoji) {
-        // Cùng emoji -> Bỏ reaction
+        // Same emoji -> Remove reaction
         await Reaction.deleteOne({ _id: existing._id });
         return {
           action: "removed",
-          message: "Đã hủy biểu cảm",
+          message: "Reaction removed",
           emoji,
         };
       }
 
-      // Khác emoji -> Cập nhật sang emoji mới
+      // Different emoji -> Update to new emoji
       existing.emoji = emoji;
       await existing.save();
       return {
         action: "changed",
-        message: "Đã thay đổi biểu cảm",
+        message: "Reaction updated",
         reaction: existing,
       };
     }
 
-    // Chưa có reaction -> Tạo mới
+    // No reaction yet -> Create new
     const reaction = await Reaction.create({
       postId,
       userId,
@@ -71,13 +60,13 @@ export class ReactionService {
 
     return {
       action: "added",
-      message: "Đã thêm biểu cảm",
+      message: "Reaction added",
       reaction,
     };
   }
 
   /**
-   * Lấy danh sách tổng hợp biểu cảm của bài đăng
+   * Get reactions summary of a post
    */
   static async getReactions(userId: string, classId: string, postId: string) {
     await this.assertMemberAndPost(userId, classId, postId);

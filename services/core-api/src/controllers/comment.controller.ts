@@ -5,10 +5,10 @@ import { CommentService } from "../services/comment.service.js";
 
 const commentSchema = z.object({
   content: z
-    .string({ required_error: "Vui lòng nhập nội dung bình luận" })
+    .string({ required_error: "Comment content is required" })
     .trim()
-    .min(1, "Nội dung bình luận không được để trống")
-    .max(1000, "Nội dung bình luận không được vượt quá 1000 ký tự"),
+    .min(1, "Comment content cannot be empty")
+    .max(1000, "Comment content must be 1000 characters or fewer"),
 });
 
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {
@@ -33,7 +33,7 @@ export class CommentController {
     const comment = await CommentService.createComment(user.id, classId, postId, content);
 
     res.status(201).json({
-      message: "Tạo bình luận thành công",
+      message: "Comment created successfully",
       comment,
     });
   }
@@ -63,7 +63,7 @@ export class CommentController {
     const comment = await CommentService.updateComment(user.id, classId, postId, commentId, content);
 
     res.status(200).json({
-      message: "Cập nhật bình luận thành công",
+      message: "Comment updated successfully",
       comment,
     });
   }

@@ -5,26 +5,26 @@ import { ClassService } from "../services/class.service.js";
 
 const createClassSchema = z.object({
   name: z
-    .string({ required_error: "Vui lòng nhập tên lớp học" })
+    .string({ required_error: "Class name is required" })
     .trim()
-    .min(1, "Tên lớp học không được để trống")
-    .max(100, "Tên lớp học không được vượt quá 100 ký tự"),
+    .min(1, "Class name cannot be empty")
+    .max(100, "Class name must be 100 characters or fewer"),
 });
 
 const joinClassSchema = z.object({
   code: z
-    .string({ required_error: "Vui lòng nhập mã lớp học" })
+    .string({ required_error: "Class code is required" })
     .trim()
-    .length(6, "Mã lớp học phải có đúng 6 ký tự")
+    .length(6, "Class code must be exactly 6 characters")
     .transform((val) => val.toUpperCase()),
 });
 
 const updateClassSchema = z.object({
   name: z
-    .string({ required_error: "Vui lòng nhập tên lớp học" })
+    .string({ required_error: "Class name is required" })
     .trim()
-    .min(1, "Tên lớp học không được để trống")
-    .max(100, "Tên lớp học không được vượt quá 100 ký tự"),
+    .min(1, "Class name cannot be empty")
+    .max(100, "Class name must be 100 characters or fewer"),
 });
 
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {
@@ -43,15 +43,11 @@ export class ClassController {
    */
   static async createClass(req: Request, res: Response): Promise<void> {
     const user = req.user!;
-    if (user.role !== "teacher") {
-      throw new HttpError(403, "Chỉ giáo viên mới có thể tạo lớp học", "FORBIDDEN");
-    }
-
     const { name } = parseBody(createClassSchema, req.body);
     const newClass = await ClassService.createClass(user.id, name);
 
     res.status(201).json({
-      message: "Tạo lớp học thành công",
+      message: "Class created successfully",
       class: newClass,
     });
   }
@@ -62,10 +58,6 @@ export class ClassController {
    */
   static async getTeachingClasses(req: Request, res: Response): Promise<void> {
     const user = req.user!;
-    if (user.role !== "teacher") {
-      throw new HttpError(403, "Chỉ giáo viên mới có thể xem danh sách lớp đang giảng dạy", "FORBIDDEN");
-    }
-
     const classes = await ClassService.getTeachingClasses(user.id);
     res.status(200).json({ classes });
   }
@@ -76,10 +68,6 @@ export class ClassController {
    */
   static async getEnrolledClasses(req: Request, res: Response): Promise<void> {
     const user = req.user!;
-    if (user.role !== "student") {
-      throw new HttpError(403, "Chỉ học sinh mới có thể xem danh sách lớp đã tham gia", "FORBIDDEN");
-    }
-
     const classes = await ClassService.getEnrolledClasses(user.id);
     res.status(200).json({ classes });
   }
@@ -90,15 +78,11 @@ export class ClassController {
    */
   static async joinClass(req: Request, res: Response): Promise<void> {
     const user = req.user!;
-    if (user.role !== "student") {
-      throw new HttpError(403, "Chỉ học sinh mới có thể tham gia lớp học", "FORBIDDEN");
-    }
-
     const { code } = parseBody(joinClassSchema, req.body);
     const result = await ClassService.joinClass(user.id, code);
 
     res.status(200).json({
-      message: "Tham gia lớp học thành công",
+      message: "Joined class successfully",
       ...result,
     });
   }
@@ -133,17 +117,13 @@ export class ClassController {
    */
   static async updateClass(req: Request, res: Response): Promise<void> {
     const user = req.user!;
-    if (user.role !== "teacher") {
-      throw new HttpError(403, "Chỉ giáo viên mới có thể cập nhật lớp học", "FORBIDDEN");
-    }
-
     const classId = req.params.id;
     const { name } = parseBody(updateClassSchema, req.body);
 
     const updatedClass = await ClassService.updateClass(user.id, classId, name);
 
     res.status(200).json({
-      message: "Cập nhật lớp học thành công",
+      message: "Class updated successfully",
       class: updatedClass,
     });
   }
@@ -154,10 +134,6 @@ export class ClassController {
    */
   static async deleteClass(req: Request, res: Response): Promise<void> {
     const user = req.user!;
-    if (user.role !== "teacher") {
-      throw new HttpError(403, "Chỉ giáo viên mới có thể xóa lớp học", "FORBIDDEN");
-    }
-
     const classId = req.params.id;
     const result = await ClassService.deleteClass(user.id, classId);
 

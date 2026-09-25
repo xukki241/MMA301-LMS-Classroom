@@ -5,10 +5,10 @@ import { PostService } from "../services/post.service.js";
 
 const postSchema = z.object({
   content: z
-    .string({ required_error: "Vui lòng nhập nội dung bài đăng" })
+    .string({ required_error: "Post content is required" })
     .trim()
-    .min(1, "Nội dung bài đăng không được để trống")
-    .max(2000, "Nội dung bài đăng không được vượt quá 2000 ký tự"),
+    .min(1, "Post content cannot be empty")
+    .max(2000, "Post content must be 2000 characters or fewer"),
 });
 
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {
@@ -33,7 +33,7 @@ export class PostController {
     const post = await PostService.createPost(user.id, classId, content);
 
     res.status(201).json({
-      message: "Tạo bài đăng thành công",
+      message: "Post created successfully",
       post,
     });
   }
@@ -64,7 +64,7 @@ export class PostController {
     const post = await PostService.updatePost(user.id, classId, postId, content);
 
     res.status(200).json({
-      message: "Cập nhật bài đăng thành công",
+      message: "Post updated successfully",
       post,
     });
   }
