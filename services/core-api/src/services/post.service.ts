@@ -59,11 +59,11 @@ export class PostService {
 
     const post = await Post.findOne({ _id: postId, classId, isDeleted: false });
     if (!post) {
-      throw new HttpError(404, "Post not found", "POST_NOT_FOUND");
+      throw new HttpError(404, "Post not found!", "POST_NOT_FOUND");
     }
 
     if (post.authorId !== userId) {
-      throw new HttpError(403, "Only the post author can edit this post", "FORBIDDEN");
+      throw new HttpError(403, "Only the post author can edit this post!", "FORBIDDEN");
     }
 
     post.content = content;
@@ -79,25 +79,25 @@ export class PostService {
     const { membership } = await assertClassMembership(userId, classId);
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
-      throw new HttpError(400, "Invalid post ID format", "INVALID_ID");
+      throw new HttpError(400, "Invalid post ID format!", "INVALID_ID");
     }
 
     const post = await Post.findOne({ _id: postId, classId, isDeleted: false });
     if (!post) {
-      throw new HttpError(404, "Post not found", "POST_NOT_FOUND");
+      throw new HttpError(404, "Post not found!", "POST_NOT_FOUND");
     }
 
     const isAuthor = post.authorId === userId;
     const isTeacher = membership.roleInClass === "teacher";
 
     if (!isAuthor && !isTeacher) {
-      throw new HttpError(403, "You do not have permission to delete this post", "FORBIDDEN");
+      throw new HttpError(403, "You do not have permission to delete this post!", "FORBIDDEN");
     }
 
     post.isDeleted = true;
     post.deletedAt = new Date();
     await post.save();
 
-    return { message: "Post deleted successfully" };
+    return { message: "Post deleted successfully!" };
   }
 }

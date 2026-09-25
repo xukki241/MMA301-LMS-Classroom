@@ -5,10 +5,10 @@ import { ReactionService } from "../services/reaction.service.js";
 
 const reactionSchema = z.object({
   emoji: z
-    .string({ required_error: "Emoji is required" })
+    .string({ required_error: "Emoji is required!" })
     .trim()
-    .min(1, "Emoji cannot be empty")
-    .max(10, "Invalid emoji"),
+    .min(1, "Emoji cannot be empty!")
+    .max(10, "Invalid emoji!"),
 });
 
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {

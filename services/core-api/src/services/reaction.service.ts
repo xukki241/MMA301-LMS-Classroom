@@ -11,12 +11,12 @@ export class ReactionService {
     const { cls, membership } = await assertClassMembership(userId, classId);
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
-      throw new HttpError(400, "Invalid post ID format", "INVALID_ID");
+      throw new HttpError(400, "Invalid post ID format!", "INVALID_ID");
     }
 
     const post = await Post.findOne({ _id: postId, classId, isDeleted: false });
     if (!post) {
-      throw new HttpError(404, "Post not found in this class", "POST_NOT_FOUND");
+      throw new HttpError(404, "Post not found in this class!", "POST_NOT_FOUND");
     }
 
     return { cls, membership, post };

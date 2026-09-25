@@ -5,10 +5,10 @@ import { PostService } from "../services/post.service.js";
 
 const postSchema = z.object({
   content: z
-    .string({ required_error: "Post content is required" })
+    .string({ required_error: "Post content is required!" })
     .trim()
-    .min(1, "Post content cannot be empty")
-    .max(2000, "Post content must be 2000 characters or fewer"),
+    .min(1, "Post content cannot be empty!")
+    .max(2000, "Post content must be 2000 characters or fewer!"),
 });
 
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {
@@ -33,7 +33,7 @@ export class PostController {
     const post = await PostService.createPost(user.id, classId, content);
 
     res.status(201).json({
-      message: "Post created successfully",
+      message: "Post created successfully!",
       post,
     });
   }
@@ -64,7 +64,7 @@ export class PostController {
     const post = await PostService.updatePost(user.id, classId, postId, content);
 
     res.status(200).json({
-      message: "Post updated successfully",
+      message: "Post updated successfully!",
       post,
     });
   }

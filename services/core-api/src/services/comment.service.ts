@@ -11,12 +11,12 @@ export class CommentService {
     const { cls, membership } = await assertClassMembership(userId, classId);
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
-      throw new HttpError(400, "Invalid post ID format", "INVALID_ID");
+      throw new HttpError(400, "Invalid post ID format!", "INVALID_ID");
     }
 
     const post = await Post.findOne({ _id: postId, classId, isDeleted: false });
     if (!post) {
-      throw new HttpError(404, "Post not found in this class", "POST_NOT_FOUND");
+      throw new HttpError(404, "Post not found in this class!", "POST_NOT_FOUND");
     }
 
     return { cls, membership, post };
@@ -61,16 +61,16 @@ export class CommentService {
     await this.assertMemberAndPost(userId, classId, postId);
 
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
-      throw new HttpError(400, "Invalid comment ID format", "INVALID_ID");
+      throw new HttpError(400, "Invalid comment ID format!", "INVALID_ID");
     }
 
     const comment = await Comment.findOne({ _id: commentId, postId, isDeleted: false });
     if (!comment) {
-      throw new HttpError(404, "Comment not found", "COMMENT_NOT_FOUND");
+      throw new HttpError(404, "Comment not found!", "COMMENT_NOT_FOUND");
     }
 
     if (comment.authorId !== userId) {
-      throw new HttpError(403, "Only the comment author can edit this comment", "FORBIDDEN");
+      throw new HttpError(403, "Only the comment author can edit this comment!", "FORBIDDEN");
     }
 
     comment.content = content;
@@ -91,25 +91,25 @@ export class CommentService {
     const { membership } = await this.assertMemberAndPost(userId, classId, postId);
 
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
-      throw new HttpError(400, "Invalid comment ID format", "INVALID_ID");
+      throw new HttpError(400, "Invalid comment ID format!", "INVALID_ID");
     }
 
     const comment = await Comment.findOne({ _id: commentId, postId, isDeleted: false });
     if (!comment) {
-      throw new HttpError(404, "Comment not found", "COMMENT_NOT_FOUND");
+      throw new HttpError(404, "Comment not found!", "COMMENT_NOT_FOUND");
     }
 
     const isAuthor = comment.authorId === userId;
     const isTeacher = membership.roleInClass === "teacher";
 
     if (!isAuthor && !isTeacher) {
-      throw new HttpError(403, "You do not have permission to delete this comment", "FORBIDDEN");
+      throw new HttpError(403, "You do not have permission to delete this comment!", "FORBIDDEN");
     }
 
     comment.isDeleted = true;
     comment.deletedAt = new Date();
     await comment.save();
 
-    return { message: "Comment deleted successfully" };
+    return { message: "Comment deleted successfully!" };
   }
 }

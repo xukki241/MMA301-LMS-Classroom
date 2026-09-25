@@ -5,10 +5,10 @@ import { CommentService } from "../services/comment.service.js";
 
 const commentSchema = z.object({
   content: z
-    .string({ required_error: "Comment content is required" })
+    .string({ required_error: "Comment content is required!" })
     .trim()
-    .min(1, "Comment content cannot be empty")
-    .max(1000, "Comment content must be 1000 characters or fewer"),
+    .min(1, "Comment content cannot be empty!")
+    .max(1000, "Comment content must be 1000 characters or fewer!"),
 });
 
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {
@@ -33,7 +33,7 @@ export class CommentController {
     const comment = await CommentService.createComment(user.id, classId, postId, content);
 
     res.status(201).json({
-      message: "Comment created successfully",
+      message: "Comment created successfully!",
       comment,
     });
   }
@@ -63,7 +63,7 @@ export class CommentController {
     const comment = await CommentService.updateComment(user.id, classId, postId, commentId, content);
 
     res.status(200).json({
-      message: "Comment updated successfully",
+      message: "Comment updated successfully!",
       comment,
     });
   }

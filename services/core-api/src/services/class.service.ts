@@ -24,7 +24,7 @@ async function generateUniqueClassCode(): Promise<string> {
     }
     attempts++;
   }
-  throw new HttpError(500, "Failed to generate a unique class code", "CODE_GENERATION_FAILED");
+  throw new HttpError(500, "Failed to generate a unique class code!", "CODE_GENERATION_FAILED");
 }
 
 export class ClassService {
@@ -80,7 +80,7 @@ export class ClassService {
     const cls = await ClassModel.findOne({ code: uppercaseCode });
 
     if (!cls) {
-      throw new HttpError(404, "No class found with this code", "CLASS_NOT_FOUND");
+      throw new HttpError(404, "No class found with this code!", "CLASS_NOT_FOUND");
     }
 
     // Check duplicate membership
@@ -90,7 +90,7 @@ export class ClassService {
     });
 
     if (existingMember) {
-      throw new HttpError(403, "You are already a member of this class", "ALREADY_JOINED");
+      throw new HttpError(403, "You are already a member of this class!", "ALREADY_JOINED");
     }
 
     const membership = await ClassMember.create({
@@ -129,16 +129,16 @@ export class ClassService {
    */
   static async updateClass(teacherId: string, classId: string, name: string) {
     if (!mongoose.Types.ObjectId.isValid(classId)) {
-      throw new HttpError(400, "Invalid class ID format", "INVALID_ID");
+      throw new HttpError(400, "Invalid class ID format!", "INVALID_ID");
     }
 
     const cls = await ClassModel.findById(classId);
     if (!cls) {
-      throw new HttpError(404, "Class not found", "CLASS_NOT_FOUND");
+      throw new HttpError(404, "Class not found!", "CLASS_NOT_FOUND");
     }
 
     if (cls.teacherId !== teacherId) {
-      throw new HttpError(403, "Only the class owner can update this class", "FORBIDDEN");
+      throw new HttpError(403, "Only the class owner can update this class!", "FORBIDDEN");
     }
 
     cls.name = name;
@@ -152,21 +152,21 @@ export class ClassService {
    */
   static async deleteClass(teacherId: string, classId: string) {
     if (!mongoose.Types.ObjectId.isValid(classId)) {
-      throw new HttpError(400, "Invalid class ID format", "INVALID_ID");
+      throw new HttpError(400, "Invalid class ID format!", "INVALID_ID");
     }
 
     const cls = await ClassModel.findById(classId);
     if (!cls) {
-      throw new HttpError(404, "Class not found", "CLASS_NOT_FOUND");
+      throw new HttpError(404, "Class not found!", "CLASS_NOT_FOUND");
     }
 
     if (cls.teacherId !== teacherId) {
-      throw new HttpError(403, "Only the class owner can delete this class", "FORBIDDEN");
+      throw new HttpError(403, "Only the class owner can delete this class!", "FORBIDDEN");
     }
 
     await ClassModel.deleteOne({ _id: classId });
     await ClassMember.deleteMany({ classId });
 
-    return { message: "Class deleted successfully" };
+    return { message: "Class deleted successfully!" };
   }
 }

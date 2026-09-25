@@ -5,26 +5,26 @@ import { ClassService } from "../services/class.service.js";
 
 const createClassSchema = z.object({
   name: z
-    .string({ required_error: "Class name is required" })
+    .string({ required_error: "Class name is required!" })
     .trim()
-    .min(1, "Class name cannot be empty")
-    .max(100, "Class name must be 100 characters or fewer"),
+    .min(1, "Class name cannot be empty!")
+    .max(100, "Class name must be 100 characters or fewer!"),
 });
 
 const joinClassSchema = z.object({
   code: z
-    .string({ required_error: "Class code is required" })
+    .string({ required_error: "Class code is required!" })
     .trim()
-    .length(6, "Class code must be exactly 6 characters")
+    .length(6, "Class code must be exactly 6 characters!")
     .transform((val) => val.toUpperCase()),
 });
 
 const updateClassSchema = z.object({
   name: z
-    .string({ required_error: "Class name is required" })
+    .string({ required_error: "Class name is required!" })
     .trim()
-    .min(1, "Class name cannot be empty")
-    .max(100, "Class name must be 100 characters or fewer"),
+    .min(1, "Class name cannot be empty!")
+    .max(100, "Class name must be 100 characters or fewer!"),
 });
 
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {
@@ -47,7 +47,7 @@ export class ClassController {
     const newClass = await ClassService.createClass(user.id, name);
 
     res.status(201).json({
-      message: "Class created successfully",
+      message: "Class created successfully!",
       class: newClass,
     });
   }
@@ -82,7 +82,7 @@ export class ClassController {
     const result = await ClassService.joinClass(user.id, code);
 
     res.status(200).json({
-      message: "Joined class successfully",
+      message: "Joined class successfully!",
       ...result,
     });
   }
@@ -123,7 +123,7 @@ export class ClassController {
     const updatedClass = await ClassService.updateClass(user.id, classId, name);
 
     res.status(200).json({
-      message: "Class updated successfully",
+      message: "Class updated successfully!",
       class: updatedClass,
     });
   }
