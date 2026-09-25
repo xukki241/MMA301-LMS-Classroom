@@ -23,6 +23,8 @@ export const queryClient = new QueryClient({
 
 export const queryKeys = {
   me: ["me"] as const,
-  classes: ["classes"] as const,
-  class: (id: string) => ["classes", id] as const,
+  classes: (userId: string) => ["classes", userId] as const,
+  classList: (userId: string, role: string) => ["classes", userId, "list", role] as const,
+  class: (userId: string, id: string) => ["classes", userId, "detail", id] as const,
+  members: (userId: string, id: string) => ["classes", userId, "members", id] as const,
 };
