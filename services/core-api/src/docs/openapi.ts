@@ -1,4 +1,5 @@
 import { exercisePaths, exerciseSchemas } from "./exercise.openapi.js";
+import { submissionPaths, submissionSchemas } from "./submission.openapi.js";
 
 export const openApiSpec = {
   openapi: "3.1.0",
@@ -92,6 +93,7 @@ Email: dambautv2005@gmail.com
     },
   ],
   paths: {
+    ...submissionPaths,
     ...exercisePaths,
     "/docs/tokens/teacher": {
       post: {
@@ -1297,6 +1299,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
       },
     },
     schemas: {
+      ...submissionSchemas,
       ...exerciseSchemas,
       Class: {
         type: "object",
