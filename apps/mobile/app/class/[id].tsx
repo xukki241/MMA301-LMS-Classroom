@@ -149,7 +149,10 @@ export default function ClassDetailScreen() {
           onPress={() => router.push({ pathname: "/class/[id]/stream", params: { id: classId } })}>
           <ModuleCard icon="newspaper-outline" title="Bảng tin" subtitle="Thông báo và bình luận của lớp" />
         </Pressable>
-        <ModuleCard icon="document-text-outline" title="Tài liệu" subtitle="Material list/add — LMS-14" />
+        <Pressable accessibilityRole="button" accessibilityLabel="Mở tài liệu lớp học"
+          onPress={() => router.push({ pathname: "/class/[id]/materials", params: { id: classId, name: item?.name } })}>
+          <ModuleCard icon="document-text-outline" title="Tài liệu" subtitle="Tài liệu bài giảng và liên kết học tập" />
+        </Pressable>
         <ModuleCard icon="create-outline" title="Bài tập" subtitle="Exercise → nộp → chấm điểm" />
       </Animated.View>
     </Screen>

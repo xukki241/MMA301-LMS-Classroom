@@ -27,4 +27,5 @@ export const queryKeys = {
   classList: (userId: string, role: string) => ["classes", userId, "list", role] as const,
   class: (userId: string, id: string) => ["classes", userId, "detail", id] as const,
   members: (userId: string, id: string) => ["classes", userId, "members", id] as const,
+  materials: (classId: string) => ["materials", classId] as const,
 };
