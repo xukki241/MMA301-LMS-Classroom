@@ -20,3 +20,7 @@ coverage/
 .cursor/hooks/state/*.jsonl
 .cursor/hooks/evidence/*.md
 .claude/
+
+# Agents & local tooling
+.agents/
+.cursor/hooks/state/

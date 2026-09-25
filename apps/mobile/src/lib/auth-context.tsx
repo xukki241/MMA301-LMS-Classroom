@@ -1,7 +1,8 @@
 import { authStorage } from "./auth-storage";
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { login as loginApi, register as registerApi, type AuthUser } from "./api";
 import { queryClient } from "./query-client";
+import { setOnUnauthorized } from "./http";
 
 const TOKEN_KEY = "lms.accessToken";
 const USER_KEY = "lms.user";
@@ -54,6 +55,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const logout = useCallback(async () => {
+    await authStorage.removeItem(TOKEN_KEY);
+    await authStorage.removeItem(USER_KEY);
+    setToken(null);
+    setUser(null);
+    queryClient.clear();
+  }, []);
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      void logout();
+    });
+    return () => {
+      setOnUnauthorized(null);
+    };
+  }, [logout]);
+
   const value = useMemo<AuthState>(
     () => ({
       loading,
@@ -71,15 +89,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(result.token);
         setUser(result.user);
       },
-      logout: async () => {
-        await authStorage.removeItem(TOKEN_KEY);
-        await authStorage.removeItem(USER_KEY);
-        setToken(null);
-        setUser(null);
-        queryClient.clear();
-      },
+      logout,
     }),
-    [loading, token, user]
+    [loading, token, user, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,3 +1,6 @@
+import { exercisePaths, exerciseSchemas } from "./exercise.openapi.js";
+import { submissionPaths, submissionSchemas } from "./submission.openapi.js";
+
 export const openApiSpec = {
   openapi: "3.1.0",
   info: {
@@ -63,6 +66,11 @@ Email: dambautv2005@gmail.com
     },
   ],
   tags: [
+    { name: "Bài tập (LMS-08)", description: "Tạo và danh sách bài tập theo lớp — Nguyễn Quốc Hưng." },
+    {
+      name: "Submission & Grade (LMS-09)",
+      description: "Nộp bài và chấm điểm bài tập — Nguyễn Quốc Hưng.",
+    },
     {
       name: "Authentication & Lấy Token",
       description: "Các endpoint hỗ trợ lấy JWT Token nhanh để kiểm thử",
@@ -96,6 +104,8 @@ Email: dambautv2005@gmail.com
     },
   ],
   paths: {
+    ...submissionPaths,
+    ...exercisePaths,
     "/docs/tokens/teacher": {
       post: {
         tags: ["Authentication & Lấy Token"],
@@ -1300,6 +1310,8 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
       },
     },
     schemas: {
+      ...submissionSchemas,
+      ...exerciseSchemas,
       Class: {
         type: "object",
         properties: {
@@ -1361,14 +1373,10 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
       },
       ErrorResponse: {
         type: "object",
+        required: ["error", "code"],
         properties: {
-          error: {
-            type: "object",
-            properties: {
-              code: { type: "string", example: "FORBIDDEN" },
-              message: { type: "string", example: "Chỉ giáo viên mới có thể tạo lớp học" },
-            },
-          },
+          error: { type: "string", example: "Chỉ giáo viên mới có thể tạo lớp học" },
+          code: { type: "string", example: "FORBIDDEN" },
         },
       },
     },

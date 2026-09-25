@@ -84,7 +84,7 @@ export const darkPaperTheme: MD3Theme = {
   },
 };
 
-export const lightNavTheme: NavTheme = {
+export const lightNavTheme = {
   ...NavLight,
   colors: {
     ...NavLight.colors,
@@ -95,9 +95,9 @@ export const lightNavTheme: NavTheme = {
     border: palette.line,
     notification: palette.danger,
   },
-};
+} satisfies NavTheme;
 
-export const darkNavTheme: NavTheme = {
+export const darkNavTheme = {
   ...NavDark,
   colors: {
     ...NavDark.colors,
@@ -108,4 +108,4 @@ export const darkNavTheme: NavTheme = {
     border: darkPalette.line,
     notification: darkPalette.danger,
   },
-};
+} satisfies NavTheme;
