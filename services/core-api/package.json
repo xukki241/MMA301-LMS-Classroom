@@ -15,6 +15,7 @@
     "test:lms08:permissions": "tsx src/scripts/test-lms08-permissions.ts",
     "test:lms09": "tsx src/scripts/test-lms09.ts",
     "test:lms09:permissions": "tsx src/scripts/test-lms09-permissions.ts",
+    "test:guard": "tsx src/scripts/test-route-guard.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

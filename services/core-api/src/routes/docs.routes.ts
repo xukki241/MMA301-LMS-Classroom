@@ -60,6 +60,12 @@ async function getOrGenerateToken(role: "teacher" | "student") {
 
 // Endpoint lấy token Giáo viên (Teacher) 1-Click
 docsRouter.post("/docs/tokens/teacher", async (_req, res) => {
+  if (env.NODE_ENV === "production") {
+    return res.status(403).json({
+      error: "Dev token generation is disabled in production",
+      code: "FORBIDDEN_IN_PRODUCTION",
+    });
+  }
   const result = await getOrGenerateToken("teacher");
   res.status(200).json({
     role: "teacher",
@@ -73,6 +79,12 @@ docsRouter.post("/docs/tokens/teacher", async (_req, res) => {
 
 // Endpoint lấy token Học sinh (Student) 1-Click
 docsRouter.post("/docs/tokens/student", async (_req, res) => {
+  if (env.NODE_ENV === "production") {
+    return res.status(403).json({
+      error: "Dev token generation is disabled in production",
+      code: "FORBIDDEN_IN_PRODUCTION",
+    });
+  }
   const result = await getOrGenerateToken("student");
   res.status(200).json({
     role: "student",
