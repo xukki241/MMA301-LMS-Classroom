@@ -1,5 +1,6 @@
 import { exercisePaths, exerciseSchemas } from "./exercise.openapi.js";
 import { submissionPaths, submissionSchemas } from "./submission.openapi.js";
+import { materialPaths, materialSchemas } from "./material.openapi.js";
 
 export const openApiSpec = {
   openapi: "3.1.0",
@@ -66,6 +67,10 @@ Email: dambautv2005@gmail.com
     },
   ],
   tags: [
+    {
+      name: "Material (LMS-14)",
+      description: "Quản lý và chia sẻ tài liệu bài giảng theo lớp",
+    },
     { name: "Bài tập (LMS-08)", description: "Tạo và danh sách bài tập theo lớp — Nguyễn Quốc Hưng." },
     {
       name: "Submission & Grade (LMS-09)",
@@ -99,6 +104,7 @@ Email: dambautv2005@gmail.com
   paths: {
     ...submissionPaths,
     ...exercisePaths,
+    ...materialPaths,
     "/docs/tokens/teacher": {
       post: {
         tags: ["Authentication & Lấy Token"],
@@ -1305,6 +1311,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
     schemas: {
       ...submissionSchemas,
       ...exerciseSchemas,
+      ...materialSchemas,
       Class: {
         type: "object",
         properties: {
