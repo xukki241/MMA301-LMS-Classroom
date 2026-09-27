@@ -10,6 +10,7 @@ import { postRouter } from "./routes/post.routes.js";
 import { docsRouter } from "./routes/docs.routes.js";
 import { exerciseRouter } from "./routes/exercise.routes.js";
 import { submissionRouter } from "./routes/submission.routes.js";
+import { materialRouter } from "./routes/material.routes.js";
 
 function corsOptions(origin: string): cors.CorsOptions {
   if (origin.trim() === "*") {
@@ -43,6 +44,8 @@ export function createApp() {
   app.use(postRouter);
   app.use(exerciseRouter);
   app.use(submissionRouter);
+  app.use("/classes", materialRouter);
+  app.use(materialRouter);
   app.use(errorHandler);
   return app;
 }
