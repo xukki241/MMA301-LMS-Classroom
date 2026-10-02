@@ -9,11 +9,14 @@
 | Docs smoke | `npm run test:contract` | `/docs`, `/openapi.json`, token helpers |
 | API collection | `npm run test:newman` | Full Postman regression when Newman is installed |
 | Scalar browser | `npm run test:scalar` | Playwright docs/try-it-out smoke |
+| Selenium browser | `npm run test:selenium` | Headless Chrome checks Auth/Core Scalar pages, health and Core OpenAPI; saves screenshots and JSON report |
 | Android smoke | `npm run test:e2e` | Maestro auth smoke on Pixel_10; full class/material/exercise/submission journey remains manual |
 | Release gate | `npm run release:gate` | All locally available mandatory gates |
 
 Failures must preserve logs, request IDs, screenshots and traces. A retry may diagnose a flaky test but cannot hide the first failure.
 
-The repository does not currently contain a Selenium suite. Do not report
-Selenium as executed; browser documentation checks use Playwright, API
-regression uses Newman, and the native Android smoke uses Maestro.
+Selenium and Playwright intentionally overlap on the public API documentation
+surface: Playwright is the fast browser contract check, while Selenium proves
+the team can run the requested WebDriver workflow and saves reviewable browser
+screenshots under `test-results/selenium/`. API regression remains Newman and
+native Android smoke remains Maestro.

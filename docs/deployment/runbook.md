@@ -30,6 +30,7 @@ $env:CORE_URL = "https://<staging-core-host>"
 npm run test:staging
 npm run test:contract
 npm run test:newman
+npm run test:selenium
 npm run test:performance
 ```
 

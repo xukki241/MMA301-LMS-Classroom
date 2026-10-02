@@ -33,6 +33,18 @@ For every case record date, environment, build/commit, tester, result, screensho
 Use a dedicated staging/test database and test accounts only. Never paste a real
 password, JWT, Mongo URI, or response containing a token into GitHub or Notion.
 
+For the non-destructive health/docs/login smoke, the repository can register a
+fresh teacher/student pair with generated credentials and redact all identifiers:
+
+```powershell
+$env:AUTH_URL = "https://<auth-staging-host>"
+$env:CORE_URL = "https://<core-staging-host>"
+$env:SMOKE_REGISTER_TEMP = "1"
+npm run test:staging
+```
+
+This smoke does not replace the class/exercise/submission journey below.
+
 ### 1. Fill the test variables
 
 PowerShell example (replace only the URLs; keep the password in the local shell):
@@ -114,5 +126,7 @@ Request ID / defect: [value or none]
 
 The automated mobile suite uses Node tests with stubbed HTTP/storage and
 Maestro for the Android journey. It does **not** prove airplane-mode behavior.
-The repository currently uses Playwright for Scalar browser checks; Selenium
-is not part of the implemented automation and must not be reported as run.
+Browser documentation smoke is implemented in both Playwright
+(`npm run test:scalar`) and Selenium WebDriver (`npm run test:selenium`). The
+Selenium run saves Auth/Core screenshots in `test-results/selenium/` and a
+machine-readable report in `test-reports/selenium/results.json`.
