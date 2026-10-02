@@ -57,6 +57,7 @@ jobs:
           npm run test:mobile
           npm run test:newman
           npm run test:performance
+          npm run test:selenium
       - name: Upload test evidence
         if: always()
         uses: actions/upload-artifact@v4
