@@ -4,6 +4,7 @@ export type ClassOperation = "list" | "detail" | "members" | "create" | "join";
 
 export function classErrorMessage(error: unknown, operation: ClassOperation = "list"): string {
   if (!(error instanceof HttpError)) return "Đã xảy ra lỗi. Vui lòng thử lại.";
+  if (error.code === "OFFLINE_WRITE" || error.code === "OFFLINE_NO_CACHE") return error.message;
   if (error.code === "NETWORK_ERROR") {
     return "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.";
   }

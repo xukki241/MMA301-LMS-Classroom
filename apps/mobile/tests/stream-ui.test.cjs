@@ -38,6 +38,7 @@ function harness(kind, status = 403, classRole = "teacher") {
     "auth-context": { useAuth: () => ({ user: { id: "teacher", role: "teacher" }, token: "test-session" }) },
     http: { HttpError }, "stream-api": { POST_MAX_LENGTH: 2000, COMMENT_MAX_LENGTH: 1000 },
     "classes-api": { getClass: () => Promise.resolve(detail.data) },
+    "offline-data": { cachedClassDetail: () => Promise.resolve(detail.data) },
     "query-client": { queryKeys: { class: () => ["classes", "teacher", "detail", "class-a"] } },
     "stream-query": { postsOptions: () => ({}), commentsOptions: () => ({}), createPostOptions: () => ({}), createCommentOptions: () => ({}) },
     tokens: { spacing: {}, typography: {} },
