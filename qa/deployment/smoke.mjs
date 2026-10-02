@@ -6,8 +6,8 @@ const studentEmail = process.env.SMOKE_STUDENT_EMAIL || "student@lms.local";
 const studentPassword = process.env.SMOKE_STUDENT_PASSWORD || "Demo123!";
 const expectDevTokens = process.env.EXPECT_DEV_TOKENS === "1";
 
-async function get(url, expected) {
-  const response = await fetch(url);
+async function get(url, expected, method = "GET") {
+  const response = await fetch(url, { method });
   if (response.status !== expected) throw new Error(`${url}: expected ${expected}, got ${response.status}`);
   return response;
 }
@@ -32,8 +32,8 @@ if (!authSpec.paths?.["/auth/login"] || !authSpec.paths?.["/auth/register"]) thr
 if (Object.keys(coreSpec.paths || {}).length < 20) throw new Error("Core OpenAPI is unexpectedly incomplete");
 await get(`${authUrl}/docs`, 200);
 await get(`${coreUrl}/docs`, 200);
-await get(`${coreUrl}/docs/tokens/teacher`, expectDevTokens ? 200 : 403);
-await get(`${coreUrl}/docs/tokens/student`, expectDevTokens ? 200 : 403);
+await get(`${coreUrl}/docs/tokens/teacher`, expectDevTokens ? 200 : 403, "POST");
+await get(`${coreUrl}/docs/tokens/student`, expectDevTokens ? 200 : 403, "POST");
 await login(teacherEmail, teacherPassword);
 await login(studentEmail, studentPassword);
 
