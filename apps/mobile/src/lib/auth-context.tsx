@@ -1,7 +1,8 @@
-import * as SecureStore from "expo-secure-store";
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { authStorage } from "./auth-storage";
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { login as loginApi, register as registerApi, type AuthUser } from "./api";
 import { queryClient } from "./query-client";
+import { setOnUnauthorized } from "./http";
 
 const TOKEN_KEY = "lms.accessToken";
 const USER_KEY = "lms.user";
@@ -23,8 +24,8 @@ interface AuthState {
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 async function persist(token: string, user: AuthUser) {
-  await SecureStore.setItemAsync(TOKEN_KEY, token);
-  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+  await authStorage.setItem(TOKEN_KEY, token);
+  await authStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -36,12 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     void (async () => {
       try {
-        const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
-        const storedUser = await SecureStore.getItemAsync(USER_KEY);
+        const storedToken = await authStorage.getItem(TOKEN_KEY);
+        const storedUser = await authStorage.getItem(USER_KEY);
         if (!cancelled && storedToken && storedUser) {
+          const parsedUser = JSON.parse(storedUser) as AuthUser;
           setToken(storedToken);
-          setUser(JSON.parse(storedUser) as AuthUser);
+          setUser(parsedUser);
         }
+      } catch (error) {
+        console.warn("Could not restore the saved session", error);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -50,6 +54,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  const logout = useCallback(async () => {
+    await authStorage.removeItem(TOKEN_KEY);
+    await authStorage.removeItem(USER_KEY);
+    setToken(null);
+    setUser(null);
+    queryClient.clear();
+  }, []);
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      void logout();
+    });
+    return () => {
+      setOnUnauthorized(null);
+    };
+  }, [logout]);
 
   const value = useMemo<AuthState>(
     () => ({
@@ -68,15 +89,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(result.token);
         setUser(result.user);
       },
-      logout: async () => {
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-        await SecureStore.deleteItemAsync(USER_KEY);
-        setToken(null);
-        setUser(null);
-        queryClient.clear();
-      },
+      logout,
     }),
-    [loading, token, user]
+    [loading, token, user, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

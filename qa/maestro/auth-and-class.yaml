@@ -1,0 +1,14 @@
+appId: com.mma301.lmsclassroom
+---
+- launchApp
+- assertVisible: "LMS CLASSROOM"
+- tapOn:
+    id: "text-input-outlined"
+- inputText: "teacher@lms.local"
+- tapOn:
+    id: "text-input-outlined"
+    index: 1
+- inputText: "Demo123!"
+- tapOn:
+    point: "50%,64%"
+- assertNotVisible: "Invalid credentials"

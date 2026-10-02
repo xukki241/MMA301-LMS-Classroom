@@ -1,0 +1,11 @@
+$kind: "http-request"
+name: "Register User"
+description: "Đăng ký tài khoản mới (role: 'teacher' hoặc 'student')."
+url: "{{auth_url}}/auth/register"
+method: "POST"
+headers:
+  Content-Type: "application/json"
+body:
+  type: "json"
+  content: "{\n  \"email\": \"newuser@lms.local\",\n  \"password\": \"Demo123!\",\n  \"displayName\": \"Nguyen Van A\",\n  \"role\": \"student\"\n}"
+order: 4000

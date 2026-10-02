@@ -1,0 +1,8 @@
+$kind: "http-request"
+name: "2. Get Teaching Classes (Teacher)"
+description: "Lấy danh sách các lớp học do giáo viên hiện tại đứng lớp."
+url: "{{core_url}}/classes/teaching"
+method: "GET"
+headers:
+  Authorization: "Bearer {{teacher_token}}"
+order: 2000

@@ -1,0 +1,12 @@
+$kind: "http-request"
+name: "7. Update Class (Teacher Owner)"
+description: "Giáo viên chủ sở hữu cập nhật tên lớp học. 403 nếu không phải chủ lớp."
+url: "{{core_url}}/classes/{{class_id}}"
+method: "PATCH"
+headers:
+  Content-Type: "application/json"
+  Authorization: "Bearer {{teacher_token}}"
+body:
+  type: "json"
+  content: "{\n  \"name\": \"Lập trình Di động MMA301 - Đã đổi tên\"\n}"
+order: 7000

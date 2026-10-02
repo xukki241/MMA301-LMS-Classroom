@@ -1,0 +1,8 @@
+$kind: "http-request"
+name: "6. Get Class Members"
+description: "Lấy danh sách tất cả thành viên trong lớp học (giáo viên và sinh viên)."
+url: "{{core_url}}/classes/{{class_id}}/members"
+method: "GET"
+headers:
+  Authorization: "Bearer {{teacher_token}}"
+order: 6000

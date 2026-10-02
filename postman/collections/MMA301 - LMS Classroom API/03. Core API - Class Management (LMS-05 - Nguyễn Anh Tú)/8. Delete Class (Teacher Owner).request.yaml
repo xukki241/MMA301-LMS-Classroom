@@ -1,0 +1,8 @@
+$kind: "http-request"
+name: "8. Delete Class (Teacher Owner)"
+description: "Giáo viên chủ sở hữu xóa lớp học. Tự động dọn dẹp các bản ghi ClassMember liên quan."
+url: "{{core_url}}/classes/{{class_id}}"
+method: "DELETE"
+headers:
+  Authorization: "Bearer {{teacher_token}}"
+order: 8000

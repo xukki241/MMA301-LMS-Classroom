@@ -1,0 +1,12 @@
+$kind: "http-request"
+name: "3. Join Class by Code (Student)"
+description: "Sinh viên tham gia lớp học bằng mã mời 6 ký tự. Tự động thêm vào ClassMember."
+url: "{{core_url}}/classes/join"
+method: "POST"
+headers:
+  Content-Type: "application/json"
+  Authorization: "Bearer {{student_token}}"
+body:
+  type: "json"
+  content: "{\n  \"code\": \"{{class_code}}\"\n}"
+order: 3000

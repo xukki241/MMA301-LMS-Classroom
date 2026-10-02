@@ -1,0 +1,8 @@
+$kind: "http-request"
+name: "Verify Token (/me)"
+description: "Xác thực JWT token của người dùng hiện tại và lấy thông tin sub/email/role."
+url: "{{core_url}}/me"
+method: "GET"
+headers:
+  Authorization: "Bearer {{teacher_token}}"
+order: 2000

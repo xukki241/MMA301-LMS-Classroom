@@ -1,0 +1,508 @@
+{
+  "info": {
+    "_postman_id": "c541862f-380a-4303-8723-df7a80cce11d",
+    "name": "MMA301 - LMS Classroom API",
+    "description": "Bộ API tài liệu và kiểm thử tự động cho dự án MMA301 LMS Classroom.\nPhân hệ Core API Class do Nguyễn Anh Tú phụ trách (LMS-05).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01. Auth Service (:4001)",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{auth_url}}/health",
+              "host": ["{{auth_url}}"],
+              "path": ["health"]
+            },
+            "description": "Kiểm tra trạng thái hoạt động của Auth Service và kết nối MongoDB."
+          },
+          "response": []
+        },
+        {
+          "name": "Login Teacher (Auto-save Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set(\"teacher_token\", jsonData.token);",
+                  "    console.log(\"Teacher token auto-saved:\", jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{teacher_email}}\",\n  \"password\": \"{{teacher_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{auth_url}}/auth/login",
+              "host": ["{{auth_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Đăng nhập bằng tài khoản Teacher và tự động lưu `teacher_token` vào Environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Login Student (Auto-save Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set(\"student_token\", jsonData.token);",
+                  "    console.log(\"Student token auto-saved:\", jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{student_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{auth_url}}/auth/login",
+              "host": ["{{auth_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Đăng nhập bằng tài khoản Student và tự động lưu `student_token` vào Environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@lms.local\",\n  \"password\": \"Demo123!\",\n  \"displayName\": \"Nguyen Van A\",\n  \"role\": \"student\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{auth_url}}/auth/register",
+              "host": ["{{auth_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Đăng ký tài khoản mới (role: 'teacher' hoặc 'student')."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. Core API - System & Me (:4002)",
+      "item": [
+        {
+          "name": "Core API Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/health",
+              "host": ["{{core_url}}"],
+              "path": ["health"]
+            },
+            "description": "Kiểm tra trạng thái hoạt động của Core API và MongoDB."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Token (/me)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{teacher_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/me",
+              "host": ["{{core_url}}"],
+              "path": ["me"]
+            },
+            "description": "Xác thực JWT token của người dùng hiện tại và lấy thông tin sub/email/role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. Core API - Class Management (LMS-05 - Nguyễn Anh Tú)",
+      "item": [
+        {
+          "name": "1. Create Class (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.class) {",
+                  "    if (jsonData.class._id) pm.environment.set(\"class_id\", jsonData.class._id);",
+                  "    if (jsonData.class.code) pm.environment.set(\"class_code\", jsonData.class.code);",
+                  "    console.log(\"Class ID:\", jsonData.class._id, \"Class Code:\", jsonData.class.code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{teacher_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lập trình Di động MMA301\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{core_url}}/classes",
+              "host": ["{{core_url}}"],
+              "path": ["classes"]
+            },
+            "description": "Teacher tạo lớp học mới. Hệ thống sinh mã code 6 ký tự ngẫu nhiên. Tự động lưu `class_id` và `class_code` vào Environment."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Teaching Classes (Teacher)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{teacher_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/classes/teaching",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "teaching"]
+            },
+            "description": "Lấy danh sách các lớp học do giáo viên hiện tại đứng lớp."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Join Class by Code (Student)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{class_code}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{core_url}}/classes/join",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "join"]
+            },
+            "description": "Sinh viên tham gia lớp học bằng mã mời 6 ký tự. Tự động thêm vào ClassMember."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Enrolled Classes (Student)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/classes/enrolled",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "enrolled"]
+            },
+            "description": "Lấy danh sách các lớp học sinh viên hiện tại đã tham gia."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Get Class Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{teacher_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/classes/{{class_id}}",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "{{class_id}}"]
+            },
+            "description": "Xem thông tin chi tiết của 1 lớp học (chỉ thành viên trong lớp mới có quyền xem). Trả về roleInClass."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Get Class Members",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{teacher_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/classes/{{class_id}}/members",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "{{class_id}}", "members"]
+            },
+            "description": "Lấy danh sách tất cả thành viên trong lớp học (giáo viên và sinh viên)."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Update Class (Teacher Owner)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{teacher_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lập trình Di động MMA301 - Đã đổi tên\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{core_url}}/classes/{{class_id}}",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "{{class_id}}"]
+            },
+            "description": "Giáo viên chủ sở hữu cập nhật tên lớp học. 403 nếu không phải chủ lớp."
+          },
+          "response": []
+        },
+        {
+          "name": "8. Delete Class (Teacher Owner)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{teacher_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/classes/{{class_id}}",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "{{class_id}}"]
+            },
+            "description": "Giáo viên chủ sở hữu xóa lớp học. Tự động dọn dẹp các bản ghi ClassMember liên quan."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04. Core API - Posts & Comments (Chuẩn bị task tiếp theo)",
+      "item": [
+        {
+          "name": "1. Create Post (Classes)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{teacher_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Chào mừng các bạn đến với lớp MMA301!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{core_url}}/classes/{{class_id}}/posts",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "{{class_id}}", "posts"]
+            },
+            "description": "Tạo bài đăng mới trong lớp học."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Posts in Class",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{student_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{core_url}}/classes/{{class_id}}/posts",
+              "host": ["{{core_url}}"],
+              "path": ["classes", "{{class_id}}", "posts"]
+            },
+            "description": "Lấy danh sách các bài đăng trong lớp học."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

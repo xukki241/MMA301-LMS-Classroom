@@ -1,9 +1,11 @@
 export class HttpError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.name = "HttpError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -21,6 +23,12 @@ export type HttpOptions = {
   dedupe?: boolean;
 };
 
+let onUnauthorizedCallback: (() => void) | null = null;
+
+export function setOnUnauthorized(callback: (() => void) | null) {
+  onUnauthorizedCallback = callback;
+}
+
 const inflight = new Map<string, Promise<unknown>>();
 
 function sleep(ms: number) {
@@ -32,7 +40,7 @@ function isAbortError(error: unknown) {
 }
 
 function retryableStatus(status: number) {
-  return status === 429 || status >= 500;
+  return status === 0 || status === 429 || status >= 500;
 }
 
 function parseMessage(body: unknown, status: number) {
@@ -90,7 +98,7 @@ async function runWithRetry<T>(url: string, options: HttpOptions, method: HttpMe
     if (options.signal?.aborted) {
       throw options.signal.reason instanceof Error
         ? options.signal.reason
-        : new Error("Aborted");
+        : Object.assign(new Error("Aborted"), { name: "AbortError" });
     }
     try {
       return await requestOnce<T>(url, options, method);
@@ -135,12 +143,27 @@ async function requestOnce<T>(url: string, options: HttpOptions, method: HttpMet
 
     const body = await parseBody(res);
     if (!res.ok) {
-      throw new HttpError(parseMessage(body, res.status), res.status);
+      if (res.status === 401) {
+        try {
+          onUnauthorizedCallback?.();
+        } catch (err) {
+          console.warn("[http] onUnauthorized error:", err);
+        }
+      }
+      const code = body && typeof body === "object" && "code" in body && typeof body.code === "string"
+        ? body.code : undefined;
+      throw new HttpError(parseMessage(body, res.status), res.status, code);
     }
     return body as T;
   } catch (error) {
     if (isAbortError(error)) {
-      throw new Error(options.signal?.aborted ? "Aborted" : "Hết thời gian chờ máy chủ");
+      if (options.signal?.aborted) {
+        throw Object.assign(new Error("Aborted"), { name: "AbortError" });
+      }
+      throw new HttpError("Hết thời gian chờ máy chủ", 0, "NETWORK_ERROR");
+    }
+    if (error instanceof TypeError) {
+      throw new HttpError("Không thể kết nối đến máy chủ", 0, "NETWORK_ERROR");
     }
     throw error;
   } finally {

@@ -1,4 +1,4 @@
-﻿# MMA301 — LMS Classroom
+# MMA301 — LMS Classroom
 
 Ứng dụng quản lý lớp học (Teacher / Student): Auth · Class · Post/Comment · Material · Exercise → Submission → Grade.
 
@@ -33,6 +33,8 @@ nginx · WebSocket chat · Render: backlog Notion (LMS-18 / LMS-19 / LMS-21) —
 - [CONTEXT.md](./CONTEXT.md) — thuật ngữ miền
 - [docs/06-huong-dan-phat-trien.md](./docs/06-huong-dan-phat-trien.md) — hướng dẫn dev
 - [docs/adr/](./docs/adr/) — quyết định kiến trúc
+- [postman/README.md](./postman/README.md) — hướng dẫn test API Postman
+- **Scalar API Docs (Core API)**: `http://localhost:4002/docs` (OpenAPI: `http://localhost:4002/openapi.json`)
 
 ## Nhóm
 
