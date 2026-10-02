@@ -7,7 +7,7 @@ export const openApiSpec = {
   info: {
     title: "MMA301 LMS Classroom - Core API (Nguyễn Anh Tú)",
     version: "1.0.0",
-    description: `## Tài liệu API Phân hệ Quản lý Lớp học (Task LMS-05)
+    description: `## Tài liệu API Phân hệ Quản lý Lớp học & Ownership (Task LMS-05, LMS-06, LMS-07)
 
 Phụ trách: Nguyễn Anh Tú  
 Email: dambautv2005@gmail.com
@@ -87,6 +87,13 @@ Email: dambautv2005@gmail.com
     {
       name: "Bảng tin & Tương tác (LMS-06)",
       description: "Các API Bảng tin (Post, Comment, Reaction) do Nguyễn Anh Tú xây dựng",
+    },
+    {
+      name: "Ownership & Guards (LMS-07)",
+      description: `Mô hình phân quyền và kiểm tra sở hữu (Ownership) được chuẩn hóa tại Core API:
+- **requireRole middleware**: Kiểm tra role từ JWT ở route level (403 nếu sai role).
+- **assertClassMembership helper**: Shared guard xác minh thành viên lớp học dùng chung cho Post, Comment, Reaction.
+- **Ownership check**: teacherId === user.id kiểm tra quyền sở hữu đối với PATCH/DELETE class, authorId === user.id đối với bài viết/bình luận.`,
     },
     {
       name: "Hệ thống & Thông tin cá nhân",
@@ -276,7 +283,7 @@ Tài khoản seed mặc định:
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tạo lớp học thành công" },
+                    message: { type: "string", example: "Class created successfully" },
                     class: { $ref: "#/components/schemas/Class" },
                   },
                 },
@@ -404,7 +411,7 @@ Tài khoản seed mặc định:
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tham gia lớp học thành công" },
+                    message: { type: "string", example: "Joined class successfully" },
                     class: { $ref: "#/components/schemas/Class" },
                     membership: { $ref: "#/components/schemas/ClassMember" },
                   },
@@ -530,7 +537,7 @@ Tài khoản seed mặc định:
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cập nhật lớp học thành công" },
+                    message: { type: "string", example: "Class updated successfully" },
                     class: { $ref: "#/components/schemas/Class" },
                   },
                 },
@@ -577,7 +584,7 @@ Tài khoản seed mặc định:
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Xóa lớp học thành công" },
+                    message: { type: "string", example: "Class deleted successfully" },
                   },
                 },
               },
@@ -792,7 +799,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tạo bài đăng thành công" },
+                    message: { type: "string", example: "Post created successfully" },
                     post: { $ref: "#/components/schemas/Post" },
                   },
                 },
@@ -856,7 +863,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cập nhật bài đăng thành công" },
+                    message: { type: "string", example: "Post updated successfully" },
                     post: { $ref: "#/components/schemas/Post" },
                   },
                 },
@@ -904,7 +911,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Xóa bài đăng thành công" },
+                    message: { type: "string", example: "Post deleted successfully" },
                   },
                 },
               },
@@ -1015,7 +1022,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tạo bình luận thành công" },
+                    message: { type: "string", example: "Comment created successfully" },
                     comment: { $ref: "#/components/schemas/Comment" },
                   },
                 },
@@ -1085,7 +1092,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cập nhật bình luận thành công" },
+                    message: { type: "string", example: "Comment updated successfully" },
                     comment: { $ref: "#/components/schemas/Comment" },
                   },
                 },
@@ -1139,7 +1146,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Xóa bình luận thành công" },
+                    message: { type: "string", example: "Comment deleted successfully" },
                   },
                 },
               },
@@ -1277,7 +1284,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                   type: "object",
                   properties: {
                     action: { type: "string", example: "added" },
-                    message: { type: "string", example: "Đã thêm biểu cảm" },
+                    message: { type: "string", example: "Reaction added" },
                     reaction: { $ref: "#/components/schemas/Reaction" },
                   },
                 },

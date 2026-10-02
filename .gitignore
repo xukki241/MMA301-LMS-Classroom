@@ -21,6 +21,7 @@ test-results/
 .cursor/hooks/state/*.json
 .cursor/hooks/state/*.jsonl
 .cursor/hooks/evidence/*.md
+.claude/
 
 # Agents & local tooling
 .agents/

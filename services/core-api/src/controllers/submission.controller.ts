@@ -9,8 +9,8 @@ const submissionSchema = z.object({
     if (value === "") return true;
     try { return ["http:", "https:"].includes(new URL(value).protocol); }
     catch { return false; }
-  }, "URL phải dùng HTTP hoặc HTTPS").default(""),
-}).strict().refine(value => value.content !== "" || value.url !== "", "Cần nội dung hoặc URL bài nộp");
+  }, "URL must use HTTP or HTTPS").default(""),
+}).strict().refine(value => value.content !== "" || value.url !== "", "Submission content or URL is required");
 
 const gradeSchema = z.object({
   score: z.number().finite().min(0).max(10),
