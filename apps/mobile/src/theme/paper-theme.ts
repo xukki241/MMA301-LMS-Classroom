@@ -31,7 +31,7 @@ export const lightPaperTheme: MD3Theme = {
     onBackground: palette.ink,
     surface: palette.surface,
     onSurface: palette.ink,
-    surfaceVariant: "#EEF2FF",
+    surfaceVariant: "#F1E9DE",
     onSurfaceVariant: palette.inkMuted,
     outline: palette.line,
     outlineVariant: palette.line,

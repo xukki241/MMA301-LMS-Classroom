@@ -88,14 +88,14 @@ export default function LoginScreen() {
             </View>
 
             <View style={[styles.pillBadge, { backgroundColor: theme.colors.surfaceVariant }]}>
-              <Icon source="sparkles" size={13} color={theme.colors.primary} />
+              <Icon source="book-open-page-variant-outline" size={13} color={theme.colors.primary} />
               <Text style={[styles.pillText, { color: theme.colors.primary }]}>
                 LMS CLASSROOM
               </Text>
             </View>
 
             <Text style={[typography.title, styles.title, { color: theme.colors.onBackground }]}>
-              Chào mừng trở lại! 👋
+              Chào mừng trở lại
             </Text>
             <Text style={[typography.body, styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
               Đăng nhập để vào không gian lớp học, bảng tin và bài tập
@@ -178,6 +178,8 @@ export default function LoginScreen() {
 
             {/* Submit Button */}
             <AppButton
+              testID="login-submit"
+              accessibilityLabel="login-submit"
               loading={busy}
               disabled={busy}
               onPress={handleLogin}
@@ -205,7 +207,7 @@ export default function LoginScreen() {
                   ]}
                   onPress={() => fillDemo("teacher")}
                 >
-                  <Text style={styles.demoPillEmoji}>👨‍🏫</Text>
+                  <Icon source="account-tie-outline" size={18} color={palette.teacher} />
                   <Text style={[styles.demoPillText, { color: palette.teacher }]}>
                     Giáo viên
                   </Text>
@@ -219,7 +221,7 @@ export default function LoginScreen() {
                   ]}
                   onPress={() => fillDemo("student")}
                 >
-                  <Text style={styles.demoPillEmoji}>👨‍🎓</Text>
+                  <Icon source="school-outline" size={18} color={palette.student} />
                   <Text style={[styles.demoPillText, { color: palette.student }]}>
                     Học sinh
                   </Text>
@@ -389,9 +391,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     gap: 6,
-  },
-  demoPillEmoji: {
-    fontSize: 16,
   },
   demoPillText: {
     fontSize: 13,

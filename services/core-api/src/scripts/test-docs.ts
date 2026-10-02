@@ -1,46 +1,27 @@
-import { createApp } from "../app.js";
-import type { Server } from "http";
+const coreURL = process.env.CORE_URL ?? "http://127.0.0.1:4002";
+const authURL = process.env.AUTH_URL ?? "http://127.0.0.1:4001";
+const expectDevTokens = process.env.EXPECT_DEV_TOKENS === "1";
 
-async function testDocs() {
-  const app = createApp();
-  const server: Server = app.listen(4998, async () => {
-    try {
-      console.log("Testing updated Scalar Docs & Token endpoints on port 4998...");
-
-      // 1. Test /docs/tokens/teacher
-      const teacherRes = await fetch("http://localhost:4998/docs/tokens/teacher", { method: "POST" });
-      if (teacherRes.status !== 200) throw new Error(`Expected 200 for teacher token, got ${teacherRes.status}`);
-      const teacherData = await teacherRes.json();
-      console.log("OK POST /docs/tokens/teacher returned token (length):", teacherData.token?.length);
-      console.log("   Role:", teacherData.role, "| Email:", teacherData.email);
-
-      // 2. Test /docs/tokens/student
-      const studentRes = await fetch("http://localhost:4998/docs/tokens/student", { method: "POST" });
-      if (studentRes.status !== 200) throw new Error(`Expected 200 for student token, got ${studentRes.status}`);
-      const studentData = await studentRes.json();
-      console.log("OK POST /docs/tokens/student returned token (length):", studentData.token?.length);
-      console.log("   Role:", studentData.role, "| Email:", studentData.email);
-
-      // 3. Test /openapi.json
-      const openApiRes = await fetch("http://localhost:4998/openapi.json");
-      if (openApiRes.status !== 200) throw new Error(`Expected 200 for /openapi.json, got ${openApiRes.status}`);
-      const spec = await openApiRes.json();
-      console.log("OK GET /openapi.json returned 200 OK");
-      console.log("   Endpoints count:", Object.keys(spec.paths || {}).length);
-
-      // 4. Test /docs
-      const docsRes = await fetch("http://localhost:4998/docs");
-      if (docsRes.status !== 200) throw new Error(`Expected 200 for /docs, got ${docsRes.status}`);
-      console.log("OK GET /docs returned 200 OK");
-
-      console.log("\nALL VERIFICATION CHECKS PASSED!");
-    } catch (err) {
-      console.error("Test failed:", err);
-      process.exitCode = 1;
-    } finally {
-      server.close();
-    }
-  });
+async function assertStatus(url: string, expected: number, init?: RequestInit) {
+  const response = await fetch(url, init);
+  if (response.status !== expected) throw new Error(`Expected ${expected} for ${url}, got ${response.status}`);
+  return response;
 }
 
-testDocs();
+const coreOpenApi = await assertStatus(`${coreURL}/openapi.json`, 200);
+const coreSpec = await coreOpenApi.json() as { paths?: Record<string, unknown> };
+if (!coreSpec.paths || Object.keys(coreSpec.paths).length < 20) throw new Error("Core OpenAPI is unexpectedly incomplete");
+await assertStatus(`${coreURL}/docs`, 200);
+
+const authOpenApi = await assertStatus(`${authURL}/openapi.json`, 200);
+const authSpec = await authOpenApi.json() as { paths?: Record<string, unknown> };
+if (!authSpec.paths || !authSpec.paths["/auth/login"] || !authSpec.paths["/auth/register"]) throw new Error("Auth OpenAPI is incomplete");
+await assertStatus(`${authURL}/docs`, 200);
+
+for (const role of ["teacher", "student"]) {
+  const response = await fetch(`${coreURL}/docs/tokens/${role}`, { method: "POST" });
+  const expected = expectDevTokens ? 200 : 403;
+  if (response.status !== expected) throw new Error(`Unexpected ${role} docs token status: ${response.status}`);
+}
+
+console.log(`Docs runtime checks passed: Core ${Object.keys(coreSpec.paths).length} paths, Auth ${Object.keys(authSpec.paths).length} paths`);

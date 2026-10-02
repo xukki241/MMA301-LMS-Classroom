@@ -2,13 +2,17 @@ import type { ErrorRequestHandler } from "express";
 import { HttpError } from "../lib/httpError.js";
 
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  const requestId = String(res.locals.requestId ?? "unknown");
+  const sendError = (status: number, message: string, code: string) => {
+    res.status(status).json({ error: message, code, requestId });
+  };
   if (err instanceof HttpError) {
-    res.status(err.status).json({ error: err.message, code: err.code });
+    sendError(err.status, err.message, err.code);
     return;
   }
 
   if (err instanceof SyntaxError) {
-    res.status(400).json({ error: "Invalid JSON", code: "INVALID_JSON" });
+    sendError(400, "Invalid JSON", "INVALID_JSON");
     return;
   }
 
@@ -18,10 +22,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     "type" in err &&
     (err as { type?: string }).type === "entity.too.large"
   ) {
-    res.status(413).json({ error: "Payload too large", code: "PAYLOAD_TOO_LARGE" });
+    sendError(413, "Payload too large", "PAYLOAD_TOO_LARGE");
     return;
   }
 
   console.error(err);
-  res.status(500).json({ error: "Internal server error", code: "INTERNAL" });
+  sendError(500, "Internal server error", "INTERNAL");
 };

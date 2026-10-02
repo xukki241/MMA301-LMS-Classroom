@@ -1373,10 +1373,11 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
       },
       ErrorResponse: {
         type: "object",
-        required: ["error", "code"],
+        required: ["error", "code", "requestId"],
         properties: {
           error: { type: "string", example: "Chỉ giáo viên mới có thể tạo lớp học" },
           code: { type: "string", example: "FORBIDDEN" },
+          requestId: { type: "string", example: "7d2a7d2d-04a6-4fa4-a77b-8e6c7a8b0f4c" },
         },
       },
     },
@@ -1444,6 +1445,19 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
             schema: { $ref: "#/components/schemas/ErrorResponse" },
           },
         },
+      },
+      Conflict: {
+        description: "409 CONFLICT: Thao tác bị trùng hoặc tài nguyên đã tồn tại",
+        content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+      },
+      TooManyRequests: {
+        description: "429 TOO_MANY_REQUESTS: Vượt giới hạn request",
+        headers: { "Retry-After": { schema: { type: "integer" } } },
+        content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+      },
+      InternalError: {
+        description: "500 INTERNAL: Lỗi máy chủ không mong muốn",
+        content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
       },
     },
   },

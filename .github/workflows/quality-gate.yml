@@ -1,0 +1,71 @@
+name: LMS quality gate
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+jobs:
+  api-quality:
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: ci-only-secret-with-at-least-32-characters
+      MONGO_ROOT_USER: lms
+      MONGO_ROOT_PASSWORD: lms_ci_password
+      MONGO_PORT: 27018
+      AUTH_URL: http://127.0.0.1:4001
+      CORE_URL: http://127.0.0.1:4002
+      MONGO_URI: mongodb://127.0.0.1:27017/lms14_test_materials
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install root tooling
+        run: npm ci
+      - name: Install service dependencies
+        run: |
+          npm ci --prefix services/auth-service
+          npm ci --prefix services/core-api
+          npm ci --prefix apps/mobile
+      - name: Typecheck and validate contracts
+        run: |
+          npm run typecheck
+          npm run verify:docs
+          npm run validate:docs
+      - name: Start local stack
+        run: |
+          docker compose up -d --build --wait --wait-timeout 180
+          docker run -d --name lms-isolated-tests -p 27017:27017 mongo:7
+          for attempt in $(seq 1 30); do
+            if docker exec lms-isolated-tests mongosh --quiet --eval "db.adminCommand('ping').ok"; then break; fi
+            sleep 2
+          done
+      - name: Seed CI users
+        run: npm run seed --prefix services/auth-service
+        env:
+          MONGO_URI: mongodb://lms:lms_ci_password@127.0.0.1:27018/lms_auth?authSource=admin
+      - name: Run API, contract and Newman regression
+        run: |
+          npm run test:contract
+          npm run test:lms05 --prefix services/core-api
+          npm run test:lms06 --prefix services/core-api
+          npm run test:lms08 --prefix services/core-api
+          env -u AUTH_URL npm run test:lms09 --prefix services/core-api
+          npm run test:lms14 --prefix services/core-api
+          npm run test:mobile
+          npm run test:newman
+          npm run test:performance
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lms-api-test-evidence
+          path: |
+            test-reports/
+            test-results/
+          if-no-files-found: ignore
+      - name: Stop local stack
+        if: always()
+        run: docker compose down -v

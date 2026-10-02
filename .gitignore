@@ -16,6 +16,8 @@ GoogleService-Info.plist
 *.jks
 *.keystore
 coverage/
+test-reports/
+test-results/
 .cursor/hooks/state/*.json
 .cursor/hooks/state/*.jsonl
 .cursor/hooks/evidence/*.md

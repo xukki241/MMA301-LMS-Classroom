@@ -130,7 +130,7 @@ export default function RegisterScreen() {
             </View>
 
             <Text style={[typography.title, styles.title, { color: theme.colors.onBackground }]}>
-              Tạo tài khoản LMS 🚀
+              Tạo tài khoản LMS
             </Text>
             <Text style={[typography.body, styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
               Đăng ký để tham gia lớp học và trải nghiệm học tập cùng LMS
@@ -179,7 +179,7 @@ export default function RegisterScreen() {
                 ]}
               >
                 <View style={styles.roleCardTop}>
-                  <Text style={styles.roleEmoji}>👨‍🎓</Text>
+                  <Icon source="school-outline" size={22} color={role === "student" ? theme.colors.primary : theme.colors.onSurfaceVariant} />
                   {role === "student" && (
                     <Icon source="check-circle" size={18} color={theme.colors.primary} />
                   )}
@@ -206,7 +206,7 @@ export default function RegisterScreen() {
                 ]}
               >
                 <View style={styles.roleCardTop}>
-                  <Text style={styles.roleEmoji}>👨‍🏫</Text>
+                  <Icon source="account-tie-outline" size={22} color={role === "teacher" ? palette.teacher : theme.colors.onSurfaceVariant} />
                   {role === "teacher" && (
                     <Icon source="check-circle" size={18} color={palette.teacher} />
                   )}
@@ -474,9 +474,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 2,
-  },
-  roleEmoji: {
-    fontSize: 22,
   },
   roleTitle: {
     fontSize: 15,

@@ -104,7 +104,7 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <Text style={[typography.title, styles.title, { color: theme.colors.onBackground }]}>
-              Khôi phục mật khẩu 🔑
+              Khôi phục mật khẩu
             </Text>
             <Text style={[typography.body, styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
               Nhập email tài khoản LMS của bạn để nhận hướng dẫn đặt lại mật khẩu mới

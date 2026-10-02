@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "lms-classroom",
   "private": true,
   "description": "LMS Classroom Shub-lite — MMA301",
@@ -10,6 +10,24 @@
     "dev:core": "npm run dev --prefix services/core-api",
     "dev:mobile": "npm start --prefix apps/mobile",
     "seed": "npm run seed --prefix services/auth-service",
-    "sync-indexes": "npm run sync-indexes --prefix services/core-api"
+    "sync-indexes": "npm run sync-indexes --prefix services/core-api",
+    "verify:docs": "npm run verify:docs --prefix services/auth-service && npm run verify:docs --prefix services/core-api",
+    "validate:docs": "npm run validate:docs --prefix services/auth-service && npm run validate:docs --prefix services/core-api",
+    "typecheck": "npm run typecheck --prefix services/auth-service && npm run typecheck --prefix services/core-api && npm run typecheck --prefix apps/mobile",
+    "test:mobile": "npm test --prefix apps/mobile",
+    "test:api": "npm run test:lms05 --prefix services/core-api && npm run test:lms06 --prefix services/core-api && npm run test:lms08 --prefix services/core-api && npm run test:lms09 --prefix services/core-api && npm run test:lms14 --prefix services/core-api",
+    "test:contract": "npm run test:docs --prefix services/core-api",
+    "test:newman": "node qa/newman/regression.mjs",
+    "test:scalar": "playwright test",
+    "test:e2e": "node qa/maestro/run.mjs",
+    "test:performance": "node qa/performance/health.mjs",
+    "test:staging": "node qa/deployment/smoke.mjs",
+    "release:gate": "npm run typecheck && npm run verify:docs && npm run validate:docs && npm run test:mobile && npm run test:contract && npm run test:scalar && npm run test:api && npm run test:newman && npm run test:performance && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "@playwright/test": "^1.63.0",
+    "autocannon": "^8.0.0",
+    "newman": "^6.2.2"
   }
 }
