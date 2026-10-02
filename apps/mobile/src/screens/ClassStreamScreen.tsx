@@ -12,7 +12,7 @@ import { StreamRequestError } from "../components/stream/StreamRequestError";
 import { CommentThread } from "../components/stream/CommentThread";
 import { useAuth } from "../lib/auth-context";
 import { HttpError } from "../lib/http";
-import { getClass } from "../lib/classes-api";
+import { cachedClassDetail } from "../lib/offline-data";
 import { queryKeys } from "../lib/query-client";
 import { POST_MAX_LENGTH, type StreamPost } from "../lib/stream-api";
 import { postsOptions, createPostOptions, type StreamSession } from "../lib/stream-query";
@@ -24,7 +24,8 @@ export default function ClassStreamScreen({ classId }: { classId: string }) {
   const detail = useQuery({
     queryKey: queryKeys.class(user?.id ?? "", classId),
     enabled: Boolean(token && user && classId),
-    queryFn: ({ signal }) => getClass(token!, classId, signal),
+    queryFn: ({ signal }) => cachedClassDetail(token!, user!.id, user!.role, classId, signal),
+    networkMode: "always",
     staleTime: 0,
   });
   const { refetch } = detail;

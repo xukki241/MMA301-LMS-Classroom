@@ -1,12 +1,14 @@
 import { queryOptions, type QueryClient } from "@tanstack/react-query";
-import { listPosts, listComments, createPost, createComment, type StreamPost, type StreamComment } from "./stream-api";
+import { listComments, createPost, createComment, type StreamPost, type StreamComment } from "./stream-api";
+import { cachedPosts } from "./offline-data";
 
 export type StreamSession = { userId: string; token: string; classId: string };
 
 export function postsOptions(session: StreamSession) {
   return queryOptions({
     queryKey: ["stream", session.userId, session.classId, "posts"] as const,
-    queryFn: ({ signal }) => listPosts(session.token, session.classId, signal),
+    queryFn: ({ signal }) => cachedPosts(session.token, session.userId, session.classId, signal),
+    networkMode: "always",
     retry: false, // http already handles GET retries.
   });
 }
@@ -20,6 +22,7 @@ export function commentsOptions(session: StreamSession, postId: string) {
 export function createPostOptions(client: QueryClient, session: StreamSession) {
   const { queryKey } = postsOptions(session);
   return {
+    networkMode: "always" as const,
     mutationFn: (content: string) => createPost(session.token, session.classId, content),
     retry: false as const,
     onSuccess: async (post: StreamPost) => {
@@ -32,6 +35,7 @@ export function createPostOptions(client: QueryClient, session: StreamSession) {
 export function createCommentOptions(client: QueryClient, session: StreamSession, postId: string) {
   const { queryKey } = commentsOptions(session, postId);
   return {
+    networkMode: "always" as const,
     mutationFn: (content: string) => createComment(session.token, session.classId, postId, content),
     retry: false as const,
     onSuccess: async (comment: StreamComment) => {

@@ -1,3 +1,5 @@
+import { networkState, OFFLINE_MESSAGE } from "./network-state";
+
 export class HttpError extends Error {
   status: number;
   code?: string;
@@ -68,6 +70,7 @@ function dedupeKey(url: string, method: HttpMethod, token?: string | null) {
 
 export async function http<T>(url: string, options: HttpOptions = {}): Promise<T> {
   const method: HttpMethod = options.method ?? "GET";
+  if (method !== "GET" && networkState.isOffline()) throw new HttpError(OFFLINE_MESSAGE, 0, "OFFLINE_WRITE");
   const idempotent = method === "GET";
   const shouldDedupe = options.dedupe ?? idempotent;
   const key = dedupeKey(url, method, options.token);

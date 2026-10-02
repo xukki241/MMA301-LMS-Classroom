@@ -6,6 +6,8 @@ require.extensions[".ts"] = (module, filename) => module._compile(ts.transpileMo
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, filename);
 const { QueryClient } = require("@tanstack/react-query");
+const { onlineManager } = require("@tanstack/react-query");
+const { networkState } = require("../src/lib/network-state.ts");
 const queries = require("../src/lib/stream-query.ts");
 const { HttpError } = require("../src/lib/http.ts");
 const { streamAccessDenied } = require("../src/lib/stream-errors.ts");
@@ -82,4 +84,22 @@ test("late result from previous account cannot populate next account cache", asy
 test("cached success is hidden for lost permissions/deleted posts, not a network refresh error", () => {
   for (const status of [401, 403, 404]) assert.equal(streamAccessDenied(new HttpError("private", status)), true);
   assert.equal(streamAccessDenied(new HttpError("private", 0)), false);
+});
+test("offline Post and Comment mutations reject immediately without a queued request", async () => {
+  const c = client();
+  let calls = 0;
+  global.fetch = async () => { calls++; throw Error("unexpected request"); };
+  networkState.setOnline(false);
+  onlineManager.setOnline(false);
+  try {
+    for (const options of [queries.createPostOptions(c, session), queries.createCommentOptions(c, session, "post-a")]) {
+      await assert.rejects(c.getMutationCache().build(c, options).execute("hello"), e => e.code === "OFFLINE_WRITE");
+    }
+    assert.equal(calls, 0);
+    assert.equal(c.getMutationCache().getAll().every(m => m.state.isPaused === false), true);
+  } finally {
+    networkState.setOnline(true);
+    onlineManager.setOnline(true);
+    c.clear();
+  }
 });

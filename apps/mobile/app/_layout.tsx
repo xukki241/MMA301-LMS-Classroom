@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { View } from "react-native";
 import { ActivityIndicator, PaperProvider } from "react-native-paper";
 import { ThemeProvider } from "expo-router/react-navigation";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -11,6 +12,8 @@ import { useColorScheme } from "@/components/useColorScheme";
 import { AuthProvider, useAuth } from "@/src/lib/auth-context";
 import { Screen } from "@/src/components/ui/Screen";
 import { queryClient } from "@/src/lib/query-client";
+import { NetworkProvider } from "@/src/lib/network-context";
+import { OfflineBanner } from "@/src/components/ui/OfflineBanner";
 import { darkNavTheme, darkPaperTheme, lightNavTheme, lightPaperTheme } from "@/src/theme/paper-theme";
 
 export { ErrorBoundary } from "expo-router";
@@ -34,11 +37,16 @@ export default function RootLayout() {
           icon: (props) => <MaterialCommunityIcons {...props} />,
         }}
       >
-        <AuthProvider>
-          <ThemeProvider value={navTheme}>
-            <AuthenticatedStack />
-          </ThemeProvider>
-        </AuthProvider>
+        <NetworkProvider>
+          <AuthProvider>
+            <ThemeProvider value={navTheme}>
+              <View style={{ flex: 1 }}>
+                <OfflineBanner />
+                <AuthenticatedStack />
+              </View>
+            </ThemeProvider>
+          </AuthProvider>
+        </NetworkProvider>
       </PaperProvider>
     </QueryClientProvider>
   );

@@ -11,7 +11,8 @@ import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { ClassRequestError } from "@/src/components/ui/ClassRequestError";
 import { CachedAvatar } from "@/src/components/ui/CachedAvatar";
 import { useAuth } from "@/src/lib/auth-context";
-import { getClass, getClassMembers } from "@/src/lib/classes-api";
+import { getClassMembers } from "@/src/lib/classes-api";
+import { cachedClassDetail } from "@/src/lib/offline-data";
 import { queryKeys } from "@/src/lib/query-client";
 import { elevation, radius, spacing, typography } from "@/src/theme/tokens";
 
@@ -53,7 +54,8 @@ export default function ClassDetailScreen() {
   const query = useQuery({
     queryKey: queryKeys.class(user?.id ?? "", classId ?? ""),
     enabled: Boolean(token && user && classId),
-    queryFn: ({ signal }) => getClass(token!, classId!, signal),
+    queryFn: ({ signal }) => cachedClassDetail(token!, user!.id, user!.role, classId!, signal),
+    networkMode: "always",
     staleTime: 0,
   });
   const membersQuery = useQuery({
