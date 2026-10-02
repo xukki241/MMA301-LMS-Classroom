@@ -9,7 +9,11 @@
 | Docs smoke | `npm run test:contract` | `/docs`, `/openapi.json`, token helpers |
 | API collection | `npm run test:newman` | Full Postman regression when Newman is installed |
 | Scalar browser | `npm run test:scalar` | Playwright docs/try-it-out smoke |
-| Android E2E | `npm run test:e2e` | Maestro critical journeys on Pixel_10 |
+| Android smoke | `npm run test:e2e` | Maestro auth smoke on Pixel_10; full class/material/exercise/submission journey remains manual |
 | Release gate | `npm run release:gate` | All locally available mandatory gates |
 
 Failures must preserve logs, request IDs, screenshots and traces. A retry may diagnose a flaky test but cannot hide the first failure.
+
+The repository does not currently contain a Selenium suite. Do not report
+Selenium as executed; browser documentation checks use Playwright, API
+regression uses Newman, and the native Android smoke uses Maestro.
