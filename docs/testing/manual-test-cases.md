@@ -67,12 +67,19 @@ public staging unless the team explicitly provisioned them there.
 | S-06 | `POST $CORE_URL/classes/join` with student token and `{ code: classCode }` | `200`; membership role is `student` | status + response |
 | S-07 | `POST /classes/{classId}/posts` with teacher token | `201`; post has an `_id` | status + screenshot |
 | S-08 | `GET /classes/{classId}/posts` with student token | `200`; the created post is visible | response + screenshot |
-| S-09 | `POST /classes/{classId}/exercises` with teacher token and `{ title, description, dueAt: "2099-01-01T00:00:00.000Z" }` | `201`; copy `exercise._id` locally | status + response |
+| S-09 | `POST /classes/{classId}/exercises` with teacher token and `{ title, description, dueAt: "<UTC now + 2 minutes>" }` | `201`; copy `exercise._id` locally | status + response |
 | S-10 | `POST .../submissions` with student token and `{ content: "QA answer", url: "" }` | `201`; copy `submission._id` locally | status + response |
-| S-11 | `PUT .../{submissionId}/grade` with teacher token and `{ score: 8.5, feedback: "Good" }` after the due time | `200`; grade score is `8.5` | status + redacted response |
+| S-11 | Wait until the exercise due time, then `PUT .../{submissionId}/grade` with teacher token and `{ score: 8.5, feedback: "Good" }` | `200`; grade score is `8.5` | status + redacted response |
 | S-12 | `GET .../submissions/mine` with student token | `200`; own submission and grade are visible | screenshot + request ID |
 
-Use the actual route prefixes shown in `/docs`; do not invent IDs or add
+For PowerShell, generate the due time without copying a literal local timezone:
+
+```powershell
+$dueAt = (Get-Date).ToUniversalTime().AddMinutes(2).ToString("o")
+```
+
+Use `$dueAt` in the JSON body, then submit before it expires and wait until it
+expires before running S-11. Use the actual route prefixes shown in `/docs`; do not invent IDs or add
 `classId`, `createdBy`, or `studentId` to request bodies. A successful status
 without the expected response shape is a **FAIL**.
 
