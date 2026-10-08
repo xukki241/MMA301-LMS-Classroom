@@ -88,7 +88,9 @@ export function ClassesWorkspace() {
         />
       }
     >
-      <Text style={typography.title}>{isTeacher ? "Lớp giảng dạy" : "Lớp của tôi"}</Text>
+      <Text testID="classes-workspace-title" style={typography.title}>
+        {isTeacher ? "Lớp giảng dạy" : "Lớp của tôi"}
+      </Text>
       <Text style={[typography.body, { color: theme.colors.onSurfaceVariant, marginBottom: spacing.lg }]}>
         {isTeacher ? "Tạo lớp mới và chia sẻ mã lớp với học sinh." : "Nhập mã lớp do giáo viên cung cấp."}
       </Text>

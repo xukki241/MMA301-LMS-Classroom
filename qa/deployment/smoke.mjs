@@ -1,14 +1,9 @@
-import { randomBytes } from "node:crypto";
+import { redactedAccountSummary, resolveStagingAccounts } from "../lib/staging-credentials.mjs";
+import { journeyEnabled, runCoreBusinessJourney } from "../lib/core-journey.mjs";
 
 const authUrl = (process.env.AUTH_URL || "http://127.0.0.1:4001").replace(/\/$/, "");
 const coreUrl = (process.env.CORE_URL || "http://127.0.0.1:4002").replace(/\/$/, "");
-const registerTemporaryUsers = process.env.SMOKE_REGISTER_TEMP === "1";
-const suffix = `${Date.now()}-${randomBytes(3).toString("hex")}`;
-const generatedPassword = `Qa-${randomBytes(18).toString("base64url")}!`;
-const teacherEmail = registerTemporaryUsers ? `qa.teacher.${suffix}@example.test` : (process.env.SMOKE_TEACHER_EMAIL || "teacher@lms.local");
-const teacherPassword = registerTemporaryUsers ? generatedPassword : (process.env.SMOKE_TEACHER_PASSWORD || "Demo123!");
-const studentEmail = registerTemporaryUsers ? `qa.student.${suffix}@example.test` : (process.env.SMOKE_STUDENT_EMAIL || "student@lms.local");
-const studentPassword = registerTemporaryUsers ? generatedPassword : (process.env.SMOKE_STUDENT_PASSWORD || "Demo123!");
+const accounts = resolveStagingAccounts();
 const expectDevTokens = process.env.EXPECT_DEV_TOKENS === "1";
 
 async function get(url, expected, method = "GET") {
@@ -38,6 +33,8 @@ async function login(label, email, password) {
   return body.token;
 }
 
+const checks = ["health", "openapi", "scalar", "production-dev-token-lock", "teacher-login", "student-login"];
+
 await get(`${authUrl}/health`, 200);
 await get(`${coreUrl}/health`, 200);
 const authSpec = await (await get(`${authUrl}/openapi.json`, 200)).json();
@@ -48,19 +45,31 @@ await get(`${authUrl}/docs`, 200);
 await get(`${coreUrl}/docs`, 200);
 await get(`${coreUrl}/docs/tokens/teacher`, expectDevTokens ? 200 : 403, "POST");
 await get(`${coreUrl}/docs/tokens/student`, expectDevTokens ? 200 : 403, "POST");
-if (registerTemporaryUsers) {
-  await register("teacher", teacherEmail, teacherPassword, "teacher");
-  await register("student", studentEmail, studentPassword, "student");
+if (accounts.registerTemporaryUsers) {
+  await register("teacher", accounts.teacherEmail, accounts.teacherPassword, "teacher");
+  await register("student", accounts.studentEmail, accounts.studentPassword, "student");
 }
-await login("teacher", teacherEmail, teacherPassword);
-await login("student", studentEmail, studentPassword);
+const teacherToken = await login("teacher", accounts.teacherEmail, accounts.teacherPassword);
+const studentToken = await login("student", accounts.studentEmail, accounts.studentPassword);
+
+let journey;
+if (journeyEnabled()) {
+  journey = await runCoreBusinessJourney({
+    coreUrl,
+    teacherToken,
+    studentToken,
+    label: `Smoke ${accounts.suffix}`,
+  });
+  checks.push(...journey.checks);
+}
 
 console.log(JSON.stringify({
   authUrl,
   coreUrl,
   authPaths: Object.keys(authSpec.paths).length,
   corePaths: Object.keys(coreSpec.paths).length,
-  accounts: registerTemporaryUsers ? "temporary QA accounts registered; identifiers redacted" : "pre-provisioned QA accounts",
-  checks: ["health", "openapi", "scalar", "production-dev-token-lock", "teacher-login", "student-login"],
+  accounts: redactedAccountSummary(accounts),
+  journey: journeyEnabled() ? "full-core-business" : "skipped (set SMOKE_JOURNEY=1 or SMOKE_REGISTER_TEMP=1)",
+  checks,
   status: "pass",
 }, null, 2));

@@ -16,6 +16,8 @@ jobs:
       AUTH_URL: http://127.0.0.1:4001
       CORE_URL: http://127.0.0.1:4002
       MONGO_URI: mongodb://127.0.0.1:27017/lms14_test_materials
+      SMOKE_REGISTER_TEMP: "1"
+      SMOKE_DUE_OFFSET_SEC: "30"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,6 +26,8 @@ jobs:
           cache: npm
       - name: Install root tooling
         run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
       - name: Install service dependencies
         run: |
           npm ci --prefix services/auth-service
@@ -49,6 +53,7 @@ jobs:
       - name: Run API, contract and Newman regression
         run: |
           npm run test:contract
+          npm run test:scalar
           npm run test:lms05 --prefix services/core-api
           npm run test:lms06 --prefix services/core-api
           npm run test:lms08 --prefix services/core-api

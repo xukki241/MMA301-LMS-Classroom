@@ -30,6 +30,7 @@ import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { AppButton } from "@/src/components/ui/AppButton";
 import { useAuth } from "@/src/lib/auth-context";
+import { userErrorMessage } from "@/src/lib/user-error-message";
 import {
   createMaterial,
   deleteMaterial,
@@ -212,7 +213,7 @@ export default function MaterialsScreen() {
         </Screen>
       ) : query.isError ? (
         <Screen>
-          <ErrorState message={query.error.message} onRetry={() => void query.refetch()} />
+          <ErrorState message={userErrorMessage(query.error)} onRetry={() => void query.refetch()} />
         </Screen>
       ) : materials.length === 0 ? (
         <Screen

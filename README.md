@@ -96,13 +96,27 @@ Chỉ dùng tài khoản seed ghi trong `.env.example` ở local. Không tạo c
 
 ### 4. Chạy Android
 
-Android emulator truy cập máy host bằng `10.0.2.2`:
+Chọn AVD `Pixel_10` theo tên (không dùng serial `adb`). Tester thủ công: [apps/mobile/LMS-23-MANUAL-TEST.md](./apps/mobile/LMS-23-MANUAL-TEST.md).
+
+Local (emulator tới host `10.0.2.2`):
 
 ```powershell
 $env:EXPO_PUBLIC_AUTH_URL = "http://10.0.2.2:4001"
 $env:EXPO_PUBLIC_CORE_URL = "http://10.0.2.2:4002"
-npm run android --prefix apps/mobile
+cd apps/mobile
+npx expo run:android -d Pixel_10
 ```
+
+Staging:
+
+```powershell
+$env:EXPO_PUBLIC_AUTH_URL = "https://mma301-lms-auth-staging.onrender.com"
+$env:EXPO_PUBLIC_CORE_URL = "https://mma301-lms-core-staging.onrender.com"
+cd apps/mobile
+npx expo run:android -d Pixel_10
+```
+
+`POST /docs/tokens/*` bị khóa khi `NODE_ENV=production` (giống staging). Token 1-click chỉ dùng local/dev. Scalar local đã inline `$ref`; Scalar staging cần redeploy Auth/Core. Production đang chặn vì secret đã xoay — không commit secret.
 
 Với điện thoại thật, thay `10.0.2.2` bằng IPv4 LAN của máy phát triển và cho phép firewall ở cổng `4001`, `4002`.
 
@@ -123,11 +137,19 @@ Mẫu đầy đủ nằm trong [.env.example](./.env.example). Không commit `.e
 
 ## Kiểm thử
 
+Gate **không bắt e2e** (đủ cho bàn giao tay):
+
 ```powershell
-npm run release:gate
+npm run typecheck
+npm run verify:docs
+npm run validate:docs
+npm run test:mobile
+npm run test:contract
+npm run test:scalar
+npm run test:api
 ```
 
-Quality gate gồm typecheck, OpenAPI, mobile tests, Playwright, Selenium, API scripts, Newman, performance và Maestro. Các phần phụ thuộc runtime phải có backend/emulator đang chạy.
+`npm run release:gate` còn Newman, performance, Selenium và Maestro. Maestro là **tuỳ chọn** (`MAESTRO_EMAIL` / `MAESTRO_PASSWORD` trong shell). Các phần phụ thuộc runtime phải có backend/emulator đang chạy.
 
 | Lệnh | Phạm vi | Evidence |
 | --- | --- | --- |

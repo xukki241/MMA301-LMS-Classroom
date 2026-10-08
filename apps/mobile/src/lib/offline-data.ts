@@ -2,7 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getClass, listClasses, type ClassDetail, type LmsClass } from "./classes-api";
 import { listPosts, type StreamPost } from "./stream-api";
 import { HttpError } from "./http";
-import { classCacheKey, createOfflineCache, postCacheKey, readThroughCache } from "./offline-cache-core";
+import {
+  classCacheKey,
+  createOfflineCache,
+  OFFLINE_CACHE_PREFIX,
+  postCacheKey,
+  readThroughCache,
+} from "./offline-cache-core";
 import { networkState } from "./network-state";
 
 const cache = createOfflineCache(AsyncStorage);
@@ -23,6 +29,17 @@ export async function cachedPosts(token: string, userId: string, classId: string
   const key = postCacheKey(userId, classId);
   const valid = (value: unknown): value is StreamPost[] => isPostList(value) && value.every(post => post.classId === classId);
   return readThroughCache(() => listPosts(token, classId, signal), cache, key, valid, networkState.isOffline());
+}
+
+/** Removes all LMS offline cache entries (used on logout to prevent cross-user reads). */
+export async function purgeOfflineCache(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const ours = keys.filter(key => key.startsWith(OFFLINE_CACHE_PREFIX));
+    if (ours.length > 0) await AsyncStorage.multiRemove(ours);
+  } catch {
+    /* Best-effort; online session still uses per-user cache keys. */
+  }
 }
 
 export async function cachedClassDetail(
