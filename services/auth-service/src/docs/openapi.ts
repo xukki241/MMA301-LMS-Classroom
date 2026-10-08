@@ -1,4 +1,6 @@
-export const authOpenApiSpec = {
+import { expandResponseRefs } from "./expand-response-refs.js";
+
+const authOpenApiDocument = {
   openapi: "3.1.0",
   info: {
     title: "MMA301 LMS Classroom - Auth Service",
@@ -6,9 +8,10 @@ export const authOpenApiSpec = {
     description: "Authentication API for the LMS Classroom MVP.",
   },
   servers: [
-    { url: "http://localhost:4001", description: "Local Auth Service" },
-    { url: "http://localhost:14001", description: "Test Auth Service" },
-    { url: "https://lms-auth.onrender.com", description: "Render placeholder" },
+    { url: "/", description: "Host đang phục vụ tài liệu này (local hoặc staging)" },
+    { url: "http://127.0.0.1:4001", description: "Local Auth Service" },
+    { url: "http://127.0.0.1:14001", description: "Test Auth Service" },
+    { url: "https://mma301-lms-auth-staging.onrender.com", description: "Staging Auth Service" },
   ],
   tags: [
     { name: "System", description: "Health and readiness endpoints" },
@@ -20,6 +23,7 @@ export const authOpenApiSpec = {
         tags: ["System"],
         summary: "Check Auth Service health",
         operationId: "getAuthHealth",
+        security: [],
         responses: {
           "200": { description: "Service and MongoDB are healthy", content: { "application/json": { schema: { $ref: "#/components/schemas/HealthResponse" }, example: { ok: true, service: "auth-service", mongo: "up" } } } },
           "503": { $ref: "#/components/responses/ServiceUnavailable" },
@@ -31,6 +35,7 @@ export const authOpenApiSpec = {
         tags: ["Authentication"],
         summary: "Register a user",
         operationId: "registerUser",
+        security: [],
         requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/RegisterRequest" }, example: { email: "new.student@example.com", password: "Demo123!", displayName: "New Student", role: "student" } } } },
         responses: {
           "201": { description: "User registered", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthResponse" } } } },
@@ -46,6 +51,7 @@ export const authOpenApiSpec = {
         tags: ["Authentication"],
         summary: "Login and issue a JWT",
         operationId: "loginUser",
+        security: [],
         requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/LoginRequest" }, example: { email: "teacher@lms.local", password: "Demo123!" } } } },
         responses: {
           "200": { description: "Login succeeded", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthResponse" } } } },
@@ -84,4 +90,6 @@ export const authOpenApiSpec = {
       InternalError: { description: "Unexpected server error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
     },
   },
-} as const;
+};
+
+export const authOpenApiSpec = expandResponseRefs(authOpenApiDocument);
