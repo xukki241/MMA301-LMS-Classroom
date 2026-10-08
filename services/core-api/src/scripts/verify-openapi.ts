@@ -1,3 +1,5 @@
+import { operation } from "@scalar/schemas/openapi/3.1";
+import { validate } from "@scalar/validation";
 import { openApiSpec } from "../docs/openapi.js";
 
 const expected: Record<string, string[]> = {
@@ -42,6 +44,22 @@ const documented = new Set(Object.keys(paths));
 const undocumented = [...documented].filter((path) => !expected[path]);
 if (undocumented.length > 0) {
   throw new Error(`OpenAPI contains paths not present in route manifest: ${undocumented.join(", ")}`);
+}
+
+for (const [path, item] of Object.entries(paths)) {
+  for (const method of ["get", "post", "put", "patch", "delete"]) {
+    const candidate = item[method];
+    if (!candidate) continue;
+    if (!validate(operation, candidate)) {
+      throw new Error(`Scalar cannot test ${method.toUpperCase()} ${path}`);
+    }
+    const responses = (candidate as { responses?: Record<string, unknown> }).responses ?? {};
+    for (const [status, response] of Object.entries(responses)) {
+      if (response && typeof response === "object" && "$ref" in response && !("description" in response)) {
+        throw new Error(`Scalar cannot test ${method.toUpperCase()} ${path}: response ${status} is an unresolved $ref`);
+      }
+    }
+  }
 }
 
 console.log(`Core OpenAPI contract OK (${Object.keys(expected).length} paths)`);

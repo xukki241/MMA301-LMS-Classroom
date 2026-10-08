@@ -1,8 +1,9 @@
+import { expandResponseRefs } from "./expand-response-refs.js";
 import { exercisePaths, exerciseSchemas } from "./exercise.openapi.js";
 import { submissionPaths, submissionSchemas } from "./submission.openapi.js";
 import { materialPaths, materialSchemas } from "./material.openapi.js";
 
-export const openApiSpec = {
+const coreOpenApiDocument = {
   openapi: "3.1.0",
   info: {
     title: "MMA301 LMS Classroom - Core API (Nguyễn Anh Tú)",
@@ -58,12 +59,16 @@ Email: dambautv2005@gmail.com
   },
   servers: [
     {
-      url: "http://localhost:4002",
-      description: "Core API (Cổng 4002)",
+      url: "/",
+      description: "Host đang phục vụ tài liệu này (local hoặc staging)",
     },
     {
-      url: "http://localhost:4001",
-      description: "Auth Service (Cổng 4001)",
+      url: "http://127.0.0.1:4002",
+      description: "Core API local",
+    },
+    {
+      url: "https://mma301-lms-core-staging.onrender.com",
+      description: "Core API staging",
     },
   ],
   tags: [
@@ -116,6 +121,7 @@ Email: dambautv2005@gmail.com
       post: {
         tags: ["Authentication & Lấy Token"],
         summary: "Lấy Token Giáo viên 1-Click (Demo Teacher)",
+        security: [],
         description: `Endpoint tiện ích phục vụ việc test API.
 Trả về JWT Token của tài khoản Giáo viên (\`teacher@lms.local\`).
 Nếu Auth Service (:4001) đang bật, hệ thống sẽ lấy token chuẩn từ Auth Service. Nếu chưa bật, hệ thống sẽ tự ký token hợp lệ bằng JWT_SECRET.
@@ -138,6 +144,21 @@ Cách dùng: Nhấn **Test Request**, sau đó copy giá trị \`token\` và dá
               },
             },
           },
+          "403": {
+            description: "Môi trường production/staging tắt phát token demo",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["error", "code"],
+                  properties: {
+                    error: { type: "string" },
+                    code: { type: "string", enum: ["FORBIDDEN_IN_PRODUCTION"] },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -145,6 +166,7 @@ Cách dùng: Nhấn **Test Request**, sau đó copy giá trị \`token\` và dá
       post: {
         tags: ["Authentication & Lấy Token"],
         summary: "Lấy Token Sinh viên 1-Click (Demo Student)",
+        security: [],
         description: `Endpoint tiện ích phục vụ việc test API.
 Trả về JWT Token của tài khoản Sinh viên (\`student@lms.local\`).
 
@@ -166,21 +188,32 @@ Cách dùng: Nhấn **Test Request**, sau đó copy giá trị \`token\` và dá
               },
             },
           },
+          "403": {
+            description: "Môi trường production/staging tắt phát token demo",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["error", "code"],
+                  properties: {
+                    error: { type: "string" },
+                    code: { type: "string", enum: ["FORBIDDEN_IN_PRODUCTION"] },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
     "/auth/login": {
       post: {
         servers: [
-          {
-            url: "http://localhost:4001",
-            description: "Auth Service (Cổng 4001)",
-          },
-          {
-            url: "http://localhost:4002",
-            description: "Core API Proxy (Cổng 4002)",
-          },
+          { url: "/", description: "Core API hiện tại, proxy tới Auth của cùng môi trường" },
+          { url: "http://127.0.0.1:4001", description: "Auth Service local" },
+          { url: "https://mma301-lms-auth-staging.onrender.com", description: "Auth Service staging" },
         ],
+        security: [],
         tags: ["Authentication & Lấy Token"],
         summary: "Đăng nhập tài khoản qua Auth Service",
         description: `Gọi trực tiếp đến Auth Service để xác thực email và password.
@@ -232,6 +265,27 @@ Tài khoản seed mặc định:
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "503": {
+            description: "Core không kết nối được Auth Service",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["error"],
+                  properties: {
+                    error: {
+                      type: "object",
+                      required: ["code", "message"],
+                      properties: {
+                        code: { type: "string", enum: ["AUTH_SERVICE_UNAVAILABLE"] },
+                        message: { type: "string" },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -650,19 +704,39 @@ Tài khoản seed mặc định:
         tags: ["Hệ thống & Thông tin cá nhân"],
         summary: "Kiểm tra trạng thái sống Core API",
         description: "Kiểm tra trạng thái hoạt động của Core API và kết nối cơ sở dữ liệu MongoDB.",
+        security: [],
         responses: {
           "200": {
-            description: "Hệ thống hoạt động bình thường",
+            description: "Core API và MongoDB sẵn sàng",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
+                  required: ["ok", "service", "mongo"],
                   properties: {
-                    status: { type: "string", example: "ok" },
-                    service: { type: "string", example: "core-api" },
-                    mongo: { type: "string", example: "connected" },
+                    ok: { type: "boolean", const: true },
+                    service: { type: "string", enum: ["core-api"] },
+                    mongo: { type: "string", enum: ["up"] },
                   },
                 },
+                example: { ok: true, service: "core-api", mongo: "up" },
+              },
+            },
+          },
+          "503": {
+            description: "Core API chạy nhưng MongoDB không kết nối",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["ok", "service", "mongo"],
+                  properties: {
+                    ok: { type: "boolean", const: false },
+                    service: { type: "string", enum: ["core-api"] },
+                    mongo: { type: "string", enum: ["down"] },
+                  },
+                },
+                example: { ok: false, service: "core-api", mongo: "down" },
               },
             },
           },
@@ -1469,3 +1543,5 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
     },
   },
 };
+
+export const openApiSpec = expandResponseRefs(coreOpenApiDocument);
