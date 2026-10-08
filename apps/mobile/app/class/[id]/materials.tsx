@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -25,10 +24,12 @@ import {
   useTheme,
 } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Screen } from "@/src/components/ui/Screen";
 import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { AppButton } from "@/src/components/ui/AppButton";
+import { FieldError, FormDialogScroll, FormNotice, keyboardBehavior, useKeyboardLift } from "@/src/components/ui/FormFeedback";
 import { useAuth } from "@/src/lib/auth-context";
 import { userErrorMessage } from "@/src/lib/user-error-message";
 import {
@@ -76,7 +77,11 @@ export default function MaterialsScreen() {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [description, setDescription] = useState("");
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [urlError, setUrlError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
+  const keyboardLift = useKeyboardLift();
 
   // Set tiêu đề header
   useEffect(() => {
@@ -101,9 +106,11 @@ export default function MaterialsScreen() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.materials(classId!) });
       closeModal();
     },
-    onError: (err: Error) => {
+    onError: (err: unknown) => {
       notifyError();
-      setFormError(err.message || "Không thể thêm tài liệu lúc này");
+      setTitleError(null);
+      setUrlError(null);
+      setFormError(userErrorMessage(err));
     },
   });
 
@@ -116,7 +123,7 @@ export default function MaterialsScreen() {
     },
     onError: (err: Error) => {
       notifyError();
-      Alert.alert("Lỗi", err.message || "Không thể xóa tài liệu");
+      Alert.alert("Lỗi", userErrorMessage(err));
     },
   });
 
@@ -125,6 +132,8 @@ export default function MaterialsScreen() {
     setTitle("");
     setUrl("");
     setDescription("");
+    setTitleError(null);
+    setUrlError(null);
     setFormError(null);
   };
 
@@ -173,13 +182,17 @@ export default function MaterialsScreen() {
     const trimmedUrl = url.trim();
 
     if (!trimmedTitle) {
-      setFormError("Vui lòng nhập tiêu đề tài liệu");
+      setTitleError("Vui lòng nhập tiêu đề tài liệu");
+      setUrlError(null);
+      setFormError(null);
       notifyError();
       return;
     }
 
     if (!trimmedUrl) {
-      setFormError("Vui lòng nhập đường dẫn URL tài liệu");
+      setTitleError(null);
+      setUrlError("Vui lòng nhập đường dẫn URL tài liệu");
+      setFormError(null);
       notifyError();
       return;
     }
@@ -190,11 +203,15 @@ export default function MaterialsScreen() {
         throw new Error();
       }
     } catch {
-      setFormError("Đường dẫn phải bắt đầu bằng http:// hoặc https://");
+      setTitleError(null);
+      setUrlError("Đường dẫn phải bắt đầu bằng http:// hoặc https://");
+      setFormError(null);
       notifyError();
       return;
     }
 
+    setTitleError(null);
+    setUrlError(null);
     setFormError(null);
     createMutation.mutate({
       title: trimmedTitle,
@@ -238,7 +255,7 @@ export default function MaterialsScreen() {
         </Screen>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollList}
+          contentContainerStyle={[styles.scrollList, { paddingBottom: 128 + insets.bottom }]}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
@@ -359,28 +376,26 @@ export default function MaterialsScreen() {
         </ScrollView>
       )}
 
-      {/* FAB Nổi thêm tài liệu (Chỉ dành cho Giáo viên) */}
-      {isTeacher && (
+      {isTeacher && query.isSuccess && materials.length > 0 ? (
         <FAB
           icon="plus"
           label="Thêm tài liệu"
-          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+          style={[styles.fab, { bottom: spacing.lg + insets.bottom, backgroundColor: theme.colors.primary }]}
           color="#FFFFFF"
           onPress={() => {
             impactLight();
             setModalVisible(true);
           }}
         />
-      )}
+      ) : null}
 
-      {/* Dialog Form Thêm Tài Liệu */}
       <Portal>
         <Dialog
           visible={modalVisible}
           onDismiss={closeModal}
-          style={[styles.dialog, { backgroundColor: theme.colors.surface }]}
+          style={[styles.dialog, { marginBottom: keyboardLift, backgroundColor: theme.colors.surface }]}
         >
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <KeyboardAvoidingView behavior={keyboardBehavior}>
             <View style={styles.dialogHeader}>
               <View style={[styles.dialogIconBadge, { backgroundColor: theme.colors.primaryContainer }]}>
                 <Icon source="file-link-outline" size={24} color={theme.colors.primary} />
@@ -390,29 +405,28 @@ export default function MaterialsScreen() {
                 Chia sẻ liên kết slide bài giảng hoặc tài liệu tham khảo cho lớp
               </Text>
             </View>
-
-            <Dialog.Content style={styles.dialogContent}>
-              {Boolean(formError) && (
-                <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle-outline" size={18} color={palette.danger} />
-                  <Text style={styles.errorText}>{formError}</Text>
-                </View>
-              )}
-
+            {formError ? (
+              <View style={styles.noticeInset}>
+                <FormNotice message={formError} />
+              </View>
+            ) : null}
+            <FormDialogScroll>
               <TextInput
                 mode="outlined"
                 label="Tiêu đề tài liệu *"
                 placeholder="VD: Slide Bài 1 - Kiến trúc LMS"
                 value={title}
-                onChangeText={(t) => {
-                  setTitle(t);
-                  if (formError) setFormError(null);
+                error={Boolean(titleError)}
+                onChangeText={(value) => {
+                  setTitle(value);
+                  setTitleError(null);
+                  setFormError(null);
                 }}
                 outlineStyle={styles.dialogInputOutline}
                 style={styles.dialogInput}
                 left={<TextInput.Icon icon="format-title" />}
               />
-
+              <FieldError message={titleError} />
               <TextInput
                 mode="outlined"
                 label="Đường dẫn liên kết (URL) *"
@@ -420,15 +434,17 @@ export default function MaterialsScreen() {
                 autoCapitalize="none"
                 keyboardType="url"
                 value={url}
-                onChangeText={(t) => {
-                  setUrl(t);
-                  if (formError) setFormError(null);
+                error={Boolean(urlError)}
+                onChangeText={(value) => {
+                  setUrl(value);
+                  setUrlError(null);
+                  setFormError(null);
                 }}
                 outlineStyle={styles.dialogInputOutline}
                 style={styles.dialogInput}
                 left={<TextInput.Icon icon="link-variant" />}
               />
-
+              <FieldError message={urlError} />
               <TextInput
                 mode="outlined"
                 label="Mô tả / Hướng dẫn (tuỳ chọn)"
@@ -436,13 +452,12 @@ export default function MaterialsScreen() {
                 multiline
                 numberOfLines={2}
                 value={description}
-                onChangeText={(t) => setDescription(t)}
+                onChangeText={setDescription}
                 outlineStyle={styles.dialogInputOutline}
                 style={styles.dialogInput}
                 left={<TextInput.Icon icon="text" />}
               />
-            </Dialog.Content>
-
+            </FormDialogScroll>
             <Dialog.Actions style={styles.dialogActions}>
               <AppButton
                 mode="text"
@@ -474,7 +489,6 @@ const styles = StyleSheet.create({
   scrollList: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: 90,
   },
   headerInfo: {
     flexDirection: "row",
@@ -526,7 +540,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   deleteBtn: {
-    padding: 6,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 8,
   },
   itemTitle: {
@@ -562,8 +579,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingVertical: 4,
+    gap: spacing.sm,
+    minHeight: 44,
+    paddingVertical: 8,
   },
   actionBtnText: {
     fontSize: 13,
@@ -580,10 +598,10 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     right: spacing.lg,
-    bottom: spacing.xl,
     borderRadius: radius.pill,
   },
   dialog: {
+    maxHeight: "88%",
     borderRadius: 20,
     paddingVertical: spacing.xs,
   },
@@ -605,10 +623,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
   },
-  dialogContent: {
-    gap: spacing.sm,
-    paddingTop: spacing.md,
-  },
   dialogInput: {
     backgroundColor: "transparent",
   },
@@ -619,21 +633,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
   },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: palette.dangerSoft,
-    borderColor: "#FECACA",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 8,
-    gap: 6,
-    marginBottom: 4,
-  },
-  errorText: {
-    flex: 1,
-    fontSize: 12,
-    color: palette.danger,
-    fontWeight: "500",
+  noticeInset: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.sm,
   },
 });

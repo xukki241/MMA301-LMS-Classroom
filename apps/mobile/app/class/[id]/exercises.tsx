@@ -2,7 +2,6 @@ import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,10 +12,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Dialog, FAB, Portal, Text, TextInput, useTheme } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Screen } from "@/src/components/ui/Screen";
 import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { AppButton } from "@/src/components/ui/AppButton";
+import { FieldError, FormDialogScroll, FormNotice, keyboardBehavior, useKeyboardLift } from "@/src/components/ui/FormFeedback";
 import { useAuth } from "@/src/lib/auth-context";
 import { userErrorMessage } from "@/src/lib/user-error-message";
 import {
@@ -97,6 +98,9 @@ export default function ExercisesScreen() {
   const [description, setDescription] = useState("");
   const [dueAt, setDueAt] = useState(defaultDueAtIso());
   const [formError, setFormError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
+  const keyboardLift = useKeyboardLift();
 
   useEffect(() => {
     navigation.setOptions({
@@ -118,9 +122,9 @@ export default function ExercisesScreen() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.exercises(user!.id, classId!) });
       closeModal();
     },
-    onError: (err: Error) => {
+    onError: (err: unknown) => {
       notifyError();
-      setFormError(err.message || "Không thể tạo bài tập");
+      setFormError(userErrorMessage(err));
     },
   });
 
@@ -130,14 +134,17 @@ export default function ExercisesScreen() {
     setDescription("");
     setDueAt(defaultDueAtIso());
     setFormError(null);
+    setTitleError(null);
   };
 
   const handleCreate = () => {
     if (!title.trim()) {
-      setFormError("Vui lòng nhập tiêu đề bài tập");
+      setTitleError("Vui lòng nhập tiêu đề bài tập");
+      setFormError(null);
       notifyError();
       return;
     }
+    setTitleError(null);
     setFormError(null);
     createMutation.mutate({
       title: title.trim(),
@@ -186,7 +193,8 @@ export default function ExercisesScreen() {
         </Screen>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollList}
+          contentContainerStyle={[styles.scrollList, { paddingBottom: 128 + insets.bottom }]}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl refreshing={query.isRefetching} onRefresh={() => void query.refetch()} />
           }
@@ -213,12 +221,12 @@ export default function ExercisesScreen() {
         </ScrollView>
       )}
 
-      {isTeacher ? (
+      {isTeacher && query.isSuccess && exercises.length > 0 ? (
         <FAB
           testID="fab-create-exercise"
           icon="plus"
           label="Tạo bài tập"
-          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+          style={[styles.fab, { bottom: spacing.lg + insets.bottom, backgroundColor: theme.colors.primary }]}
           color="#FFFFFF"
           onPress={() => {
             impactLight();
@@ -228,14 +236,31 @@ export default function ExercisesScreen() {
       ) : null}
 
       <Portal>
-        <Dialog visible={modalVisible} onDismiss={closeModal} style={{ backgroundColor: theme.colors.surface }}>
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <Dialog
+          visible={modalVisible}
+          onDismiss={closeModal}
+          style={[styles.dialog, { marginBottom: keyboardLift, backgroundColor: theme.colors.surface }]}
+        >
+          <KeyboardAvoidingView behavior={keyboardBehavior}>
             <Dialog.Title>Tạo bài tập mới</Dialog.Title>
-            <Dialog.Content style={{ gap: spacing.sm }}>
-              {formError ? (
-                <Text style={{ color: palette.danger, fontSize: 13 }}>{formError}</Text>
-              ) : null}
-              <TextInput mode="outlined" label="Tiêu đề *" value={title} onChangeText={setTitle} />
+            {formError ? (
+              <View style={styles.noticeInset}>
+                <FormNotice message={formError} />
+              </View>
+            ) : null}
+            <FormDialogScroll>
+              <TextInput
+                mode="outlined"
+                label="Tiêu đề *"
+                value={title}
+                error={Boolean(titleError)}
+                onChangeText={(value) => {
+                  setTitle(value);
+                  setTitleError(null);
+                  setFormError(null);
+                }}
+              />
+              <FieldError message={titleError} />
               <TextInput
                 mode="outlined"
                 label="Mô tả"
@@ -253,7 +278,7 @@ export default function ExercisesScreen() {
               <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
                 Mặc định cộng 7 ngày. Hạn nộp phải là chuỗi ISO 8601 có múi giờ và nằm trong tương lai.
               </Text>
-            </Dialog.Content>
+            </FormDialogScroll>
             <Dialog.Actions>
               <AppButton mode="text" onPress={closeModal} disabled={createMutation.isPending}>
                 Hủy
@@ -271,7 +296,7 @@ export default function ExercisesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollList: { padding: spacing.lg, paddingBottom: 96, gap: spacing.md },
+  scrollList: { padding: spacing.lg, gap: spacing.md },
   headerInfo: { marginBottom: spacing.sm },
   cardList: { gap: spacing.md },
   card: { padding: spacing.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, gap: spacing.xs },
@@ -279,5 +304,7 @@ const styles = StyleSheet.create({
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
   statusText: { fontSize: 11, fontWeight: "700" },
   pressed: { opacity: 0.85 },
-  fab: { position: "absolute", right: spacing.lg, bottom: spacing.xl, borderRadius: radius.pill },
+  fab: { position: "absolute", right: spacing.lg, borderRadius: radius.pill },
+  dialog: { maxHeight: "88%", borderRadius: radius.lg },
+  noticeInset: { paddingHorizontal: spacing.xl, paddingBottom: spacing.sm },
 });

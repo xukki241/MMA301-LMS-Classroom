@@ -42,7 +42,9 @@ export default function RootLayout() {
             <ThemeProvider value={navTheme}>
               <View style={{ flex: 1 }}>
                 <OfflineBanner />
-                <AuthenticatedStack />
+                <View style={{ flex: 1 }}>
+                  <AuthenticatedStack />
+                </View>
               </View>
             </ThemeProvider>
           </AuthProvider>
