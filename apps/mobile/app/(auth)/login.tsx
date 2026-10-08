@@ -2,7 +2,6 @@ import { Link, Redirect } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,7 +10,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import {
-  HelperText,
   Icon,
   Text,
   TextInput,
@@ -19,7 +17,9 @@ import {
 } from "react-native-paper";
 import { useAuth } from "@/src/lib/auth-context";
 import { AppButton } from "@/src/components/ui/AppButton";
+import { FieldError, FormNotice, keyboardBehavior } from "@/src/components/ui/FormFeedback";
 import { impactLight, notifyError, notifySuccess } from "@/src/lib/haptics";
+import { userErrorMessage } from "@/src/lib/user-error-message";
 import { palette, spacing, typography, radius } from "@/src/theme/tokens";
 
 export default function LoginScreen() {
@@ -29,7 +29,9 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (user) {
@@ -40,30 +42,42 @@ export default function LoginScreen() {
     impactLight();
     setEmail(role === "teacher" ? "teacher@lms.local" : "student@lms.local");
     setPassword("Demo123!");
-    setError(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setFormError(null);
+  };
+
+  const clearErrors = () => {
+    setEmailError(null);
+    setPasswordError(null);
+    setFormError(null);
   };
 
   const handleLogin = () => {
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
-      setError("Vui lòng nhập địa chỉ email của bạn");
+      setEmailError("Vui lòng nhập địa chỉ email của bạn");
+      setPasswordError(null);
+      setFormError("Vui lòng nhập địa chỉ email của bạn");
       notifyError();
       return;
     }
     if (!password) {
-      setError("Vui lòng nhập mật khẩu");
+      setEmailError(null);
+      setPasswordError("Vui lòng nhập mật khẩu");
+      setFormError("Vui lòng nhập mật khẩu");
       notifyError();
       return;
     }
 
     setBusy(true);
-    setError(null);
+    clearErrors();
 
     void login(trimmedEmail, password)
       .then(() => notifySuccess())
       .catch((err: Error) => {
         notifyError();
-        setError(err.message || "Đăng nhập không thành công, vui lòng thử lại");
+        setFormError(userErrorMessage(err));
       })
       .finally(() => setBusy(false));
   };
@@ -71,12 +85,18 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={keyboardBehavior}
         style={styles.flex}
       >
+        {formError ? (
+          <View style={styles.noticeWrap}>
+            <FormNotice message={formError} />
+          </View>
+        ) : null}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}
         >
           {/* Hero Branding Header */}
@@ -113,14 +133,6 @@ export default function LoginScreen() {
               },
             ]}
           >
-            {/* Error Banner */}
-            {Boolean(error) && (
-              <View style={styles.errorBanner}>
-                <Icon source="alert-circle-outline" size={20} color={palette.danger} />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-
             {/* Email Field */}
             <View style={styles.inputGroup}>
               <TextInput
@@ -131,14 +143,16 @@ export default function LoginScreen() {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
+                error={Boolean(emailError)}
                 onChangeText={(text) => {
                   setEmail(text);
-                  if (error) setError(null);
+                  clearErrors();
                 }}
                 left={<TextInput.Icon icon="email-outline" color={theme.colors.onSurfaceVariant} />}
                 outlineStyle={styles.inputOutline}
                 style={styles.textInput}
               />
+              <FieldError message={emailError} />
             </View>
 
             {/* Password Field */}
@@ -150,9 +164,10 @@ export default function LoginScreen() {
                 placeholder="••••••••"
                 secureTextEntry={!showPassword}
                 value={password}
+                error={Boolean(passwordError)}
                 onChangeText={(text) => {
                   setPassword(text);
-                  if (error) setError(null);
+                  clearErrors();
                 }}
                 left={<TextInput.Icon icon="lock-outline" color={theme.colors.onSurfaceVariant} />}
                 right={
@@ -166,6 +181,7 @@ export default function LoginScreen() {
                 outlineStyle={styles.inputOutline}
                 style={styles.textInput}
               />
+              <FieldError message={passwordError} />
 
               <View style={styles.forgotRow}>
                 <Link href="/(auth)/forgot-password" asChild>
@@ -261,12 +277,15 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  noticeWrap: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
-    justifyContent: "center",
+    paddingBottom: 96,
   },
   header: {
     alignItems: "center",
@@ -341,28 +360,12 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     fontWeight: "600",
+    minHeight: 44,
+    lineHeight: 44,
   },
   loginBtn: {
     borderRadius: radius.md,
     marginTop: spacing.xs,
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: palette.dangerSoft,
-    borderColor: "#FECACA",
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  errorText: {
-    flex: 1,
-    color: palette.danger,
-    fontSize: 13,
-    fontWeight: "500",
-    lineHeight: 18,
   },
   demoCard: {
     borderRadius: radius.lg,
@@ -388,6 +391,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    minHeight: 44,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: radius.md,
@@ -411,5 +415,7 @@ const styles = StyleSheet.create({
   registerLink: {
     fontSize: 15,
     fontWeight: "700",
+    minHeight: 44,
+    lineHeight: 44,
   },
 });

@@ -24,7 +24,7 @@ export function EmptyState({ icon = "albums-outline", title, subtitle, actionLab
         <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>{subtitle}</Text>
       ) : null}
       {actionLabel && onAction ? (
-        <Button mode="contained-tonal" onPress={onAction} style={styles.action}>
+        <Button mode="contained-tonal" onPress={onAction} style={styles.action} contentStyle={styles.actionContent}>
           {actionLabel}
         </Button>
       ) : null}
@@ -41,14 +41,14 @@ export function ErrorState({
 }) {
   const theme = useTheme();
   return (
-    <View style={styles.wrap}>
+    <View accessibilityRole="alert" style={styles.wrap}>
       <View style={[styles.iconWrap, { backgroundColor: theme.colors.errorContainer }]}>
         <Ionicons name="warning-outline" size={28} color={theme.colors.error} />
       </View>
       <Text style={styles.title}>Không tải được dữ liệu</Text>
       <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>{message}</Text>
       {onRetry ? (
-        <Button mode="contained" onPress={onRetry} style={styles.action}>
+        <Button mode="contained" onPress={onRetry} style={styles.action} contentStyle={styles.actionContent}>
           Thử lại
         </Button>
       ) : null}
@@ -75,4 +75,5 @@ const styles = StyleSheet.create({
   title: { ...typography.subtitle, textAlign: "center" },
   subtitle: { ...typography.body, textAlign: "center" },
   action: { marginTop: spacing.sm },
+  actionContent: { minHeight: 44 },
 });

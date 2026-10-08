@@ -89,6 +89,13 @@ function harness(kind) {
       },
     },
     haptics: { impactLight() {}, notifyError() {}, notifySuccess() {} },
+    FormFeedback: {
+      FieldError: "FieldError",
+      FormNotice: "FormNotice",
+      FormDialogScroll: "FormDialogScroll",
+      keyboardBehavior: "padding",
+      useKeyboardLift: () => 0,
+    },
     tokens: {
       elevation: { card: {} },
       palette: { success: "#0a0", danger: "#c00" },
@@ -118,6 +125,7 @@ function harness(kind) {
       useRouter: () => ({ push() {} }),
     },
     "react-native": {
+      Keyboard: { addListener: () => ({ remove() {} }) },
       KeyboardAvoidingView: "KeyboardAvoidingView",
       Platform: { OS: "android" },
       Pressable: "Pressable",
@@ -136,6 +144,7 @@ function harness(kind) {
       useTheme: () => theme,
     },
     "react-native-reanimated": { default: { View: "AnimatedView" }, FadeInDown: fade },
+    "react-native-safe-area-context": { useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }) },
     "@expo/vector-icons": { Ionicons: "Ionicons" },
   };
   const filename = resolve(__dirname, kind === "list"
@@ -230,6 +239,8 @@ test("exercise list shows loading, empty, and error with retry", () => {
   assert.equal(teacherEmpty.props.title, "Chưa có bài tập");
   assert.equal(teacherEmpty.props.actionLabel, "Tạo bài tập");
   assert.equal(typeof teacherEmpty.props.onAction, "function");
+  assert.equal(tree.some((node) => node.type === "FAB"), false);
+  assert.equal(tree.some((node) => node.type === "ClassListSkeleton" || node.type === "ErrorState"), false);
 });
 
 test("exercise list renders rows after a successful non-empty query", () => {
@@ -242,6 +253,29 @@ test("exercise list renders rows after a successful non-empty query", () => {
   assert.equal(tree.some((node) => node.type === "EmptyState" || node.type === "ErrorState" || node.type === "ClassListSkeleton"), false);
   assert.match(treeText(tree), /Bài kiểm tra/);
   assert.match(treeText(tree), /1 bài tập/);
+  assert.equal(tree.some((node) => node.type === "FAB"), false);
+
+  h.ctx.role = "teacher";
+  const teacherTree = nodes(h.render());
+  assert.equal(teacherTree.filter((node) => node.type === "FAB").length, 1);
+  assert.equal(teacherTree.some((node) => node.type === "EmptyState" || node.type === "ErrorState"), false);
+});
+
+test("exercise errors stay beside fields and the fab does not cover them", () => {
+  const h = harness("list");
+  h.ctx.role = "teacher";
+  h.ctx.exercises = queryResult({ isError: true, error: new Error("Mất kết nối danh sách") });
+  const tree = nodes(h.render());
+  assert.equal(tree.some((node) => node.type === "ErrorState"), true);
+  assert.equal(tree.some((node) => node.type === "FAB" || node.type === "EmptyState" || node.type === "ClassListSkeleton"), false);
+  assert.match(exerciseListSource, /FieldError message=\{titleError\}/);
+  assert.match(exerciseListSource, /FormNotice message=\{formError\}/);
+  assert.match(exerciseListSource, /FormDialogScroll/);
+  assert.match(exerciseListSource, /paddingBottom: 128 \+ insets\.bottom/);
+  assert.match(exerciseListSource, /query\.isSuccess && exercises\.length > 0/);
+  assert.match(exerciseDetailSource, /FieldError message=\{submitError\}/);
+  assert.match(exerciseDetailSource, /FieldError message=\{gradeError\}/);
+  assert.match(exerciseDetailSource, /error=\{Boolean\(gradeError\)\}/);
 });
 
 test("exercise detail keeps loading, missing, and error exclusive", () => {

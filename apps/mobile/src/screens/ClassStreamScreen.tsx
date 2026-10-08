@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Redirect, useFocusEffect } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
-import { KeyboardAvoidingView, Platform, RefreshControl, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, RefreshControl, StyleSheet, View } from "react-native";
 import { ActivityIndicator, Card, Text } from "react-native-paper";
 import { Screen } from "../components/ui/Screen";
 import { AppButton } from "../components/ui/AppButton";
@@ -50,9 +50,9 @@ function StreamFeed({ session, role }: { session: StreamSession; role: "teacher"
     if (result.isSuccess && streamAccessDenied(mutation.error)) mutation.reset();
   };
   return (
-    <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <KeyboardAvoidingView style={styles.fill} behavior="padding"
       keyboardVerticalOffset={headerHeight}>
-      <Screen refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => void refresh()} />}>
+      <Screen keyboardInset={false} refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => void refresh()} />}>
         <Text style={typography.title} accessibilityRole="header">Bảng tin lớp học</Text>
         <Text style={[typography.body, styles.intro]}>Thông báo từ giáo viên và bình luận của thành viên.</Text>
         {query.isPending ? <ActivityIndicator accessibilityLabel="Đang tải bảng tin" /> : null}

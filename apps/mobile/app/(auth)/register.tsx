@@ -2,7 +2,6 @@ import { Link, Redirect, router } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,7 +17,9 @@ import {
 } from "react-native-paper";
 import { useAuth } from "@/src/lib/auth-context";
 import { AppButton } from "@/src/components/ui/AppButton";
+import { FieldError, FormNotice, keyboardBehavior } from "@/src/components/ui/FormFeedback";
 import { impactLight, notifyError, notifySuccess } from "@/src/lib/haptics";
+import { userErrorMessage } from "@/src/lib/user-error-message";
 import { palette, spacing, typography, radius } from "@/src/theme/tokens";
 
 export default function RegisterScreen() {
@@ -32,7 +33,8 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState<"teacher" | "student">("student");
-  const [error, setError] = useState<string | null>(null);
+  const [field, setField] = useState<"displayName" | "email" | "password" | "confirmPassword" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (user) {
@@ -41,31 +43,37 @@ export default function RegisterScreen() {
 
   const validate = () => {
     if (displayName.trim().length < 2) {
-      return "Họ và tên cần có ít nhất 2 ký tự";
+      return { field: "displayName" as const, message: "Họ và tên cần có ít nhất 2 ký tự" };
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      return "Địa chỉ email không đúng định dạng";
+      return { field: "email" as const, message: "Địa chỉ email không đúng định dạng" };
     }
     if (password.length < 8) {
-      return "Mật khẩu phải chứa ít nhất 8 ký tự";
+      return { field: "password" as const, message: "Mật khẩu phải chứa ít nhất 8 ký tự" };
     }
     if (password !== confirmPassword) {
-      return "Mật khẩu xác nhận không khớp";
+      return { field: "confirmPassword" as const, message: "Mật khẩu xác nhận không khớp" };
     }
     return null;
+  };
+
+  const clearErrors = () => {
+    setField(null);
+    setNotice(null);
   };
 
   const handleRegister = () => {
     const err = validate();
     if (err) {
-      setError(err);
+      setField(err.field);
+      setNotice(err.message);
       notifyError();
       return;
     }
 
     setBusy(true);
-    setError(null);
+    clearErrors();
     void register({
       email: email.trim(),
       password,
@@ -75,7 +83,8 @@ export default function RegisterScreen() {
       .then(() => notifySuccess())
       .catch((e: Error) => {
         notifyError();
-        setError(e.message || "Đăng ký không thành công, vui lòng thử lại");
+        setField(null);
+        setNotice(userErrorMessage(e));
       })
       .finally(() => setBusy(false));
   };
@@ -88,12 +97,18 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={keyboardBehavior}
         style={styles.flex}
       >
+        {notice ? (
+          <View style={styles.noticeWrap}>
+            <FormNotice message={notice} />
+          </View>
+        ) : null}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}
         >
           {/* Top Bar with Back Button */}
@@ -148,14 +163,6 @@ export default function RegisterScreen() {
               },
             ]}
           >
-            {/* Error Banner */}
-            {Boolean(error) && (
-              <View style={styles.errorBanner}>
-                <Icon source="alert-circle-outline" size={20} color={palette.danger} />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-
             {/* Role Selection Label */}
             <View style={styles.roleHeader}>
               <Text style={[typography.caption, styles.roleLabel, { color: theme.colors.onSurfaceVariant }]}>
@@ -227,14 +234,16 @@ export default function RegisterScreen() {
                 label="Họ và tên"
                 placeholder="Nguyễn Văn A"
                 value={displayName}
+                error={field === "displayName"}
                 onChangeText={(text) => {
                   setDisplayName(text);
-                  if (error) setError(null);
+                  clearErrors();
                 }}
                 left={<TextInput.Icon icon="account-outline" color={theme.colors.onSurfaceVariant} />}
                 outlineStyle={styles.inputOutline}
                 style={styles.textInput}
               />
+              <FieldError message={field === "displayName" ? notice : null} />
             </View>
 
             <View style={styles.inputGroup}>
@@ -245,14 +254,16 @@ export default function RegisterScreen() {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
+                error={field === "email"}
                 onChangeText={(text) => {
                   setEmail(text);
-                  if (error) setError(null);
+                  clearErrors();
                 }}
                 left={<TextInput.Icon icon="email-outline" color={theme.colors.onSurfaceVariant} />}
                 outlineStyle={styles.inputOutline}
                 style={styles.textInput}
               />
+              <FieldError message={field === "email" ? notice : null} />
             </View>
 
             <View style={styles.inputGroup}>
@@ -262,9 +273,10 @@ export default function RegisterScreen() {
                 placeholder="••••••••"
                 secureTextEntry={!showPassword}
                 value={password}
+                error={field === "password"}
                 onChangeText={(text) => {
                   setPassword(text);
-                  if (error) setError(null);
+                  clearErrors();
                 }}
                 left={<TextInput.Icon icon="lock-outline" color={theme.colors.onSurfaceVariant} />}
                 right={
@@ -278,6 +290,7 @@ export default function RegisterScreen() {
                 outlineStyle={styles.inputOutline}
                 style={styles.textInput}
               />
+              <FieldError message={field === "password" ? notice : null} />
             </View>
 
             <View style={styles.inputGroup}>
@@ -287,9 +300,10 @@ export default function RegisterScreen() {
                 placeholder="••••••••"
                 secureTextEntry={!showConfirmPassword}
                 value={confirmPassword}
+                error={field === "confirmPassword"}
                 onChangeText={(text) => {
                   setConfirmPassword(text);
-                  if (error) setError(null);
+                  clearErrors();
                 }}
                 left={<TextInput.Icon icon="lock-check-outline" color={theme.colors.onSurfaceVariant} />}
                 right={
@@ -303,6 +317,7 @@ export default function RegisterScreen() {
                 outlineStyle={styles.inputOutline}
                 style={styles.textInput}
               />
+              <FieldError message={field === "confirmPassword" ? notice : null} />
             </View>
 
             {/* Submit Button */}
@@ -346,11 +361,15 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  noticeWrap: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xxl,
+    paddingBottom: 96,
   },
   topBar: {
     flexDirection: "row",
@@ -360,6 +379,7 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: "row",
     alignItems: "center",
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.md,
@@ -433,24 +453,6 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.md,
   },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: palette.dangerSoft,
-    borderColor: "#FECACA",
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  errorText: {
-    flex: 1,
-    color: palette.danger,
-    fontSize: 13,
-    fontWeight: "500",
-    lineHeight: 18,
-  },
   roleHeader: {
     marginTop: spacing.xs,
   },
@@ -465,9 +467,10 @@ const styles = StyleSheet.create({
   },
   roleCard: {
     flex: 1,
+    minHeight: 44,
     padding: spacing.md,
     borderRadius: radius.lg,
-    gap: 4,
+    gap: spacing.sm,
   },
   roleCardTop: {
     flexDirection: "row",
@@ -506,5 +509,7 @@ const styles = StyleSheet.create({
   loginLink: {
     fontSize: 15,
     fontWeight: "700",
+    minHeight: 44,
+    lineHeight: 44,
   },
 });

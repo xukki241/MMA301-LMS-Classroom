@@ -9,6 +9,7 @@ import { ClassCard } from "@/src/components/ui/ClassCard";
 import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState } from "@/src/components/ui/EmptyState";
 import { ClassRequestError } from "@/src/components/ui/ClassRequestError";
+import { FieldError } from "@/src/components/ui/FormFeedback";
 import { useAuth } from "@/src/lib/auth-context";
 import { useClassesQuery } from "@/src/lib/hooks";
 import { createClass, joinClass, type LmsClass } from "@/src/lib/classes-api";
@@ -112,37 +113,38 @@ export function ClassesWorkspace() {
             mutation.reset();
           }}
         />
+        <FieldError message={inputError} />
+        {mutation.isError ? (
+          <ClassRequestError error={mutation.error} operation={isTeacher ? "create" : "join"} inline />
+        ) : null}
         <HelperText type="info" visible>
           {isTeacher ? "Tên lớp tối đa 100 ký tự." : "Mã lớp gồm 6 ký tự."}
         </HelperText>
         <AppButton loading={mutation.isPending} onPress={submit}>
           {isTeacher ? "Tạo lớp" : "Tham gia"}
         </AppButton>
-        {inputError ? <HelperText type="error" visible>{inputError}</HelperText> : null}
-        {mutation.isError ? (
-          <ClassRequestError error={mutation.error} operation={isTeacher ? "create" : "join"} inline />
-        ) : null}
       </View> : null}
 
-      {classesQuery.isPending ? <ClassListSkeleton /> : null}
-      {classesQuery.isError ? (
+      {classesQuery.isPending ? (
+        <ClassListSkeleton />
+      ) : classesQuery.isError ? (
         <ClassRequestError error={classesQuery.error} operation="list" onRetry={() => void classesQuery.refetch()} />
-      ) : null}
-      {classesQuery.isSuccess && classes.length === 0 ? (
+      ) : classes.length === 0 ? (
         <EmptyState
           icon="book-outline"
           title={isTeacher ? "Bạn chưa tạo lớp học nào." : "Bạn chưa tham gia lớp học nào."}
           subtitle={isTeacher ? "Tạo lớp đầu tiên bằng biểu mẫu phía trên." : "Nhập mã lớp phía trên để bắt đầu."}
         />
-      ) : null}
-      {!classesQuery.isError && classes.map((item, index) => (
-        <ClassCard
-          key={item.id}
-          item={item}
-          index={index}
-          onPress={() => router.push({ pathname: "/class/[id]", params: { id: item.id } })}
-        />
-      ))}
+      ) : (
+        classes.map((item, index) => (
+          <ClassCard
+            key={item.id}
+            item={item}
+            index={index}
+            onPress={() => router.push({ pathname: "/class/[id]", params: { id: item.id } })}
+          />
+        ))
+      )}
     </Screen>
   );
 }

@@ -2,11 +2,12 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { RefreshControl, StyleSheet, View } from "react-native";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { HelperText, Text, TextInput, useTheme } from "react-native-paper";
+import { Text, TextInput, useTheme } from "react-native-paper";
 import { Screen } from "@/src/components/ui/Screen";
 import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { AppButton } from "@/src/components/ui/AppButton";
+import { FieldError } from "@/src/components/ui/FormFeedback";
 import { useAuth } from "@/src/lib/auth-context";
 import { userErrorMessage } from "@/src/lib/user-error-message";
 import {
@@ -87,9 +88,9 @@ export default function ExerciseDetailScreen() {
       });
       setSubmitError(null);
     },
-    onError: (err: Error) => {
+    onError: (err: unknown) => {
       notifyError();
-      setSubmitError(err.message);
+      setSubmitError(userErrorMessage(err));
     },
   });
 
@@ -106,9 +107,9 @@ export default function ExerciseDetailScreen() {
         queryKey: queryKeys.exerciseSubmissions(user!.id, classId!, exerciseId!),
       });
     },
-    onError: (err: Error) => {
+    onError: (err: unknown) => {
       notifyError();
-      setGradeError(err.message);
+      setGradeError(userErrorMessage(err));
     },
   });
 
@@ -200,7 +201,7 @@ export default function ExerciseDetailScreen() {
                 ) : null}
                 {open ? (
                   <>
-                    <TextInput mode="outlined" label="Nội dung bài làm" multiline value={content} onChangeText={setContent} />
+                    <TextInput mode="outlined" label="Nội dung bài làm" multiline value={content} onChangeText={setContent} error={Boolean(submitError)} />
                     <TextInput
                       mode="outlined"
                       label="Liên kết đính kèm (tuỳ chọn)"
@@ -208,7 +209,7 @@ export default function ExerciseDetailScreen() {
                       autoCapitalize="none"
                       onChangeText={setUrl}
                     />
-                    {submitError ? <HelperText type="error">{submitError}</HelperText> : null}
+                    <FieldError message={submitError} />
                     <AppButton
                       testID="submit-exercise"
                       loading={submitMutation.isPending}
@@ -258,9 +259,9 @@ export default function ExerciseDetailScreen() {
                   </View>
                 ) : gradingId === row.id ? (
                   <View style={styles.gradeForm}>
-                    <TextInput mode="outlined" label="Điểm (0–10)" keyboardType="decimal-pad" value={gradeScore} onChangeText={setGradeScore} />
+                    <TextInput mode="outlined" label="Điểm (0–10)" keyboardType="decimal-pad" value={gradeScore} onChangeText={setGradeScore} error={Boolean(gradeError)} />
+                    <FieldError message={gradeError} />
                     <TextInput mode="outlined" label="Nhận xét" value={gradeFeedback} onChangeText={setGradeFeedback} />
-                    {gradeError ? <HelperText type="error">{gradeError}</HelperText> : null}
                     <View style={styles.gradeActions}>
                       <AppButton mode="text" onPress={() => setGradingId(null)}>
                         Hủy

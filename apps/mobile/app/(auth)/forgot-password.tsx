@@ -2,7 +2,6 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +16,7 @@ import {
   useTheme,
 } from "react-native-paper";
 import { AppButton } from "@/src/components/ui/AppButton";
+import { FieldError, FormNotice, keyboardBehavior } from "@/src/components/ui/FormFeedback";
 import { notifyError, notifySuccess } from "@/src/lib/haptics";
 import { palette, spacing, typography, radius } from "@/src/theme/tokens";
 
@@ -62,12 +62,18 @@ export default function ForgotPasswordScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={keyboardBehavior}
         style={styles.flex}
       >
+        {error && !submitted ? (
+          <View style={styles.noticeWrap}>
+            <FormNotice message={error} />
+          </View>
+        ) : null}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}
         >
           {/* Top Bar with Back Button */}
@@ -124,13 +130,6 @@ export default function ForgotPasswordScreen() {
           >
             {!submitted ? (
               <View style={styles.formGap}>
-                {Boolean(error) && (
-                  <View style={styles.errorBanner}>
-                    <Icon source="alert-circle-outline" size={20} color={palette.danger} />
-                    <Text style={styles.errorText}>{error}</Text>
-                  </View>
-                )}
-
                 <TextInput
                   mode="outlined"
                   label="Email tài khoản"
@@ -138,6 +137,7 @@ export default function ForgotPasswordScreen() {
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={email}
+                  error={Boolean(error)}
                   onChangeText={(text) => {
                     setEmail(text);
                     if (error) setError(null);
@@ -146,6 +146,7 @@ export default function ForgotPasswordScreen() {
                   outlineStyle={styles.inputOutline}
                   style={styles.textInput}
                 />
+                <FieldError message={error} />
 
                 <AppButton
                   loading={busy}
@@ -204,11 +205,15 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  noticeWrap: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xxl,
+    paddingBottom: 96,
   },
   topBar: {
     flexDirection: "row",
@@ -218,6 +223,7 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: "row",
     alignItems: "center",
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.md,
@@ -292,24 +298,6 @@ const styles = StyleSheet.create({
   },
   formGap: {
     gap: spacing.md,
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: palette.dangerSoft,
-    borderColor: "#FECACA",
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  errorText: {
-    flex: 1,
-    color: palette.danger,
-    fontSize: 13,
-    fontWeight: "500",
-    lineHeight: 18,
   },
   textInput: {
     backgroundColor: "transparent",
