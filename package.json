@@ -21,6 +21,7 @@
     "test:scalar": "playwright test",
     "test:selenium": "node qa/selenium/docs-smoke.mjs",
     "test:e2e": "node qa/maestro/run.mjs",
+    "test:e2e:exercise": "node qa/maestro/run.mjs --exercise",
     "test:performance": "node qa/performance/health.mjs",
     "test:staging": "node qa/deployment/smoke.mjs",
     "release:gate": "npm run typecheck && npm run verify:docs && npm run validate:docs && npm run test:mobile && npm run test:contract && npm run test:scalar && npm run test:selenium && npm run test:api && npm run test:newman && npm run test:performance && npm run test:e2e"

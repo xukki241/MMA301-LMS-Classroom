@@ -1,5 +1,7 @@
 # Manual Acceptance Test Cases
 
+Tester mới: clone/cài/chạy Android Pixel_10, hành trình bài tập, offline và Scalar nằm ở [apps/mobile/LMS-23-MANUAL-TEST.md](../../apps/mobile/LMS-23-MANUAL-TEST.md). Gate không gồm e2e: `typecheck`, `verify:docs`, `validate:docs`, `test:mobile`, `test:contract`, `test:scalar`, `test:api`. Staging Auth/Core: `https://mma301-lms-auth-staging.onrender.com` và `https://mma301-lms-core-staging.onrender.com`. Scalar staging cũ đến khi redeploy. Production chặn vì secret đã xoay. Không đưa secret vào git.
+
 | ID | Area | Preconditions | Expected |
 |---|---|---|---|
 | AUTH-01 | Register | Auth + Mongo up | Valid user returns 201 and user contract |
@@ -43,7 +45,10 @@ $env:SMOKE_REGISTER_TEMP = "1"
 npm run test:staging
 ```
 
-This smoke does not replace the class/exercise/submission journey below.
+With `SMOKE_REGISTER_TEMP=1`, `npm run test:staging` also runs the automated
+class/post/exercise/submission/grade journey (credentials redacted in output).
+See `docs/testing/scenario-matrix.md`. Steps below remain the manual evidence
+template and negative checks not fully automated.
 
 ### 1. Fill the test variables
 

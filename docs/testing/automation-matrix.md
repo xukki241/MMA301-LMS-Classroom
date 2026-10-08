@@ -10,8 +10,9 @@
 | API collection | `npm run test:newman` | Full Postman regression when Newman is installed |
 | Scalar browser | `npm run test:scalar` | Playwright docs/try-it-out smoke |
 | Selenium browser | `npm run test:selenium` | Headless Chrome checks Auth/Core Scalar pages, health and Core OpenAPI; saves screenshots and JSON report |
-| Android smoke | `npm run test:e2e` | Maestro auth smoke on Pixel_10; full class/material/exercise/submission journey remains manual |
-| Release gate | `npm run release:gate` | All locally available mandatory gates |
+| Staging smoke | `npm run test:staging` | Health, OpenAPI, docs lock, login; with `SMOKE_REGISTER_TEMP=1` also runs class → post → exercise → submission → grade journey (see `docs/testing/scenario-matrix.md`) |
+| Android smoke | `npm run test:e2e` | Optional Maestro auth smoke on Pixel_10 when `MAESTRO_EMAIL`/`MAESTRO_PASSWORD` are set; not required for manual handover |
+| Release gate | `npm run release:gate` | Full local gate including e2e; skip `test:e2e` for a docs/mobile/API-only run |
 
 Failures must preserve logs, request IDs, screenshots and traces. A retry may diagnose a flaky test but cannot hide the first failure.
 

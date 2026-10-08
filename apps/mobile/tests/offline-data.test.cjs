@@ -7,7 +7,12 @@ require.extensions['.ts'] = (module, filename) => module._compile(ts.transpileMo
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, filename);
 const values = new Map();
-const storage = { getItem: async key => values.get(key) ?? null, setItem: async (key, value) => { values.set(key, value); } };
+const storage = {
+  getItem: async key => values.get(key) ?? null,
+  setItem: async (key, value) => { values.set(key, value); },
+  getAllKeys: async () => [...values.keys()],
+  multiRemove: async keys => { keys.forEach(key => values.delete(key)); },
+};
 const originalLoad = Module._load;
 Module._load = function(name, parent, isMain) {
   if (name === '@react-native-async-storage/async-storage') return { __esModule: true, default: storage };
@@ -43,6 +48,14 @@ test('other user and class cannot see cached data; corrupted feed is rejected', 
   await assert.rejects(data.cachedPosts('token', 'b', 'class-a'), e => e.code === 'OFFLINE_NO_CACHE');
   await assert.rejects(data.cachedPosts('token', 'a', 'class-b'), e => e.code === 'OFFLINE_NO_CACHE');
   await assert.rejects(data.cachedClasses('token', 'b', 'student'), e => e.code === 'OFFLINE_NO_CACHE');
+});
+
+test('purgeOfflineCache removes lms23 keys only', async () => {
+  values.set('lms23:classes:a:student', '[]');
+  values.set('other:app:key', 'keep');
+  await data.purgeOfflineCache();
+  assert.equal(values.has('lms23:classes:a:student'), false);
+  assert.equal(values.get('other:app:key'), 'keep');
 });
 
 test('business permission errors do not read old Class cache', async () => {

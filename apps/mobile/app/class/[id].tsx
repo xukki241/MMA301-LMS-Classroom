@@ -155,7 +155,10 @@ export default function ClassDetailScreen() {
           onPress={() => router.push({ pathname: "/class/[id]/materials", params: { id: classId, name: item?.name } })}>
           <ModuleCard icon="document-text-outline" title="Tài liệu" subtitle="Tài liệu bài giảng và liên kết học tập" />
         </Pressable>
-        <ModuleCard icon="create-outline" title="Bài tập" subtitle="Exercise → nộp → chấm điểm" />
+        <Pressable accessibilityRole="button" accessibilityLabel="Mở bài tập lớp học"
+          onPress={() => router.push({ pathname: "/class/[id]/exercises", params: { id: classId, name: item?.name } })}>
+          <ModuleCard icon="create-outline" title="Bài tập" subtitle="Giao bài, nộp bài và xem điểm" />
+        </Pressable>
       </Animated.View>
     </Screen>
   );

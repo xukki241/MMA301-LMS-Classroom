@@ -3,8 +3,11 @@ import { HttpError } from "./http";
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<unknown> };
 type Validator<T> = (value: unknown) => value is T;
 
-export const classCacheKey = (userId: string, role: string) => `lms23:classes:${encodeURIComponent(userId)}:${role}`;
-export const postCacheKey = (userId: string, classId: string) => `lms23:posts:${encodeURIComponent(userId)}:${encodeURIComponent(classId)}`;
+export const OFFLINE_CACHE_PREFIX = "lms23:";
+
+export const classCacheKey = (userId: string, role: string) => `${OFFLINE_CACHE_PREFIX}classes:${encodeURIComponent(userId)}:${role}`;
+export const postCacheKey = (userId: string, classId: string) =>
+  `${OFFLINE_CACHE_PREFIX}posts:${encodeURIComponent(userId)}:${encodeURIComponent(classId)}`;
 
 export function createOfflineCache(storage: Storage) {
   return {

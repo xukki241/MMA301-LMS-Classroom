@@ -1,16 +1,18 @@
+// Expo joins platforms.android.sourceDir onto the package root.
+// Keep it as "android", not a path relative to apps/mobile.
 module.exports = {
   dependencies: {
     "@react-native-community/netinfo": {
       platforms: {
         android: {
-          sourceDir: "../node_modules/@react-native-community/netinfo/android",
+          sourceDir: "android",
         },
       },
     },
     "@react-native-async-storage/async-storage": {
       platforms: {
         android: {
-          sourceDir: "../node_modules/@react-native-async-storage/async-storage/android",
+          sourceDir: "android",
         },
       },
     },

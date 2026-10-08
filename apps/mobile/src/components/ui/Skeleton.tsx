@@ -7,8 +7,8 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { useTheme } from "react-native-paper";
-import { radius, spacing } from "@/src/theme/tokens";
+import { Text, useTheme } from "react-native-paper";
+import { radius, spacing, typography } from "@/src/theme/tokens";
 
 type BoneProps = {
   width?: number | `${number}%`;
@@ -45,9 +45,19 @@ export function SkeletonBone({ width = "100%", height = 14, rounded = radius.sm,
   );
 }
 
-export function ClassListSkeleton() {
+export function ClassListSkeleton({ accessibilityLabel }: { accessibilityLabel?: string }) {
+  const theme = useTheme();
   return (
-    <View style={styles.list}>
+    <View accessible={false} style={styles.list}>
+      {accessibilityLabel ? (
+        <Text
+          accessibilityLabel={accessibilityLabel}
+          accessibilityRole="progressbar"
+          style={[styles.loadingLabel, { color: theme.colors.onSurface }]}
+        >
+          {accessibilityLabel}
+        </Text>
+      ) : null}
       {Array.from({ length: 4 }).map((_, index) => (
         <View key={index} style={styles.card}>
           <SkeletonBone width={44} height={44} rounded={radius.md} />
@@ -77,6 +87,7 @@ export function HomeSkeleton() {
 
 const styles = StyleSheet.create({
   list: { gap: spacing.md, paddingTop: spacing.sm },
+  loadingLabel: { ...typography.body, paddingHorizontal: spacing.lg },
   card: {
     flexDirection: "row",
     alignItems: "center",

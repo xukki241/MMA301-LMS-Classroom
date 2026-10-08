@@ -124,6 +124,7 @@ export default function LoginScreen() {
             {/* Email Field */}
             <View style={styles.inputGroup}>
               <TextInput
+                testID="login-email"
                 mode="outlined"
                 label="Email"
                 placeholder="email@school.edu.vn"
@@ -143,6 +144,7 @@ export default function LoginScreen() {
             {/* Password Field */}
             <View style={styles.inputGroup}>
               <TextInput
+                testID="login-password"
                 mode="outlined"
                 label="Mật khẩu"
                 placeholder="••••••••"
