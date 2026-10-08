@@ -26,6 +26,8 @@ jobs:
           cache: npm
       - name: Install root tooling
         run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
       - name: Install service dependencies
         run: |
           npm ci --prefix services/auth-service
@@ -51,6 +53,7 @@ jobs:
       - name: Run API, contract and Newman regression
         run: |
           npm run test:contract
+          npm run test:scalar
           npm run test:lms05 --prefix services/core-api
           npm run test:lms06 --prefix services/core-api
           npm run test:lms08 --prefix services/core-api
