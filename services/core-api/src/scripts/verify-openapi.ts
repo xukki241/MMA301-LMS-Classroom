@@ -26,6 +26,9 @@ const expected: Record<string, string[]> = {
   "/classes/{classId}/exercises/{exerciseId}/submissions/mine": ["get", "put"],
   "/classes/{classId}/exercises/{exerciseId}/submissions/{submissionId}": ["get"],
   "/classes/{classId}/exercises/{exerciseId}/submissions/{submissionId}/grade": ["put"],
+  "/tasks": ["get", "post"],
+  "/tasks/{id}": ["get", "patch", "delete"],
+  "/tasks/{id}/toggle": ["patch"],
 };
 
 const paths = openApiSpec.paths as Record<string, Record<string, unknown>>;

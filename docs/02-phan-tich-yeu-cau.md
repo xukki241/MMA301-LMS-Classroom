@@ -45,6 +45,15 @@
 | RF05.3 | Teacher xem danh sách Submission và gắn Grade | Teacher |
 | RF05.4 | Student xem điểm / phản hồi của bài mình | Student |
 
+### RF06 — Quản lý công việc cá nhân (Personal Tasks)
+
+| Mã | Mô tả | Actor |
+|----|--------|-------|
+| RF06.1 | Tạo Task cá nhân (tiêu đề, ghi chú, độ ưu tiên, hạn nộp, liên kết lớp) | Teacher, Student |
+| RF06.2 | Xem danh sách Task theo bộ lọc (Tất cả, Chưa xong, Đã xong, Quá hạn) | Teacher, Student |
+| RF06.3 | Chuyển đổi trạng thái hoàn thành Task (checkbox toggle) | Teacher, Student |
+| RF06.4 | Cập nhật và Xóa Task cá nhân | Teacher, Student |
+
 ## 2.2. Yêu cầu phi chức năng
 
 | Mã | Nhóm | Mô tả |

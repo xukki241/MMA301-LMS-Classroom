@@ -54,6 +54,10 @@ _Avoid_: Attempt, answer sheet
 Điểm và phản hồi Teacher gắn với Submission.
 _Avoid_: Score, mark, feedback (khi nói về thực thể chấm điểm)
 
+**Task**:
+Công việc cá nhân của User (tiêu đề, ghi chú, mức ưu tiên, hạn chót, trạng thái).
+_Avoid_: To-do, chore, job (trừ khi nói ngôn ngữ UI)
+
 ### Auth boundary
 
 **Auth Service**:

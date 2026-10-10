@@ -2,6 +2,7 @@ import { expandResponseRefs } from "./expand-response-refs.js";
 import { exercisePaths, exerciseSchemas } from "./exercise.openapi.js";
 import { submissionPaths, submissionSchemas } from "./submission.openapi.js";
 import { materialPaths, materialSchemas } from "./material.openapi.js";
+import { taskPaths, taskSchemas } from "./task.openapi.js";
 
 const coreOpenApiDocument = {
   openapi: "3.1.0",
@@ -104,6 +105,10 @@ Email: dambautv2005@gmail.com
       name: "Hệ thống & Thông tin cá nhân",
       description: "Kiểm tra sức khỏe Core API và thông tin người dùng từ JWT",
     },
+    {
+      name: "Công việc cá nhân (LMS-28)",
+      description: "Quản lý to-do list, hạn chót và trạng thái hoàn thành công việc cá nhân",
+    },
   ],
   security: [
     {
@@ -117,6 +122,7 @@ Email: dambautv2005@gmail.com
     ...submissionPaths,
     ...exercisePaths,
     ...materialPaths,
+    ...taskPaths,
     "/docs/tokens/teacher": {
       post: {
         tags: ["Authentication & Lấy Token"],
@@ -1393,6 +1399,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
       ...submissionSchemas,
       ...exerciseSchemas,
       ...materialSchemas,
+      ...taskSchemas,
       Class: {
         type: "object",
         properties: {

@@ -15,7 +15,7 @@
     "validate:docs": "npm run validate:docs --prefix services/auth-service && npm run validate:docs --prefix services/core-api",
     "typecheck": "npm run typecheck --prefix services/auth-service && npm run typecheck --prefix services/core-api && npm run typecheck --prefix apps/mobile",
     "test:mobile": "npm test --prefix apps/mobile",
-    "test:api": "npm run test:lms05 --prefix services/core-api && npm run test:lms06 --prefix services/core-api && npm run test:lms08 --prefix services/core-api && npm run test:lms09 --prefix services/core-api && npm run test:lms14 --prefix services/core-api",
+    "test:api": "npm run test:lms05 --prefix services/core-api && npm run test:lms06 --prefix services/core-api && npm run test:lms08 --prefix services/core-api && npm run test:lms09 --prefix services/core-api && npm run test:lms14 --prefix services/core-api && npm run test:lms28 --prefix services/core-api",
     "test:contract": "npm run test:docs --prefix services/core-api",
     "test:newman": "node qa/newman/regression.mjs",
     "test:scalar": "playwright test",

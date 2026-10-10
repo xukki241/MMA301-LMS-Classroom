@@ -210,7 +210,7 @@ export default function ExercisesScreen() {
                   onPress={() => {
                     impactLight();
                     router.push({
-                      pathname: "/class/[id]/exercise/[exerciseId]",
+                      pathname: "/class/[id]/exercise/[exerciseId]" as any,
                       params: { id: classId, exerciseId: item.id, title: item.title },
                     });
                   }}

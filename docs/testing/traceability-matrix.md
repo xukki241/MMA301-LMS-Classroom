@@ -9,6 +9,7 @@
 | Materials | `/materials` | LMS-14 + contract | MATERIAL-01 |
 | Exercises | `/exercises` | LMS-08 + permissions | EXERCISE-01 |
 | Submission/grade | `/submissions` | LMS-09 + permissions | SUB-01..03 |
+| Personal Tasks | `/tasks` | LMS-28 + mobile tests | TASK-01..04 |
 | Abuse/error handling | error contract and limits | contract/security tests | SEC-01..02 |
 | Mobile UX | React Native app | node tests + Maestro | MOB-01..02 |
 | Deployment | Render/Atlas | smoke scripts | DEP-01 |

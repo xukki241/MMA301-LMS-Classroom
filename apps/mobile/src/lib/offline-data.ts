@@ -1,12 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getClass, listClasses, type ClassDetail, type LmsClass } from "./classes-api";
 import { listPosts, type StreamPost } from "./stream-api";
+import { listTasks, type ListTasksFilter, type LmsTask } from "./tasks-api";
 import { HttpError } from "./http";
 import {
   classCacheKey,
   createOfflineCache,
   OFFLINE_CACHE_PREFIX,
   postCacheKey,
+  taskCacheKey,
   readThroughCache,
 } from "./offline-cache-core";
 import { networkState } from "./network-state";
@@ -19,6 +21,9 @@ const isClassList = (value: unknown): value is LmsClass[] => Array.isArray(value
 const isPostList = (value: unknown): value is StreamPost[] => Array.isArray(value) && value.every(item =>
   item && typeof item === "object" &&
   [item.id, item.classId, item.authorId, item.content, item.createdAt].every(nonempty));
+const isTaskList = (value: unknown): value is LmsTask[] => Array.isArray(value) && value.every(item =>
+  item && typeof item === "object" &&
+  [item.id, item.userId, item.title, item.priority, item.status].every(nonempty));
 
 export async function cachedClasses(token: string, userId: string, role: "teacher" | "student", signal?: AbortSignal) {
   return readThroughCache(() => listClasses(token, role, signal), cache, classCacheKey(userId, role), isClassList, networkState.isOffline());
@@ -29,6 +34,11 @@ export async function cachedPosts(token: string, userId: string, classId: string
   const key = postCacheKey(userId, classId);
   const valid = (value: unknown): value is StreamPost[] => isPostList(value) && value.every(post => post.classId === classId);
   return readThroughCache(() => listPosts(token, classId, signal), cache, key, valid, networkState.isOffline());
+}
+
+export async function cachedTasks(token: string, userId: string, filter?: ListTasksFilter, signal?: AbortSignal) {
+  const key = taskCacheKey(userId);
+  return readThroughCache(() => listTasks(token, filter, signal), cache, key, isTaskList, networkState.isOffline());
 }
 
 /** Removes all LMS offline cache entries (used on logout to prevent cross-user reads). */

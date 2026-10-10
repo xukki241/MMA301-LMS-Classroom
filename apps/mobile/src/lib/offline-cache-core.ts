@@ -8,6 +8,7 @@ export const OFFLINE_CACHE_PREFIX = "lms23:";
 export const classCacheKey = (userId: string, role: string) => `${OFFLINE_CACHE_PREFIX}classes:${encodeURIComponent(userId)}:${role}`;
 export const postCacheKey = (userId: string, classId: string) =>
   `${OFFLINE_CACHE_PREFIX}posts:${encodeURIComponent(userId)}:${encodeURIComponent(classId)}`;
+export const taskCacheKey = (userId: string) => `${OFFLINE_CACHE_PREFIX}tasks:${encodeURIComponent(userId)}`;
 
 export function createOfflineCache(storage: Storage) {
   return {

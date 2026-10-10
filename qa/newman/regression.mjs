@@ -62,6 +62,20 @@ const collection = {
     request("Teacher creates post", "POST", `${coreUrl}/classes/{{class_id}}/posts`, ["pm.test('post created', () => pm.response.to.have.status(201));", "pm.test('post envelope valid', () => pm.expect(pm.response.json().post._id).to.match(/^[a-f0-9]{24}$/));"], { content: "Newman release regression post" }, "{{teacher_token}}"),
     request("Student reads post feed", "GET", `${coreUrl}/classes/{{class_id}}/posts`, ["pm.test('feed is 200', () => pm.response.to.have.status(200));", "pm.test('feed is an array', () => pm.expect(pm.response.json().posts).to.be.an('array').and.not.empty);"], undefined, "{{student_token}}"),
     request("Student cannot create post", "POST", `${coreUrl}/classes/{{class_id}}/posts`, ["pm.test('student write is forbidden', () => pm.response.to.have.status(403));"], { content: "forbidden" }, "{{student_token}}"),
+    request("Teacher creates task", "POST", `${coreUrl}/tasks`, [
+      "pm.test('task created', () => pm.response.to.have.status(201));",
+      "const body = pm.response.json();",
+      "pm.test('task envelope valid', () => pm.expect(body.task._id).to.match(/^[a-f0-9]{24}$/));",
+      "pm.environment.set('task_id', body.task._id);",
+    ], { title: "Newman task regression", priority: "high" }, "{{teacher_token}}"),
+    request("Teacher lists tasks", "GET", `${coreUrl}/tasks`, [
+      "pm.test('list tasks 200', () => pm.response.to.have.status(200));",
+      "pm.test('tasks is array', () => pm.expect(pm.response.json().tasks).to.be.an('array').and.not.empty);",
+    ], undefined, "{{teacher_token}}"),
+    request("Teacher toggles task status", "PATCH", `${coreUrl}/tasks/{{task_id}}/toggle`, [
+      "pm.test('toggle task 200', () => pm.response.to.have.status(200));",
+      "pm.test('task completed', () => pm.expect(pm.response.json().task.status).to.equal('completed'));",
+    ], undefined, "{{teacher_token}}"),
     request(
       "Teacher creates exercise",
       "POST",
@@ -149,7 +163,7 @@ console.log(JSON.stringify({
   gradeFlow: includeGrade ? "enabled" : "skipped (NEWMAN_GRADE=0)",
 }, null, 2));
 
-const minAssertions = includeGrade ? 18 : 15;
+const minAssertions = includeGrade ? 24 : 21;
 
 newman.run({
   collection,

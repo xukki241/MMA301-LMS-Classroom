@@ -148,15 +148,15 @@ export default function ClassDetailScreen() {
 
       <Animated.View entering={FadeInDown.delay(80).springify()} style={styles.modules}>
         <Pressable accessibilityRole="button" accessibilityLabel="Mở bảng tin lớp học"
-          onPress={() => router.push({ pathname: "/class/[id]/stream", params: { id: classId } })}>
+          onPress={() => router.push({ pathname: "/class/[id]/stream" as any, params: { id: classId } })}>
           <ModuleCard icon="newspaper-outline" title="Bảng tin" subtitle="Thông báo và bình luận của lớp" />
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Mở tài liệu lớp học"
-          onPress={() => router.push({ pathname: "/class/[id]/materials", params: { id: classId, name: item?.name } })}>
+          onPress={() => router.push({ pathname: "/class/[id]/materials" as any, params: { id: classId, name: item?.name } })}>
           <ModuleCard icon="document-text-outline" title="Tài liệu" subtitle="Tài liệu bài giảng và liên kết học tập" />
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Mở bài tập lớp học"
-          onPress={() => router.push({ pathname: "/class/[id]/exercises", params: { id: classId, name: item?.name } })}>
+          onPress={() => router.push({ pathname: "/class/[id]/exercises" as any, params: { id: classId, name: item?.name } })}>
           <ModuleCard icon="create-outline" title="Bài tập" subtitle="Giao bài, nộp bài và xem điểm" />
         </Pressable>
       </Animated.View>
