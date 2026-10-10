@@ -7,13 +7,13 @@ type Props = Omit<ButtonProps, "children"> & {
   haptic?: boolean;
 };
 
-export function AppButton({ children, haptic = true, onPress, loading, disabled, ...rest }: Props) {
+export function AppButton({ children, haptic = true, onPress, loading, disabled, contentStyle, ...rest }: Props) {
   return (
     <Button
       mode="contained"
       loading={loading}
       disabled={disabled || loading}
-      contentStyle={styles.content}
+      contentStyle={[contentStyle, styles.content]}
       labelStyle={styles.label}
       onPress={(event) => {
         if (haptic) impactLight();
@@ -49,7 +49,7 @@ export function GhostButton({
 }
 
 const styles = StyleSheet.create({
-  content: { paddingVertical: 6 },
+  content: { minHeight: 44, paddingVertical: 6 },
   label: { fontWeight: "700", letterSpacing: 0.2 },
   ghost: { alignSelf: "flex-start" },
   pressed: { opacity: 0.7 },

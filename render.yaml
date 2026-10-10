@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: mma301-lms-auth
+    runtime: docker
+    dockerfilePath: ./services/auth-service/Dockerfile
+    dockerContext: ./services/auth-service
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4001"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGO_URI
+        sync: false
+
+  - type: web
+    name: mma301-lms-core
+    runtime: docker
+    dockerfilePath: ./services/core-api/Dockerfile
+    dockerContext: ./services/core-api
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4002"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGO_URI
+        sync: false

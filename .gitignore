@@ -1,4 +1,4 @@
-﻿# IDE
+# IDE
 .idea/
 .vscode/
 
@@ -17,6 +17,13 @@ GoogleService-Info.plist
 *.keystore
 coverage/
 .superpowers/lms10-mongo/
+test-reports/
+test-results/
 .cursor/hooks/state/*.json
 .cursor/hooks/state/*.jsonl
 .cursor/hooks/evidence/*.md
+.claude/
+
+# Agents & local tooling
+.agents/
+.cursor/hooks/state/

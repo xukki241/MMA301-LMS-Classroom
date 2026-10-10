@@ -14,7 +14,7 @@ export const exerciseSchemas = {
       description: { type: "string", maxLength: 10000, default: "" },
       dueAt: { type: "string", format: "date-time", description: "ISO 8601 có Z hoặc offset, lớn hơn giờ server; lưu UTC." },
     },
-    example: { title: "Bài tập 1", description: "Nộp báo cáo", dueAt: "2099-01-01T00:00:00.000Z" },
+    example: { title: "Assignment 1", description: "Submit project report", dueAt: "2099-01-01T00:00:00.000Z" },
   },
   Exercise: {
     type: "object", required: ["_id", "classId", "title", "description", "dueAt", "createdBy", "createdAt", "updatedAt"],

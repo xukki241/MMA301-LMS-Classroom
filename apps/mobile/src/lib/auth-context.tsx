@@ -1,7 +1,9 @@
 import { authStorage } from "./auth-storage";
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { login as loginApi, register as registerApi, type AuthUser } from "./api";
 import { queryClient } from "./query-client";
+import { setOnUnauthorized } from "./http";
+import { purgeOfflineCache } from "./offline-data";
 
 const TOKEN_KEY = "lms.accessToken";
 const USER_KEY = "lms.user";
@@ -54,6 +56,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const logout = useCallback(async () => {
+    await authStorage.removeItem(TOKEN_KEY);
+    await authStorage.removeItem(USER_KEY);
+    setToken(null);
+    setUser(null);
+    queryClient.clear();
+    await purgeOfflineCache();
+  }, []);
+
+  const beginSession = useCallback(async (nextToken: string, nextUser: AuthUser) => {
+    queryClient.clear();
+    await persist(nextToken, nextUser);
+    setToken(nextToken);
+    setUser(nextUser);
+  }, []);
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      void logout();
+    });
+    return () => {
+      setOnUnauthorized(null);
+    };
+  }, [logout]);
+
   const value = useMemo<AuthState>(
     () => ({
       loading,
@@ -61,25 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       login: async (email, password) => {
         const result = await loginApi(email, password);
-        await persist(result.token, result.user);
-        setToken(result.token);
-        setUser(result.user);
+        await beginSession(result.token, result.user);
       },
       register: async (input) => {
         const result = await registerApi(input);
-        await persist(result.token, result.user);
-        setToken(result.token);
-        setUser(result.user);
+        await beginSession(result.token, result.user);
       },
-      logout: async () => {
-        await authStorage.removeItem(TOKEN_KEY);
-        await authStorage.removeItem(USER_KEY);
-        setToken(null);
-        setUser(null);
-        queryClient.clear();
-      },
+      logout,
     }),
-    [loading, token, user]
+    [loading, token, user, logout, beginSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

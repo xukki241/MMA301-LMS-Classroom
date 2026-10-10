@@ -36,14 +36,27 @@ npx expo start
 
 Tài khoản seed: `teacher@lms.local` / `student@lms.local` — mật khẩu `Demo123!`.
 
-## 6.3. Quy ước nhánh Git
+## 6.3. Quy ước Git Branching, Pull Request & Quản lý Mã nguồn
 
-| Nhánh | Mục đích |
-|-------|----------|
-| `main` | Ổn định, có thể demo |
-| `feature/<ten-task>` | Phát triển hạng mục |
+Áp dụng bắt buộc cho toàn bộ lập trình viên trong dự án MMA301 LMS Classroom:
 
-Commit message ngắn gọn, tiếng Anh hoặc tiếng Việt nhất quán trong repo (ví dụ: `feat(auth): add login endpoint`).
+1. **Nguyên tắc phân nhánh (GitFlow & Base Branch)**:
+   - Branch `develop` là nhánh tích hợp trung tâm. Mọi Pull Request phát triển tính năng (`LMS-XX`) **bắt buộc phải target vào `develop`**. Tuyệt đối **không mở PR trực tiếp vào `main`**.
+   - Branch `main` là nhánh phát hành (Release), chỉ nhận merge từ `develop` khi toàn bộ MVP đã được nghiệm thu và gắn tag phiên bản (ví dụ: `v1.0-mvp`).
+2. **Quy ước đặt tên nhánh (Branch Naming)**:
+   - Cú pháp chuẩn: `LMS-XX-·-short-description` (Ví dụ: `LMS-11-·-Mobile-class-list-/-join-/-detail`, `LMS-12-·-Mobile-stream-Post-+-Comment`, `LMS-13-·-Mobile-Login-Register`, `LMS-14-·-Material-API-mobile`).
+   - Nghiêm cấm đặt tên nhánh tự do như `huy`, `anh-tus`, `lms-08`.
+3. **Quy ước tiêu đề Pull Request (PR Title)**:
+   - Theo chuẩn Conventional Commits kết hợp mã task: `feat(LMS-XX): short description` hoặc `fix(LMS-XX): short description`.
+4. **Nội dung mô tả PR (PR Description)**:
+   - Bắt buộc điền đầy đủ form từ `.github/PULL_REQUEST_TEMPLATE.md` gồm: Linked Task, Changes, Testing Evidence, và Checklist.
+5. **Kỷ luật Clean Diff & Code Hygiene**:
+   - Nguyên tắc đơn trách nhiệm (1 PR = 1 Task). Không gộp Auth, Material, Assignment vào chung một PR.
+   - Tuyệt đối không commit thư mục công cụ/agent (`.agents/`, `.cursor/hooks/state/`) vào repository. Giữ `.gitignore` đồng bộ.
+6. **Tiêu chuẩn Review & Approval**:
+   - Tối thiểu 01 lượt Approved Review trước khi merge.
+7. **Tiêu chí hoàn thành (Definition of Done — DoD)**:
+   - Toàn bộ automated unit/permission test suites pass 100%, typecheck sạch, và thẻ Notion được cập nhật link `GitHub Evidence` cùng `Evidence State` tương ứng.
 
 ## 6.4. Hợp đồng API tối thiểu (khung)
 

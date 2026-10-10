@@ -1,0 +1,21 @@
+appId: com.mma301.lmsclassroom
+env:
+  MAESTRO_EMAIL: ${MAESTRO_EMAIL}
+  MAESTRO_PASSWORD: ${MAESTRO_PASSWORD}
+---
+- launchApp:
+    clearState: true
+- assertVisible: "LMS CLASSROOM"
+- tapOn:
+    id: "login-email"
+- inputText: ${MAESTRO_EMAIL}
+- tapOn:
+    id: "login-password"
+- inputText: ${MAESTRO_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "login-submit"
+- assertNotVisible:
+    text: "Đăng nhập không thành công"
+- assertVisible:
+    id: "classes-workspace-title"

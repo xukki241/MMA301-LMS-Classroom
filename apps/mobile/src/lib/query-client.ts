@@ -23,10 +23,14 @@ export const queryClient = new QueryClient({
 
 export const queryKeys = {
   me: ["me"] as const,
-  classes: ["classes"] as const,
-  class: (id: string) => ["classes", id] as const,
-  teacherClass: (userId: string, classId: string) => ["teacher", userId, classId] as const,
-  exercises: (userId: string, classId: string) => ["teacher", userId, classId, "exercises"] as const,
-  submissions: (userId: string, classId: string, exerciseId: string) => ["teacher", userId, classId, "submissions", exerciseId] as const,
-  submission: (userId: string, classId: string, exerciseId: string, submissionId: string) => ["teacher", userId, classId, "submissions", exerciseId, submissionId] as const,
+  classes: (userId: string) => ["classes", userId] as const,
+  classList: (userId: string, role: string) => ["classes", userId, "list", role] as const,
+  class: (userId: string, id: string) => ["classes", userId, "detail", id] as const,
+  members: (userId: string, id: string) => ["classes", userId, "members", id] as const,
+  materials: (classId: string) => ["materials", classId] as const,
+  exercises: (userId: string, classId: string) => ["exercises", userId, classId] as const,
+  mySubmission: (userId: string, classId: string, exerciseId: string) =>
+    ["exercises", userId, classId, exerciseId, "mine"] as const,
+  exerciseSubmissions: (userId: string, classId: string, exerciseId: string) =>
+    ["exercises", userId, classId, exerciseId, "submissions"] as const,
 };

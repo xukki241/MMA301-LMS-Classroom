@@ -6,6 +6,17 @@ import { openApiSpec } from "../docs/openapi.js";
 
 export const docsRouter = Router();
 
+function authServiceBaseUrl(): string {
+  const configured = process.env.AUTH_URL?.trim().replace(/\/$/, "");
+  if (configured) return configured;
+  const external = process.env.RENDER_EXTERNAL_URL?.trim().replace(/\/$/, "");
+  if (external) {
+    const derived = external.replace("lms-core", "lms-auth");
+    if (derived !== external) return derived;
+  }
+  return "http://127.0.0.1:4001";
+}
+
 // Endpoint cung cấp raw OpenAPI JSON specification
 docsRouter.get("/openapi.json", (_req, res) => {
   res.setHeader("Content-Type", "application/json");
@@ -18,7 +29,7 @@ async function getOrGenerateToken(role: "teacher" | "student") {
   const password = "Demo123!";
 
   try {
-    const authRes = await fetch("http://127.0.0.1:4001/auth/login", {
+    const authRes = await fetch(`${authServiceBaseUrl()}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -60,6 +71,12 @@ async function getOrGenerateToken(role: "teacher" | "student") {
 
 // Endpoint lấy token Giáo viên (Teacher) 1-Click
 docsRouter.post("/docs/tokens/teacher", async (_req, res) => {
+  if (env.NODE_ENV === "production") {
+    return res.status(403).json({
+      error: "Dev token generation is disabled in production",
+      code: "FORBIDDEN_IN_PRODUCTION",
+    });
+  }
   const result = await getOrGenerateToken("teacher");
   res.status(200).json({
     role: "teacher",
@@ -73,6 +90,12 @@ docsRouter.post("/docs/tokens/teacher", async (_req, res) => {
 
 // Endpoint lấy token Học sinh (Student) 1-Click
 docsRouter.post("/docs/tokens/student", async (_req, res) => {
+  if (env.NODE_ENV === "production") {
+    return res.status(403).json({
+      error: "Dev token generation is disabled in production",
+      code: "FORBIDDEN_IN_PRODUCTION",
+    });
+  }
   const result = await getOrGenerateToken("student");
   res.status(200).json({
     role: "student",
@@ -87,7 +110,7 @@ docsRouter.post("/docs/tokens/student", async (_req, res) => {
 // Proxy endpoint đăng nhập qua Auth Service
 docsRouter.post("/auth/login", async (req, res) => {
   try {
-    const authRes = await fetch("http://127.0.0.1:4001/auth/login", {
+    const authRes = await fetch(`${authServiceBaseUrl()}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(req.body),
@@ -98,7 +121,7 @@ docsRouter.post("/auth/login", async (req, res) => {
     res.status(503).json({
       error: {
         code: "AUTH_SERVICE_UNAVAILABLE",
-        message: "Auth Service (cổng 4001) chưa được bật. Hãy dùng endpoint /docs/tokens/teacher hoặc /docs/tokens/student để lấy token test.",
+        message: "Auth Service chưa sẵn sàng. Hãy dùng endpoint /docs/tokens/teacher hoặc /docs/tokens/student khi môi trường cho phép token demo.",
       },
     });
   }

@@ -1,12 +1,14 @@
+import { expandResponseRefs } from "./expand-response-refs.js";
 import { exercisePaths, exerciseSchemas } from "./exercise.openapi.js";
 import { submissionPaths, submissionSchemas } from "./submission.openapi.js";
+import { materialPaths, materialSchemas } from "./material.openapi.js";
 
-export const openApiSpec = {
+const coreOpenApiDocument = {
   openapi: "3.1.0",
   info: {
     title: "MMA301 LMS Classroom - Core API (Nguyễn Anh Tú)",
     version: "1.0.0",
-    description: `## Tài liệu API Phân hệ Quản lý Lớp học (Task LMS-05)
+    description: `## Tài liệu API Phân hệ Quản lý Lớp học & Ownership (Task LMS-05, LMS-06, LMS-07)
 
 Phụ trách: Nguyễn Anh Tú  
 Email: dambautv2005@gmail.com
@@ -57,16 +59,28 @@ Email: dambautv2005@gmail.com
   },
   servers: [
     {
-      url: "http://localhost:4002",
-      description: "Core API (Cổng 4002)",
+      url: "/",
+      description: "Host đang phục vụ tài liệu này (local hoặc staging)",
     },
     {
-      url: "http://localhost:4001",
-      description: "Auth Service (Cổng 4001)",
+      url: "http://127.0.0.1:4002",
+      description: "Core API local",
+    },
+    {
+      url: "https://mma301-lms-core-staging.onrender.com",
+      description: "Core API staging",
     },
   ],
   tags: [
+    {
+      name: "Material (LMS-14)",
+      description: "Quản lý và chia sẻ tài liệu bài giảng theo lớp",
+    },
     { name: "Bài tập (LMS-08)", description: "Tạo và danh sách bài tập theo lớp — Nguyễn Quốc Hưng." },
+    {
+      name: "Submission & Grade (LMS-09)",
+      description: "Nộp bài và chấm điểm bài tập — Nguyễn Quốc Hưng.",
+    },
     {
       name: "Authentication & Lấy Token",
       description: "Các endpoint hỗ trợ lấy JWT Token nhanh để kiểm thử",
@@ -78,6 +92,13 @@ Email: dambautv2005@gmail.com
     {
       name: "Bảng tin & Tương tác (LMS-06)",
       description: "Các API Bảng tin (Post, Comment, Reaction) do Nguyễn Anh Tú xây dựng",
+    },
+    {
+      name: "Ownership & Guards (LMS-07)",
+      description: `Mô hình phân quyền và kiểm tra sở hữu (Ownership) được chuẩn hóa tại Core API:
+- **requireRole middleware**: Kiểm tra role từ JWT ở route level (403 nếu sai role).
+- **assertClassMembership helper**: Shared guard xác minh thành viên lớp học dùng chung cho Post, Comment, Reaction.
+- **Ownership check**: teacherId === user.id kiểm tra quyền sở hữu đối với PATCH/DELETE class, authorId === user.id đối với bài viết/bình luận.`,
     },
     {
       name: "Hệ thống & Thông tin cá nhân",
@@ -95,10 +116,12 @@ Email: dambautv2005@gmail.com
   paths: {
     ...submissionPaths,
     ...exercisePaths,
+    ...materialPaths,
     "/docs/tokens/teacher": {
       post: {
         tags: ["Authentication & Lấy Token"],
         summary: "Lấy Token Giáo viên 1-Click (Demo Teacher)",
+        security: [],
         description: `Endpoint tiện ích phục vụ việc test API.
 Trả về JWT Token của tài khoản Giáo viên (\`teacher@lms.local\`).
 Nếu Auth Service (:4001) đang bật, hệ thống sẽ lấy token chuẩn từ Auth Service. Nếu chưa bật, hệ thống sẽ tự ký token hợp lệ bằng JWT_SECRET.
@@ -121,6 +144,21 @@ Cách dùng: Nhấn **Test Request**, sau đó copy giá trị \`token\` và dá
               },
             },
           },
+          "403": {
+            description: "Môi trường production/staging tắt phát token demo",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["error", "code"],
+                  properties: {
+                    error: { type: "string" },
+                    code: { type: "string", enum: ["FORBIDDEN_IN_PRODUCTION"] },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -128,6 +166,7 @@ Cách dùng: Nhấn **Test Request**, sau đó copy giá trị \`token\` và dá
       post: {
         tags: ["Authentication & Lấy Token"],
         summary: "Lấy Token Sinh viên 1-Click (Demo Student)",
+        security: [],
         description: `Endpoint tiện ích phục vụ việc test API.
 Trả về JWT Token của tài khoản Sinh viên (\`student@lms.local\`).
 
@@ -149,21 +188,32 @@ Cách dùng: Nhấn **Test Request**, sau đó copy giá trị \`token\` và dá
               },
             },
           },
+          "403": {
+            description: "Môi trường production/staging tắt phát token demo",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["error", "code"],
+                  properties: {
+                    error: { type: "string" },
+                    code: { type: "string", enum: ["FORBIDDEN_IN_PRODUCTION"] },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
     "/auth/login": {
       post: {
         servers: [
-          {
-            url: "http://localhost:4001",
-            description: "Auth Service (Cổng 4001)",
-          },
-          {
-            url: "http://localhost:4002",
-            description: "Core API Proxy (Cổng 4002)",
-          },
+          { url: "/", description: "Core API hiện tại, proxy tới Auth của cùng môi trường" },
+          { url: "http://127.0.0.1:4001", description: "Auth Service local" },
+          { url: "https://mma301-lms-auth-staging.onrender.com", description: "Auth Service staging" },
         ],
+        security: [],
         tags: ["Authentication & Lấy Token"],
         summary: "Đăng nhập tài khoản qua Auth Service",
         description: `Gọi trực tiếp đến Auth Service để xác thực email và password.
@@ -218,6 +268,27 @@ Tài khoản seed mặc định:
               },
             },
           },
+          "503": {
+            description: "Core không kết nối được Auth Service",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["error"],
+                  properties: {
+                    error: {
+                      type: "object",
+                      required: ["code", "message"],
+                      properties: {
+                        code: { type: "string", enum: ["AUTH_SERVICE_UNAVAILABLE"] },
+                        message: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -266,7 +337,7 @@ Tài khoản seed mặc định:
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tạo lớp học thành công" },
+                    message: { type: "string", example: "Class created successfully" },
                     class: { $ref: "#/components/schemas/Class" },
                   },
                 },
@@ -394,7 +465,7 @@ Tài khoản seed mặc định:
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tham gia lớp học thành công" },
+                    message: { type: "string", example: "Joined class successfully" },
                     class: { $ref: "#/components/schemas/Class" },
                     membership: { $ref: "#/components/schemas/ClassMember" },
                   },
@@ -520,7 +591,7 @@ Tài khoản seed mặc định:
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cập nhật lớp học thành công" },
+                    message: { type: "string", example: "Class updated successfully" },
                     class: { $ref: "#/components/schemas/Class" },
                   },
                 },
@@ -567,7 +638,7 @@ Tài khoản seed mặc định:
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Xóa lớp học thành công" },
+                    message: { type: "string", example: "Class deleted successfully" },
                   },
                 },
               },
@@ -633,19 +704,39 @@ Tài khoản seed mặc định:
         tags: ["Hệ thống & Thông tin cá nhân"],
         summary: "Kiểm tra trạng thái sống Core API",
         description: "Kiểm tra trạng thái hoạt động của Core API và kết nối cơ sở dữ liệu MongoDB.",
+        security: [],
         responses: {
           "200": {
-            description: "Hệ thống hoạt động bình thường",
+            description: "Core API và MongoDB sẵn sàng",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
+                  required: ["ok", "service", "mongo"],
                   properties: {
-                    status: { type: "string", example: "ok" },
-                    service: { type: "string", example: "core-api" },
-                    mongo: { type: "string", example: "connected" },
+                    ok: { type: "boolean", const: true },
+                    service: { type: "string", enum: ["core-api"] },
+                    mongo: { type: "string", enum: ["up"] },
                   },
                 },
+                example: { ok: true, service: "core-api", mongo: "up" },
+              },
+            },
+          },
+          "503": {
+            description: "Core API chạy nhưng MongoDB không kết nối",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["ok", "service", "mongo"],
+                  properties: {
+                    ok: { type: "boolean", const: false },
+                    service: { type: "string", enum: ["core-api"] },
+                    mongo: { type: "string", enum: ["down"] },
+                  },
+                },
+                example: { ok: false, service: "core-api", mongo: "down" },
               },
             },
           },
@@ -782,7 +873,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tạo bài đăng thành công" },
+                    message: { type: "string", example: "Post created successfully" },
                     post: { $ref: "#/components/schemas/Post" },
                   },
                 },
@@ -846,7 +937,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cập nhật bài đăng thành công" },
+                    message: { type: "string", example: "Post updated successfully" },
                     post: { $ref: "#/components/schemas/Post" },
                   },
                 },
@@ -894,7 +985,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Xóa bài đăng thành công" },
+                    message: { type: "string", example: "Post deleted successfully" },
                   },
                 },
               },
@@ -1005,7 +1096,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Tạo bình luận thành công" },
+                    message: { type: "string", example: "Comment created successfully" },
                     comment: { $ref: "#/components/schemas/Comment" },
                   },
                 },
@@ -1075,7 +1166,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Cập nhật bình luận thành công" },
+                    message: { type: "string", example: "Comment updated successfully" },
                     comment: { $ref: "#/components/schemas/Comment" },
                   },
                 },
@@ -1129,7 +1220,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                 schema: {
                   type: "object",
                   properties: {
-                    message: { type: "string", example: "Xóa bình luận thành công" },
+                    message: { type: "string", example: "Comment deleted successfully" },
                   },
                 },
               },
@@ -1267,7 +1358,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
                   type: "object",
                   properties: {
                     action: { type: "string", example: "added" },
-                    message: { type: "string", example: "Đã thêm biểu cảm" },
+                    message: { type: "string", example: "Reaction added" },
                     reaction: { $ref: "#/components/schemas/Reaction" },
                   },
                 },
@@ -1301,6 +1392,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
     schemas: {
       ...submissionSchemas,
       ...exerciseSchemas,
+      ...materialSchemas,
       Class: {
         type: "object",
         properties: {
@@ -1362,14 +1454,11 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
       },
       ErrorResponse: {
         type: "object",
+        required: ["error", "code", "requestId"],
         properties: {
-          error: {
-            type: "object",
-            properties: {
-              code: { type: "string", example: "FORBIDDEN" },
-              message: { type: "string", example: "Chỉ giáo viên mới có thể tạo lớp học" },
-            },
-          },
+          error: { type: "string", example: "Chỉ giáo viên mới có thể tạo lớp học" },
+          code: { type: "string", example: "FORBIDDEN" },
+          requestId: { type: "string", example: "7d2a7d2d-04a6-4fa4-a77b-8e6c7a8b0f4c" },
         },
       },
     },
@@ -1438,6 +1527,21 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
           },
         },
       },
+      Conflict: {
+        description: "409 CONFLICT: Thao tác bị trùng hoặc tài nguyên đã tồn tại",
+        content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+      },
+      TooManyRequests: {
+        description: "429 TOO_MANY_REQUESTS: Vượt giới hạn request",
+        headers: { "Retry-After": { schema: { type: "integer" } } },
+        content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+      },
+      InternalError: {
+        description: "500 INTERNAL: Lỗi máy chủ không mong muốn",
+        content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+      },
     },
   },
 };
+
+export const openApiSpec = expandResponseRefs(coreOpenApiDocument);

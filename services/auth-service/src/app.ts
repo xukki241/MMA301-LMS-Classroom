@@ -5,6 +5,8 @@ import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { authRouter } from "./routes/auth.routes.js";
 import { healthRouter } from "./routes/health.routes.js";
+import { docsRouter } from "./routes/docs.routes.js";
+import { requestContext } from "./middleware/requestContext.js";
 
 function corsOptions(origin: string): cors.CorsOptions {
   if (origin.trim() === "*") {
@@ -23,10 +25,14 @@ export function createApp() {
   if (env.trustProxy) {
     app.set("trust proxy", 1);
   }
-  app.use(helmet());
+  // Scalar embeds its module bootstrap in the docs HTML. Keep the rest of
+  // Helmet enabled while disabling only CSP for this local API reference.
+  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(requestContext);
   app.use(cors(corsOptions(env.CORS_ORIGIN)));
   app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
   app.use(express.urlencoded({ extended: true, limit: env.JSON_BODY_LIMIT }));
+  app.use(docsRouter);
   app.use(healthRouter);
   app.use("/auth", authRouter);
   app.use(errorHandler);

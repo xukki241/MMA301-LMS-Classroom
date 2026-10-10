@@ -10,6 +10,8 @@ import { postRouter } from "./routes/post.routes.js";
 import { docsRouter } from "./routes/docs.routes.js";
 import { exerciseRouter } from "./routes/exercise.routes.js";
 import { submissionRouter } from "./routes/submission.routes.js";
+import { materialRouter } from "./routes/material.routes.js";
+import { requestContext } from "./middleware/requestContext.js";
 
 function corsOptions(origin: string): cors.CorsOptions {
   if (origin.trim() === "*") {
@@ -33,6 +35,7 @@ export function createApp() {
       contentSecurityPolicy: false,
     })
   );
+  app.use(requestContext);
   app.use(cors(corsOptions(env.CORS_ORIGIN)));
   app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
   app.use(express.urlencoded({ extended: true, limit: env.JSON_BODY_LIMIT }));
@@ -43,6 +46,8 @@ export function createApp() {
   app.use(postRouter);
   app.use(exerciseRouter);
   app.use(submissionRouter);
+  app.use("/classes", materialRouter);
+  app.use(materialRouter);
   app.use(errorHandler);
   return app;
 }

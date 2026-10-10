@@ -30,7 +30,7 @@ export const lightPaperTheme: MD3Theme = {
     onBackground: palette.ink,
     surface: palette.surface,
     onSurface: palette.ink,
-    surfaceVariant: "#EEF2FF",
+    surfaceVariant: "#F1E9DE",
     onSurfaceVariant: palette.inkMuted,
     outline: palette.line,
     outlineVariant: palette.line,
@@ -94,7 +94,7 @@ export const lightNavTheme = {
     border: palette.line,
     notification: palette.danger,
   },
-};
+} satisfies NavTheme;
 
 export const darkNavTheme = {
   ...NavDark,
@@ -107,4 +107,4 @@ export const darkNavTheme = {
     border: darkPalette.line,
     notification: darkPalette.danger,
   },
-};
+} satisfies NavTheme;

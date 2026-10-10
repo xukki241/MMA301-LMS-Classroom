@@ -15,7 +15,12 @@
     "test:lms08:permissions": "tsx src/scripts/test-lms08-permissions.ts",
     "test:lms09": "tsx src/scripts/test-lms09.ts",
     "test:lms09:permissions": "tsx src/scripts/test-lms09-permissions.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test:lms14": "tsx src/scripts/test-lms14.ts",
+    "test:guard": "tsx src/scripts/test-route-guard.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify:docs": "tsx src/scripts/verify-openapi.ts",
+    "test:docs": "tsx src/scripts/test-docs.ts",
+    "validate:docs": "tsx src/scripts/validate-openapi.ts"
   },
   "dependencies": {
     "@scalar/express-api-reference": "^0.10.18",
@@ -28,6 +33,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.7",

@@ -12,6 +12,7 @@
       "bundleIdentifier": "com.mma301.lmsclassroom"
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "package": "com.mma301.lmsclassroom",
       "adaptiveIcon": {
         "backgroundColor": "#2563EB",
@@ -38,7 +39,8 @@
           "backgroundColor": "#F4F6FB"
         }
       ],
-      "expo-image"
+      "expo-image",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

@@ -9,12 +9,22 @@ type Props = {
   scroll?: boolean;
   refreshControl?: ReactElement<RefreshControlProps>;
   padded?: boolean;
+  /** Extra space so the last field or error clears a floating action or the keyboard. */
+  bottomInset?: number;
+  keyboardInset?: boolean;
 };
 
-export function Screen({ children, scroll = true, refreshControl, padded = true }: Props) {
+export function Screen({
+  children,
+  scroll = true,
+  refreshControl,
+  padded = true,
+  bottomInset = 0,
+  keyboardInset = true,
+}: Props) {
   const theme = useTheme();
   const body = (
-    <View style={[styles.body, padded && styles.padded, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.body, padded && styles.padded, bottomInset > 0 && { paddingBottom: bottomInset }, { backgroundColor: theme.colors.background }]}>
       {children}
     </View>
   );
@@ -24,6 +34,7 @@ export function Screen({ children, scroll = true, refreshControl, padded = true 
       {scroll ? (
         <ScrollView
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={keyboardInset}
           contentContainerStyle={styles.scroll}
           refreshControl={refreshControl}
         >
