@@ -25,4 +25,8 @@ export const queryKeys = {
   me: ["me"] as const,
   classes: ["classes"] as const,
   class: (id: string) => ["classes", id] as const,
+  teacherClass: (userId: string, classId: string) => ["teacher", userId, classId] as const,
+  exercises: (userId: string, classId: string) => ["teacher", userId, classId, "exercises"] as const,
+  submissions: (userId: string, classId: string, exerciseId: string) => ["teacher", userId, classId, "submissions", exerciseId] as const,
+  submission: (userId: string, classId: string, exerciseId: string, submissionId: string) => ["teacher", userId, classId, "submissions", exerciseId, submissionId] as const,
 };

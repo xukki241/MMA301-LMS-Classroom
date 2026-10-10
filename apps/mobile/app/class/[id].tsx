@@ -1,6 +1,6 @@
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, type ComponentProps } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Text, useTheme } from "react-native-paper";
@@ -19,14 +19,20 @@ function ModuleCard({
   icon,
   title,
   subtitle,
+  onPress,
 }: {
   icon: ComponentProps<typeof Ionicons>["name"];
   title: string;
   subtitle: string;
+  onPress?: () => void;
 }) {
   const theme = useTheme();
   return (
-    <View
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={title}
       style={[
         styles.module,
         elevation.card,
@@ -38,14 +44,14 @@ function ModuleCard({
         <Text style={typography.subtitle}>{title}</Text>
         <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>{subtitle}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function ClassDetailScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { id, name, code } = useLocalSearchParams<{ id: string; name?: string; code?: string }>();
   const classId = Array.isArray(id) ? id[0] : id;
 
@@ -98,7 +104,9 @@ export default function ClassDetailScreen() {
       <Animated.View entering={FadeInDown.delay(80).springify()} style={styles.modules}>
         <ModuleCard icon="newspaper-outline" title="Bảng tin" subtitle="Post + comment — chờ contract stream" />
         <ModuleCard icon="document-text-outline" title="Tài liệu" subtitle="Material list/add — LMS-14" />
-        <ModuleCard icon="create-outline" title="Bài tập" subtitle="Exercise → nộp → chấm điểm" />
+        <ModuleCard icon="create-outline" title="Bài tập" subtitle="Exercise → nộp → chấm điểm"
+          onPress={user?.role === "teacher" && item?.teacherId === user.id && classId
+            ? () => router.push(`/teacher/class/${classId}/exercises`) : undefined} />
       </Animated.View>
     </Screen>
   );

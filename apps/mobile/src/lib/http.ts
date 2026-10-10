@@ -1,9 +1,11 @@
 export class HttpError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.name = "HttpError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -135,7 +137,9 @@ async function requestOnce<T>(url: string, options: HttpOptions, method: HttpMet
 
     const body = await parseBody(res);
     if (!res.ok) {
-      throw new HttpError(parseMessage(body, res.status), res.status);
+      const code = body && typeof body === "object" && "code" in body && typeof body.code === "string"
+        ? body.code : undefined;
+      throw new HttpError(parseMessage(body, res.status), res.status, code);
     }
     return body as T;
   } catch (error) {
