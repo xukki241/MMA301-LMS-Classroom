@@ -16,6 +16,7 @@ GoogleService-Info.plist
 *.jks
 *.keystore
 coverage/
+.superpowers/lms10-mongo/
 test-reports/
 test-results/
 .cursor/hooks/state/*.json
