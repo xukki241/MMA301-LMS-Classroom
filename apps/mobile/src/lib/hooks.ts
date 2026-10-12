@@ -9,8 +9,10 @@ import {
   createTask,
   deleteTask,
   toggleTask,
+  updateTask,
   type CreateTaskPayload,
   type ListTasksFilter,
+  type UpdateTaskPayload,
 } from "./tasks-api";
 
 export function useMeQuery() {
@@ -87,3 +89,16 @@ export function useDeleteTaskMutation() {
     },
   });
 }
+
+export function useUpdateTaskMutation() {
+  const { token, user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, payload }: { taskId: string; payload: UpdateTaskPayload }) =>
+      updateTask(token!, taskId, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["tasks", user?.id] });
+    },
+  });
+}
+

@@ -20,12 +20,13 @@ Module._load = function(name, parent, isMain) {
 };
 const data = require('../src/lib/offline-data.ts');
 Module._load = originalLoad;
-const { classCacheKey, postCacheKey } = require('../src/lib/offline-cache-core.ts');
+const { classCacheKey, postCacheKey, taskCacheKey } = require('../src/lib/offline-cache-core.ts');
 const { networkState } = require('../src/lib/network-state.ts');
 const originalFetch = global.fetch;
 afterEach(() => { values.clear(); networkState.setOnline(true); global.fetch = originalFetch; });
 const cls = { _id: 'class-a', name: 'MMA301', code: 'A8K92Z', teacherId: 'teacher', createdAt: '2026-09-21', updatedAt: '2026-09-21' };
 const post = { _id: 'post-a', classId: 'class-a', authorId: 'teacher', content: 'Thông báo', createdAt: '2026-09-21T01:00:00.000Z' };
+const taskItem = { _id: 'task-a', userId: 'user-a', title: 'Học bài', priority: 'medium', status: 'todo' };
 
 test('fetched Class list and feed survive offline restart path with no HTTP request', async () => {
   networkState.setOnline(true);
@@ -64,3 +65,26 @@ test('business permission errors do not read old Class cache', async () => {
   global.fetch = async () => new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   await assert.rejects(data.cachedClasses('token', 'teacher', 'teacher'), e => e.status === 403);
 });
+
+test('fetched Task list survives offline restart path with no HTTP request', async () => {
+  networkState.setOnline(true);
+  global.fetch = async () => new Response(JSON.stringify({ tasks: [taskItem] }));
+  const onlineTasks = await data.cachedTasks('token', 'user-a');
+  assert.equal(onlineTasks.length, 1);
+  assert.equal(onlineTasks[0].id, 'task-a');
+  assert.ok(values.has(taskCacheKey('user-a')));
+
+  networkState.setOnline(false);
+  global.fetch = () => { throw Error('offline request'); };
+  const offlineTasks = await data.cachedTasks('token', 'user-a');
+  assert.equal(offlineTasks.length, 1);
+  assert.equal(offlineTasks[0].id, 'task-a');
+});
+
+test('other user cannot see cached task; corrupted task cache is rejected', async () => {
+  values.set(taskCacheKey('user-a'), JSON.stringify([{ id: 'x', userId: '', title: '', priority: '', status: '' }]));
+  networkState.setOnline(false);
+  await assert.rejects(data.cachedTasks('token', 'user-a'), e => e.code === 'OFFLINE_NO_CACHE');
+  await assert.rejects(data.cachedTasks('token', 'user-b'), e => e.code === 'OFFLINE_NO_CACHE');
+});
+

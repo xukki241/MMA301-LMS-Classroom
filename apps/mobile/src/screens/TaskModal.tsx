@@ -1,24 +1,23 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import {
   Dialog,
   Portal,
-  SegmentedButtons,
   Text,
   TextInput,
   useTheme,
 } from "react-native-paper";
+import { Ionicons } from "@expo/vector-icons";
 import { AppButton } from "@/src/components/ui/AppButton";
 import {
   FieldError,
   FormDialogScroll,
   FormNotice,
-  keyboardBehavior,
   useKeyboardLift,
 } from "@/src/components/ui/FormFeedback";
 import { impactLight, notifyError } from "@/src/lib/haptics";
 import type { CreateTaskPayload, LmsTask, TaskPriority } from "@/src/lib/tasks-api";
-import { radius, spacing, typography } from "@/src/theme/tokens";
+import { palette, radius, spacing, typography } from "@/src/theme/tokens";
 
 type TaskModalProps = {
   visible: boolean;
@@ -27,6 +26,48 @@ type TaskModalProps = {
   onSubmit: (data: CreateTaskPayload) => Promise<void>;
   isPending: boolean;
 };
+
+const PRIORITY_OPTIONS: {
+  key: TaskPriority;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  bg: string;
+  activeBorder: string;
+}[] = [
+  {
+    key: "low",
+    label: "Thấp",
+    icon: "flag-outline",
+    color: "#4F46E5",
+    bg: "#EEF2FF",
+    activeBorder: "#6366F1",
+  },
+  {
+    key: "medium",
+    label: "Trung bình",
+    icon: "flag",
+    color: "#D97706",
+    bg: "#FEF3C7",
+    activeBorder: "#F59E0B",
+  },
+  {
+    key: "high",
+    label: "Cao",
+    icon: "flame",
+    color: "#DC2626",
+    bg: "#FEE2E2",
+    activeBorder: "#EF4444",
+  },
+];
+
+const PRESETS = [
+  { key: "none", label: "Không" },
+  { key: "today", label: "Hôm nay" },
+  { key: "tomorrow", label: "Ngày mai" },
+  { key: "3days", label: "3 ngày tới" },
+  { key: "custom", label: "Ngày khác" },
+];
 
 export function TaskModal({
   visible,
@@ -120,11 +161,39 @@ export function TaskModal({
       <Dialog
         visible={visible}
         onDismiss={onDismiss}
-        style={[styles.dialog, { transform: [{ translateY: keyboardLift }] }]}
+        style={[
+          styles.dialog,
+          {
+            backgroundColor: theme.colors.surface,
+            transform: [{ translateY: keyboardLift }],
+          },
+        ]}
       >
-        <Dialog.Title style={typography.title}>
-          {initialTask ? "Sửa công việc" : "Thêm công việc mới"}
-        </Dialog.Title>
+        {/* Header */}
+        <View style={styles.header}>
+          <View
+            style={[
+              styles.iconBadge,
+              { backgroundColor: theme.colors.primaryContainer },
+            ]}
+          >
+            <Ionicons
+              name={initialTask ? "create-outline" : "checkbox-outline"}
+              size={22}
+              color={theme.colors.primary}
+            />
+          </View>
+          <View style={styles.headerText}>
+            <Text style={typography.title}>
+              {initialTask ? "Chỉnh sửa công việc" : "Thêm công việc mới"}
+            </Text>
+            <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
+              {initialTask
+                ? "Cập nhật tiến độ và hạn chót"
+                : "Lên kế hoạch và theo dõi công việc cá nhân"}
+            </Text>
+          </View>
+        </View>
 
         <Dialog.ScrollArea style={styles.scrollArea}>
           <FormDialogScroll>
@@ -133,14 +202,14 @@ export function TaskModal({
 
               <View>
                 <TextInput
-                  label="Tiêu đề *"
+                  label="Tiêu đề công việc *"
                   value={title}
                   onChangeText={(val) => {
                     setTitle(val);
                     if (errorMsg) setErrorMsg(null);
                   }}
                   mode="outlined"
-                  placeholder="Ví dụ: Ôn tập chương 3 React Native"
+                  placeholder="Ví dụ: Hoàn thành bài tập Lab 3"
                   autoFocus
                   disabled={isPending}
                 />
@@ -150,41 +219,113 @@ export function TaskModal({
               </View>
 
               <TextInput
-                label="Mô tả ghi chú"
+                label="Ghi chú chi tiết (tùy chọn)"
                 value={description}
                 onChangeText={setDescription}
                 mode="outlined"
                 multiline
                 numberOfLines={3}
-                placeholder="Thêm chi tiết nếu cần…"
+                placeholder="Ghi chú thêm thông tin hoặc liên kết cần nhớ…"
                 disabled={isPending}
               />
 
+              {/* Priority Picker */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Mức độ ưu tiên</Text>
-                <SegmentedButtons
-                  value={priority}
-                  onValueChange={(val) => setPriority(val as TaskPriority)}
-                  buttons={[
-                    { value: "low", label: "Thấp" },
-                    { value: "medium", label: "Trung bình" },
-                    { value: "high", label: "Cao" },
-                  ]}
-                />
+                <Text style={styles.sectionLabel}>Mức độ ưu tiên</Text>
+                <View style={styles.priorityRow}>
+                  {PRIORITY_OPTIONS.map((opt) => {
+                    const isSelected = priority === opt.key;
+                    return (
+                      <Pressable
+                        key={opt.key}
+                        onPress={() => {
+                          impactLight();
+                          setPriority(opt.key);
+                        }}
+                        style={[
+                          styles.priorityCard,
+                          {
+                            borderColor: isSelected ? opt.activeBorder : theme.colors.outline,
+                            backgroundColor: isSelected ? opt.bg : theme.colors.surface,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name={opt.icon}
+                          size={18}
+                          color={isSelected ? opt.color : theme.colors.onSurfaceVariant}
+                        />
+                        <Text
+                          style={[
+                            styles.priorityText,
+                            {
+                              color: isSelected ? opt.color : theme.colors.onSurfaceVariant,
+                              fontWeight: isSelected ? "700" : "500",
+                            },
+                          ]}
+                        >
+                          {opt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </View>
 
+              {/* Due Date Presets */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Thời hạn hoàn thành</Text>
-                <SegmentedButtons
-                  value={dueDatePreset}
-                  onValueChange={setDueDatePreset}
-                  buttons={[
-                    { value: "none", label: "Không" },
-                    { value: "today", label: "Hôm nay" },
-                    { value: "tomorrow", label: "Ngày mai" },
-                    { value: "3days", label: "3 ngày" },
-                  ]}
-                />
+                <Text style={styles.sectionLabel}>Hạn hoàn thành</Text>
+                <View style={styles.presetChips}>
+                  {PRESETS.map((preset) => {
+                    const isSelected = dueDatePreset === preset.key;
+                    return (
+                      <Pressable
+                        key={preset.key}
+                        onPress={() => {
+                          impactLight();
+                          setDueDatePreset(preset.key);
+                        }}
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: isSelected
+                              ? theme.colors.primary
+                              : theme.colors.surfaceVariant,
+                            borderColor: isSelected
+                              ? theme.colors.primary
+                              : theme.colors.outline,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            {
+                              color: isSelected
+                                ? theme.colors.onPrimary
+                                : theme.colors.onSurfaceVariant,
+                              fontWeight: isSelected ? "700" : "500",
+                            },
+                          ]}
+                        >
+                          {preset.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                {dueDatePreset === "custom" && (
+                  <TextInput
+                    label="Hạn hoàn thành (YYYY-MM-DD)"
+                    value={customDueDate}
+                    onChangeText={setCustomDueDate}
+                    mode="outlined"
+                    placeholder="2026-10-20"
+                    style={{ marginTop: spacing.xs }}
+                    disabled={isPending}
+                  />
+                )}
               </View>
             </View>
           </FormDialogScroll>
@@ -200,7 +341,7 @@ export function TaskModal({
             loading={isPending}
             disabled={isPending || title.trim().length < 2}
           >
-            Lưu
+            {initialTask ? "Cập nhật" : "Tạo công việc"}
           </AppButton>
         </Dialog.Actions>
       </Dialog>
@@ -210,8 +351,27 @@ export function TaskModal({
 
 const styles = StyleSheet.create({
   dialog: {
-    borderRadius: radius.lg,
-    maxHeight: "85%",
+    borderRadius: radius.xl,
+    maxHeight: "88%",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  iconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerText: {
+    flex: 1,
+    gap: 2,
   },
   scrollArea: {
     paddingHorizontal: 0,
@@ -224,12 +384,46 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.xs,
   },
-  sectionTitle: {
+  sectionLabel: {
     ...typography.label,
+    color: palette.inkMuted,
     marginBottom: spacing.xs,
+  },
+  priorityRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  priorityCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+  },
+  priorityText: {
+    fontSize: 12,
+  },
+  presetChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 12,
   },
   actions: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
+    paddingTop: spacing.xs,
   },
 });
