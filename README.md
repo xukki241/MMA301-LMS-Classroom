@@ -116,7 +116,7 @@ cd apps/mobile
 npx expo run:android -d Pixel_10
 ```
 
-`POST /docs/tokens/*` bị khóa khi `NODE_ENV=production` (giống staging). Token 1-click chỉ dùng local/dev. Scalar local đã inline `$ref`; Scalar staging cần redeploy Auth/Core. Production đang chặn vì secret đã xoay — không commit secret.
+`POST /docs/tokens/*` bị khóa khi `NODE_ENV=production` (giống staging). Token 1-click chỉ dùng local/dev. Scalar staging đã được kiểm tra lại ngày 09/10/2026. Production chưa được tạo, còn chờ credential Mongo đã xoay vòng, hai DB riêng, JWT mới và CORS chính xác. Xem [báo cáo kiểm tra](docs/testing/completion-2026-10-09.md); không commit secret.
 
 Với điện thoại thật, thay `10.0.2.2` bằng IPv4 LAN của máy phát triển và cho phép firewall ở cổng `4001`, `4002`.
 
@@ -240,7 +240,7 @@ Kiểm tra URI đã URL-encode password, đúng database Auth/Core, Atlas Networ
 - [docs/00-muc-luc-bao-cao.md](./docs/00-muc-luc-bao-cao.md) — mục lục báo cáo.
 - [docs/06-huong-dan-phat-trien.md](./docs/06-huong-dan-phat-trien.md) — hướng dẫn phát triển.
 - [docs/adr/](./docs/adr/) — quyết định kiến trúc.
-- [postman/README.md](./postman/README.md) — Postman/API QA.
+- [Postman/API QA](./postman/docs/README.md).
 - [LMS Classroom trên Notion](https://app.notion.com/p/3751a3267e3e8086b82ecc06d6f23e3a) — board, evidence và runbook.
 
 ## Nhóm

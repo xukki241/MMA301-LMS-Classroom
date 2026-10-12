@@ -18,6 +18,8 @@ GoogleService-Info.plist
 coverage/
 test-reports/
 test-results/
+artifacts/
+.worktrees/
 .cursor/hooks/state/*.json
 .cursor/hooks/state/*.jsonl
 .cursor/hooks/evidence/*.md
