@@ -150,5 +150,5 @@ export function ClassesWorkspace() {
 }
 
 const styles = StyleSheet.create({
-  form: { gap: spacing.sm, marginBottom: spacing.xl },
+  form: { gap: spacing.sm, marginBottom: spacing.xl, paddingBottom: spacing.xl },
 });

@@ -255,7 +255,10 @@ export default function MaterialsScreen() {
         </Screen>
       ) : (
         <ScrollView
-          contentContainerStyle={[styles.scrollList, { paddingBottom: 128 + insets.bottom }]}
+          contentContainerStyle={[
+            styles.scrollList,
+            { paddingTop: spacing.md + insets.top, paddingBottom: 128 + insets.bottom },
+          ]}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
