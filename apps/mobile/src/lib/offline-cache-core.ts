@@ -9,6 +9,7 @@ export const classCacheKey = (userId: string, role: string) => `${OFFLINE_CACHE_
 export const postCacheKey = (userId: string, classId: string) =>
   `${OFFLINE_CACHE_PREFIX}posts:${encodeURIComponent(userId)}:${encodeURIComponent(classId)}`;
 export const taskCacheKey = (userId: string) => `${OFFLINE_CACHE_PREFIX}tasks:${encodeURIComponent(userId)}`;
+export const calendarCacheKey = (userId: string) => `${OFFLINE_CACHE_PREFIX}calendar:${encodeURIComponent(userId)}`;
 
 export function createOfflineCache(storage: Storage) {
   return {

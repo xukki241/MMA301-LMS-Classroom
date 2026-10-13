@@ -3,6 +3,7 @@ import { exercisePaths, exerciseSchemas } from "./exercise.openapi.js";
 import { submissionPaths, submissionSchemas } from "./submission.openapi.js";
 import { materialPaths, materialSchemas } from "./material.openapi.js";
 import { taskPaths, taskSchemas } from "./task.openapi.js";
+import { calendarPaths, calendarSchemas } from "./calendar.openapi.js";
 
 const coreOpenApiDocument = {
   openapi: "3.1.0",
@@ -109,6 +110,10 @@ Email: dambautv2005@gmail.com
       name: "Công việc cá nhân (LMS-28)",
       description: "Quản lý to-do list, hạn chót và trạng thái hoàn thành công việc cá nhân",
     },
+    {
+      name: "Lịch trình & Hạn chót (LMS-29)",
+      description: "Tổng hợp toàn bộ deadline bài tập và công việc cá nhân trên giao diện lịch/dòng thời gian",
+    },
   ],
   security: [
     {
@@ -123,6 +128,7 @@ Email: dambautv2005@gmail.com
     ...exercisePaths,
     ...materialPaths,
     ...taskPaths,
+    ...calendarPaths,
     "/docs/tokens/teacher": {
       post: {
         tags: ["Authentication & Lấy Token"],
@@ -1400,6 +1406,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
       ...exerciseSchemas,
       ...materialSchemas,
       ...taskSchemas,
+      ...calendarSchemas,
       Class: {
         type: "object",
         properties: {

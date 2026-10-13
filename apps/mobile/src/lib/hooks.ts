@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useFocusEffect } from "expo-router";
 import { fetchMe } from "./api";
-import { cachedClasses, cachedTasks } from "./offline-data";
+import { cachedCalendarEvents, cachedClasses, cachedTasks } from "./offline-data";
 import { useAuth } from "./auth-context";
 import { queryKeys } from "./query-client";
+import { type ListCalendarFilter } from "./calendar-api";
 import {
   createTask,
   deleteTask,
@@ -57,6 +58,23 @@ export function useTasksQuery(filter?: ListTasksFilter) {
   return query;
 }
 
+export function useCalendarQuery(filter?: ListCalendarFilter) {
+  const { token, user } = useAuth();
+  const filterKey = JSON.stringify(filter ?? {});
+  const query = useQuery({
+    queryKey: queryKeys.calendar(user?.id ?? "", filterKey),
+    enabled: Boolean(token && user),
+    queryFn: ({ signal }) => cachedCalendarEvents(token!, user!.id, filter, signal),
+    networkMode: "always",
+    retry: false,
+  });
+  const { refetch } = query;
+  useFocusEffect(useCallback(() => {
+    if (token && user) void refetch();
+  }, [token, user, refetch]));
+  return query;
+}
+
 export function useCreateTaskMutation() {
   const { token, user } = useAuth();
   const queryClient = useQueryClient();
@@ -64,6 +82,7 @@ export function useCreateTaskMutation() {
     mutationFn: (payload: CreateTaskPayload) => createTask(token!, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["tasks", user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ["calendar", user?.id] });
     },
   });
 }
@@ -75,6 +94,7 @@ export function useToggleTaskMutation() {
     mutationFn: (taskId: string) => toggleTask(token!, taskId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["tasks", user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ["calendar", user?.id] });
     },
   });
 }
@@ -86,6 +106,7 @@ export function useDeleteTaskMutation() {
     mutationFn: (taskId: string) => deleteTask(token!, taskId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["tasks", user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ["calendar", user?.id] });
     },
   });
 }
@@ -98,6 +119,7 @@ export function useUpdateTaskMutation() {
       updateTask(token!, taskId, payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["tasks", user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ["calendar", user?.id] });
     },
   });
 }

@@ -29,6 +29,7 @@ const expected: Record<string, string[]> = {
   "/tasks": ["get", "post"],
   "/tasks/{id}": ["get", "patch", "delete"],
   "/tasks/{id}/toggle": ["patch"],
+  "/calendar/events": ["get"],
 };
 
 const paths = openApiSpec.paths as Record<string, Record<string, unknown>>;

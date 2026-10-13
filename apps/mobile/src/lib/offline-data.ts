@@ -2,8 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getClass, listClasses, type ClassDetail, type LmsClass } from "./classes-api";
 import { listPosts, type StreamPost } from "./stream-api";
 import { listTasks, type ListTasksFilter, type LmsTask } from "./tasks-api";
+import { listCalendarEvents, type CalendarResponse, type ListCalendarFilter } from "./calendar-api";
 import { HttpError } from "./http";
 import {
+  calendarCacheKey,
   classCacheKey,
   createOfflineCache,
   OFFLINE_CACHE_PREFIX,
@@ -39,6 +41,30 @@ export async function cachedPosts(token: string, userId: string, classId: string
 export async function cachedTasks(token: string, userId: string, filter?: ListTasksFilter, signal?: AbortSignal) {
   const key = taskCacheKey(userId);
   return readThroughCache(() => listTasks(token, filter, signal), cache, key, isTaskList, networkState.isOffline());
+}
+
+const isCalendarResponse = (value: unknown): value is CalendarResponse =>
+  Boolean(
+    value &&
+      typeof value === "object" &&
+      "events" in value &&
+      Array.isArray((value as Record<string, unknown>).events)
+  );
+
+export async function cachedCalendarEvents(
+  token: string,
+  userId: string,
+  filter?: ListCalendarFilter,
+  signal?: AbortSignal
+): Promise<CalendarResponse> {
+  const key = calendarCacheKey(userId);
+  return readThroughCache(
+    () => listCalendarEvents(token, filter, signal),
+    cache,
+    key,
+    isCalendarResponse,
+    networkState.isOffline()
+  );
 }
 
 /** Removes all LMS offline cache entries (used on logout to prevent cross-user reads). */

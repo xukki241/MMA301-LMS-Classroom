@@ -80,6 +80,12 @@ export function HomeDashboard({ role }: { role: "teacher" | "student" }) {
           onPress={() => router.push(isTeacher ? "/(teacher)/classes" : "/(student)/classes")}
         />
         <QuickAction
+          icon="calendar-outline"
+          label="Lịch trình"
+          delay={95}
+          onPress={() => router.push(isTeacher ? "/(teacher)/calendar" : "/(student)/calendar")}
+        />
+        <QuickAction
           icon="checkbox-outline"
           label="Công việc"
           delay={110}

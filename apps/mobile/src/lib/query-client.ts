@@ -34,4 +34,5 @@ export const queryKeys = {
   exerciseSubmissions: (userId: string, classId: string, exerciseId: string) =>
     ["exercises", userId, classId, exerciseId, "submissions"] as const,
   tasks: (userId: string, filterKey?: string) => ["tasks", userId, filterKey ?? "all"] as const,
+  calendar: (userId: string, filterKey?: string) => ["calendar", userId, filterKey ?? "all"] as const,
 };

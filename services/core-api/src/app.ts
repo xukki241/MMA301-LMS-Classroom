@@ -12,6 +12,7 @@ import { exerciseRouter } from "./routes/exercise.routes.js";
 import { submissionRouter } from "./routes/submission.routes.js";
 import { materialRouter } from "./routes/material.routes.js";
 import { taskRouter } from "./routes/task.routes.js";
+import { calendarRouter } from "./routes/calendar.routes.js";
 import { requestContext } from "./middleware/requestContext.js";
 
 function corsOptions(origin: string): cors.CorsOptions {
@@ -50,6 +51,7 @@ export function createApp() {
   app.use("/classes", materialRouter);
   app.use(materialRouter);
   app.use(taskRouter);
+  app.use(calendarRouter);
   app.use(errorHandler);
   return app;
 }
