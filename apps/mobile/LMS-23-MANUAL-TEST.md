@@ -27,7 +27,7 @@ Health/docs: <http://127.0.0.1:4001/health> · <http://127.0.0.1:4001/docs> · <
 
 - Token 1-click `/docs/tokens/teacher|student` **chỉ** khi `NODE_ENV` không phải `production` (mặc định Compose).
 - Để **khóa** token giống staging: chạy Auth/Core với `$env:NODE_ENV = "production"` — `POST /docs/tokens/*` phải `403`.
-- Scalar **local** hoạt động sau khi inline OpenAPI `$ref`. Scalar **staging** vẫn bản cũ cho đến khi redeploy Auth/Core. **Production** đang chặn vì secret đã xoay — không ghi secret vào git.
+- Scalar **staging** đã qua browser/contract smoke ngày 09/10/2026. **Production** chưa được tạo; còn chờ credential Mongo đã xoay vòng, hai DB riêng, JWT mới và CORS chính xác. Xem [báo cáo kiểm tra](../../docs/testing/completion-2026-10-09.md); không ghi secret vào git.
 
 ## 3. Staging (không redeploy từ máy tester)
 

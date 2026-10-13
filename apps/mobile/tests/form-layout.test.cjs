@@ -11,6 +11,7 @@ const login = source("../app/(auth)/login.tsx");
 const register = source("../app/(auth)/register.tsx");
 const forgot = source("../app/(auth)/forgot-password.tsx");
 const classes = source("../src/screens/ClassesWorkspace.tsx");
+const materials = source("../app/class/[id]/materials.tsx");
 const screen = source("../src/components/ui/Screen.tsx");
 const button = source("../src/components/ui/AppButton.tsx");
 
@@ -44,11 +45,16 @@ test("auth notices stay in document flow and fields keep their own errors", () =
 
 test("class create errors sit under the field and list states stay exclusive", () => {
   assert.match(classes, /FieldError message=\{inputError\}/);
+  assert.match(classes, /form: \{[^}]*paddingBottom: spacing\.xl/);
   const exclusive = classes.indexOf("classesQuery.isPending ?");
   const errorBranch = classes.indexOf(": classesQuery.isError ?");
   const emptyBranch = classes.indexOf(": classes.length === 0 ?");
   assert.ok(exclusive > 0 && exclusive < errorBranch && errorBranch < emptyBranch);
   assert.doesNotMatch(classes, /classesQuery\.isPending \? <ClassListSkeleton \/> : null/);
+});
+
+test("the populated materials list clears the status-bar safe area", () => {
+  assert.match(materials, /paddingTop:\s*spacing\.md\s*\+\s*insets\.top/);
 });
 
 test("shared screen and buttons keep errors reachable", () => {

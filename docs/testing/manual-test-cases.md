@@ -1,6 +1,6 @@
 # Manual Acceptance Test Cases
 
-Tester mới: clone/cài/chạy Android Pixel_10, hành trình bài tập, offline và Scalar nằm ở [apps/mobile/LMS-23-MANUAL-TEST.md](../../apps/mobile/LMS-23-MANUAL-TEST.md). Gate không gồm e2e: `typecheck`, `verify:docs`, `validate:docs`, `test:mobile`, `test:contract`, `test:scalar`, `test:api`. Staging Auth/Core: `https://mma301-lms-auth-staging.onrender.com` và `https://mma301-lms-core-staging.onrender.com`. Scalar staging cũ đến khi redeploy. Production chặn vì secret đã xoay. Không đưa secret vào git.
+Tester mới: clone/cài/chạy Android Pixel_10, hành trình bài tập, offline và Scalar nằm ở [apps/mobile/LMS-23-MANUAL-TEST.md](../../apps/mobile/LMS-23-MANUAL-TEST.md). Gate không gồm e2e: xem [runbook](../deployment/runbook.md#production-gate). Staging Auth/Core: `https://mma301-lms-auth-staging.onrender.com` và `https://mma301-lms-core-staging.onrender.com`. Scalar staging đã được kiểm tra lại ngày 09/10/2026. Production chưa có cấu hình; xem [kết quả và blocker](completion-2026-10-09.md). Không đưa secret vào git.
 
 | ID | Area | Preconditions | Expected |
 |---|---|---|---|

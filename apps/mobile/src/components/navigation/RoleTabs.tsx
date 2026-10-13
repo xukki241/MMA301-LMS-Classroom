@@ -2,7 +2,8 @@ import { type ComponentProps } from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "react-native-paper";
-import { palette } from "@/src/theme/tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { spacing } from "@/src/theme/tokens";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -13,8 +14,11 @@ const screens: { name: string; title: string; icon: IconName; iconOn: IconName }
   { name: "profile", title: "Tôi", icon: "person-outline", iconOn: "person" },
 ];
 
+const TAB_BAR_CONTENT_HEIGHT = 56;
+
 export function RoleTabs() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -24,8 +28,13 @@ export function RoleTabs() {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.outline,
+          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+          paddingTop: spacing.xs,
+          paddingBottom: insets.bottom,
         },
+        tabBarItemStyle: { minHeight: 48 },
         tabBarLabelStyle: { fontWeight: "700", fontSize: 11 },
+        tabBarHideOnKeyboard: true,
         animation: "shift",
       }}
     >
@@ -38,7 +47,7 @@ export function RoleTabs() {
             tabBarIcon: ({ color, focused, size }) => (
               <Ionicons name={focused ? screen.iconOn : screen.icon} size={size} color={color} />
             ),
-            tabBarActiveTintColor: palette.primary,
+            tabBarAccessibilityLabel: screen.title,
           }}
         />
       ))}

@@ -13,7 +13,7 @@ Xác nhận critical path LMS chạy đúng từ Auth đến Class, Stream, Mate
 | API regression | Postman/Newman | 100% pass |
 | OpenAPI contract | route manifest + schema validator | no drift |
 | Scalar browser | Playwright | docs load, try-it-out, no console error |
-| Android E2E | Maestro + `Pixel_10` | critical journeys pass |
+| Android E2E | Maestro + `Pixel_10` | optional; not a release gate |
 | Manual QA | Android Studio + Scalar | all P0-P3 cases pass |
 | Performance | autocannon + request logs | baseline not regressed |
 
