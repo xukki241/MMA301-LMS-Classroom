@@ -35,6 +35,9 @@ html, body, #root {
   min-height: 100dvh;
   margin: 0;
   overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 body {
   background-color: #fff;

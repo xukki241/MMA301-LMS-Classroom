@@ -99,3 +99,47 @@ test("deleteTask gọi DELETE /tasks/:id", async () => {
   const result = await api.deleteTask("test-token", taskFixture._id);
   assert.equal(result.success, true);
 });
+
+test("listTasks hỗ trợ lọc theo classId", async () => {
+  respond({ tasks: [taskFixture] }, 200, (url) => {
+    assert.ok(url.includes("classId=66e6b4f73a1b5c0012a45555"));
+  });
+
+  const tasks = await api.listTasks("test-token", { classId: "66e6b4f73a1b5c0012a45555" });
+  assert.equal(tasks.length, 1);
+});
+
+test("createTask hỗ trợ gửi classId và exerciseId", async () => {
+  const linkedTaskFixture = {
+    ...taskFixture,
+    classId: "66e6b4f73a1b5c0012a45555",
+    exerciseId: "66e6b4f73a1b5c0012a46666",
+  };
+  respond({ task: linkedTaskFixture }, 201, (url, options) => {
+    const sent = JSON.parse(options.body);
+    assert.equal(sent.classId, "66e6b4f73a1b5c0012a45555");
+    assert.equal(sent.exerciseId, "66e6b4f73a1b5c0012a46666");
+  });
+
+  const created = await api.createTask("test-token", {
+    title: "Bài tập toán số 1",
+    classId: "66e6b4f73a1b5c0012a45555",
+    exerciseId: "66e6b4f73a1b5c0012a46666",
+  });
+  assert.equal(created.classId, "66e6b4f73a1b5c0012a45555");
+});
+
+test("updateTask gọi PATCH /tasks/:id với payload mới", async () => {
+  const updatedFixture = { ...taskFixture, title: "Tiêu đề đã sửa" };
+  respond({ task: updatedFixture }, 200, (url, options) => {
+    assert.equal(url, `${CORE_URL}/tasks/${taskFixture._id}`);
+    assert.equal(options.method, "PATCH");
+    const sent = JSON.parse(options.body);
+    assert.equal(sent.title, "Tiêu đề đã sửa");
+  });
+
+  const updated = await api.updateTask("test-token", taskFixture._id, {
+    title: "Tiêu đề đã sửa",
+  });
+  assert.equal(updated.title, "Tiêu đề đã sửa");
+});

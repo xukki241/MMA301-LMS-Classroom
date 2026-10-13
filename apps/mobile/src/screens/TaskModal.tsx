@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import {
   Dialog,
   Portal,
@@ -16,6 +16,7 @@ import {
   useKeyboardLift,
 } from "@/src/components/ui/FormFeedback";
 import { impactLight, notifyError } from "@/src/lib/haptics";
+import { useClassesQuery } from "@/src/lib/hooks";
 import type { CreateTaskPayload, LmsTask, TaskPriority } from "@/src/lib/tasks-api";
 import { palette, radius, spacing, typography } from "@/src/theme/tokens";
 
@@ -78,12 +79,15 @@ export function TaskModal({
 }: TaskModalProps) {
   const theme = useTheme();
   const keyboardLift = useKeyboardLift();
+  const classesQuery = useClassesQuery();
+  const classes = classesQuery.data ?? [];
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [dueDatePreset, setDueDatePreset] = useState<string>("none");
   const [customDueDate, setCustomDueDate] = useState<string>("");
+  const [selectedClassId, setSelectedClassId] = useState<string | undefined>(undefined);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,6 +96,7 @@ export function TaskModal({
         setTitle(initialTask.title);
         setDescription(initialTask.description || "");
         setPriority(initialTask.priority);
+        setSelectedClassId(initialTask.classId);
         if (initialTask.dueDate) {
           setDueDatePreset("custom");
           setCustomDueDate(new Date(initialTask.dueDate).toISOString().slice(0, 10));
@@ -103,6 +108,7 @@ export function TaskModal({
         setTitle("");
         setDescription("");
         setPriority("medium");
+        setSelectedClassId(undefined);
         setDueDatePreset("none");
         setCustomDueDate("");
       }
@@ -147,6 +153,7 @@ export function TaskModal({
         description: description.trim(),
         priority,
         dueDate,
+        classId: selectedClassId || undefined,
       });
       onDismiss();
     } catch (err: unknown) {
@@ -195,9 +202,8 @@ export function TaskModal({
           </View>
         </View>
 
-        <Dialog.ScrollArea style={styles.scrollArea}>
-          <FormDialogScroll>
-            <View style={styles.form}>
+        <FormDialogScroll>
+          <View style={styles.form}>
               {errorMsg ? <FormNotice message={errorMsg} /> : null}
 
               <View>
@@ -327,9 +333,93 @@ export function TaskModal({
                   />
                 )}
               </View>
+
+              {/* Class linking section */}
+              {classes.length > 0 && (
+                <View style={styles.section}>
+                  <View style={styles.sectionHeaderRow}>
+                    <Ionicons name="school-outline" size={15} color={theme.colors.primary} />
+                    <Text style={styles.sectionLabel}>Lớp học liên kết (Tùy chọn)</Text>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.classChipsScroll}
+                  >
+                    <Pressable
+                      onPress={() => {
+                        impactLight();
+                        setSelectedClassId(undefined);
+                      }}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: !selectedClassId
+                            ? theme.colors.primary
+                            : theme.colors.surfaceVariant,
+                          borderColor: !selectedClassId
+                            ? theme.colors.primary
+                            : theme.colors.outline,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          {
+                            color: !selectedClassId
+                              ? theme.colors.onPrimary
+                              : theme.colors.onSurfaceVariant,
+                            fontWeight: !selectedClassId ? "700" : "500",
+                          },
+                        ]}
+                      >
+                        Không liên kết
+                      </Text>
+                    </Pressable>
+                    {classes.map((cls) => {
+                      const isSelected = selectedClassId === cls.id;
+                      return (
+                        <Pressable
+                          key={cls.id}
+                          onPress={() => {
+                            impactLight();
+                            setSelectedClassId(cls.id);
+                          }}
+                          style={[
+                            styles.chip,
+                            {
+                              backgroundColor: isSelected
+                                ? theme.colors.primary
+                                : theme.colors.surfaceVariant,
+                              borderColor: isSelected
+                                ? theme.colors.primary
+                                : theme.colors.outline,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.chipText,
+                              {
+                                color: isSelected
+                                  ? theme.colors.onPrimary
+                                  : theme.colors.onSurfaceVariant,
+                                fontWeight: isSelected ? "700" : "500",
+                              },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {cls.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
             </View>
           </FormDialogScroll>
-        </Dialog.ScrollArea>
 
         <Dialog.Actions style={styles.actions}>
           <AppButton mode="text" onPress={onDismiss} disabled={isPending}>
@@ -384,10 +474,19 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.xs,
   },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
   sectionLabel: {
     ...typography.label,
     color: palette.inkMuted,
-    marginBottom: spacing.xs,
+  },
+  classChipsScroll: {
+    gap: spacing.xs,
+    paddingVertical: 2,
   },
   priorityRow: {
     flexDirection: "row",

@@ -4,6 +4,7 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   View,
 } from "react-native";
@@ -20,6 +21,7 @@ import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { TaskModal } from "./TaskModal";
 import {
+  useClassesQuery,
   useCreateTaskMutation,
   useDeleteTaskMutation,
   useTasksQuery,
@@ -31,6 +33,18 @@ import type { CreateTaskPayload, LmsTask, TaskPriority } from "@/src/lib/tasks-a
 import { elevation, palette, radius, spacing, typography } from "@/src/theme/tokens";
 
 type FilterTab = "all" | "pending" | "completed" | "overdue";
+
+const PRIORITY_FILTERS: {
+  key: "all" | TaskPriority;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color?: string;
+}[] = [
+  { key: "all", label: "Tất cả mức", icon: "layers-outline" },
+  { key: "high", label: "Cao", icon: "flame", color: "#DC2626" },
+  { key: "medium", label: "Trung bình", icon: "flag", color: "#D97706" },
+  { key: "low", label: "Thấp", icon: "flag-outline", color: "#4F46E5" },
+];
 
 function getPriorityConfig(priority: TaskPriority) {
   switch (priority) {
@@ -87,11 +101,17 @@ function formatDueDate(dueDateStr?: string) {
 export function TasksScreen() {
   const theme = useTheme();
   const [filter, setFilter] = useState<FilterTab>("all");
+  const [priorityFilter, setPriorityFilter] = useState<"all" | TaskPriority>("all");
+  const [classFilter, setClassFilter] = useState<string>("all");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<LmsTask | null>(null);
 
-  // Fetch all tasks and filter instantaneously
+  // Fetch all tasks and classes
   const { data: allTasks = [], isLoading, isError, error, refetch, isRefetching } = useTasksQuery();
+  const classesQuery = useClassesQuery();
+  const classes = classesQuery.data ?? [];
+  const classMap = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes]);
+
   const createMutation = useCreateTaskMutation();
   const updateMutation = useUpdateTaskMutation();
   const toggleMutation = useToggleTaskMutation();
@@ -116,25 +136,26 @@ export function TasksScreen() {
 
   const completionPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  // Filtered task list
+  // Filtered task list combining Status, Overdue, Priority and Class
   const displayTasks = useMemo(() => {
-    switch (filter) {
-      case "pending":
-        return allTasks.filter((t) => t.status !== "completed");
-      case "completed":
-        return allTasks.filter((t) => t.status === "completed");
-      case "overdue":
-        return allTasks.filter(
-          (t) =>
-            t.status !== "completed" &&
-            t.dueDate &&
-            new Date(t.dueDate).getTime() < Date.now()
-        );
-      case "all":
-      default:
-        return allTasks;
-    }
-  }, [allTasks, filter]);
+    return allTasks.filter((task) => {
+      // 1. Trạng thái / Quá hạn
+      if (filter === "pending" && task.status === "completed") return false;
+      if (filter === "completed" && task.status !== "completed") return false;
+      if (filter === "overdue") {
+        if (task.status === "completed") return false;
+        if (!task.dueDate || new Date(task.dueDate).getTime() >= Date.now()) return false;
+      }
+
+      // 2. Mức độ ưu tiên
+      if (priorityFilter !== "all" && task.priority !== priorityFilter) return false;
+
+      // 3. Lớp học liên kết
+      if (classFilter !== "all" && task.classId !== classFilter) return false;
+
+      return true;
+    });
+  }, [allTasks, filter, priorityFilter, classFilter]);
 
   const handleToggle = (task: LmsTask) => {
     impactLight();
@@ -346,7 +367,7 @@ export function TasksScreen() {
                   </View>
                 </Animated.View>
 
-                {/* Filter Pills */}
+                {/* Filter Pills: Trạng thái & Quá hạn */}
                 <View style={styles.filterPillsRow}>
                   {filterTabs.map((tab) => {
                     const isActive = filter === tab.key;
@@ -407,13 +428,179 @@ export function TasksScreen() {
                     );
                   })}
                 </View>
+
+                {/* Secondary Filters: Mức độ ưu tiên & Lớp học */}
+                <View style={styles.secondaryFiltersWrap}>
+                  {/* Priority Row */}
+                  <View style={styles.subFilterSection}>
+                    <View style={styles.subFilterHeaderRow}>
+                      <Text style={[styles.subFilterLabel, { color: theme.colors.onSurfaceVariant }]}>
+                        Độ ưu tiên
+                      </Text>
+                      {priorityFilter !== "all" || classFilter !== "all" ? (
+                        <Pressable
+                          onPress={() => {
+                            impactLight();
+                            setPriorityFilter("all");
+                            setClassFilter("all");
+                          }}
+                          style={styles.resetFilterTouch}
+                        >
+                          <Ionicons name="close-circle-outline" size={13} color={theme.colors.primary} />
+                          <Text style={[styles.resetFilterText, { color: theme.colors.primary }]}>
+                            Đặt lại
+                          </Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.subFilterScroll}
+                    >
+                      {PRIORITY_FILTERS.map((p) => {
+                        const isSelected = priorityFilter === p.key;
+                        const activeColor = p.color ?? theme.colors.primary;
+                        return (
+                          <Pressable
+                            key={p.key}
+                            onPress={() => {
+                              impactLight();
+                              setPriorityFilter(p.key);
+                            }}
+                            style={[
+                              styles.subFilterChip,
+                              {
+                                backgroundColor: isSelected
+                                  ? (p.color ? `${p.color}15` : theme.colors.primaryContainer)
+                                  : theme.colors.surface,
+                                borderColor: isSelected
+                                  ? activeColor
+                                  : theme.colors.outline,
+                              },
+                            ]}
+                          >
+                            <Ionicons
+                              name={p.icon}
+                              size={13}
+                              color={isSelected ? activeColor : theme.colors.onSurfaceVariant}
+                            />
+                            <Text
+                              style={[
+                                styles.subFilterChipText,
+                                {
+                                  color: isSelected ? activeColor : theme.colors.onSurfaceVariant,
+                                  fontWeight: isSelected ? "700" : "500",
+                                },
+                              ]}
+                            >
+                              {p.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+
+                  {/* Class Row if user belongs to classes */}
+                  {classes.length > 0 && (
+                    <View style={styles.subFilterSection}>
+                      <Text style={[styles.subFilterLabel, { color: theme.colors.onSurfaceVariant }]}>
+                        Lớp học
+                      </Text>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.subFilterScroll}
+                      >
+                        <Pressable
+                          onPress={() => {
+                            impactLight();
+                            setClassFilter("all");
+                          }}
+                          style={[
+                            styles.subFilterChip,
+                            {
+                              backgroundColor: classFilter === "all"
+                                ? theme.colors.primaryContainer
+                                : theme.colors.surface,
+                              borderColor: classFilter === "all"
+                                ? theme.colors.primary
+                                : theme.colors.outline,
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name="albums-outline"
+                            size={13}
+                            color={classFilter === "all" ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                          />
+                          <Text
+                            style={[
+                              styles.subFilterChipText,
+                              {
+                                color: classFilter === "all" ? theme.colors.primary : theme.colors.onSurfaceVariant,
+                                fontWeight: classFilter === "all" ? "700" : "500",
+                              },
+                            ]}
+                          >
+                            Tất cả lớp
+                          </Text>
+                        </Pressable>
+                        {classes.map((cls) => {
+                          const isSelected = classFilter === cls.id;
+                          return (
+                            <Pressable
+                              key={cls.id}
+                              onPress={() => {
+                                impactLight();
+                                setClassFilter(cls.id);
+                              }}
+                              style={[
+                                styles.subFilterChip,
+                                {
+                                  backgroundColor: isSelected
+                                    ? theme.colors.primaryContainer
+                                    : theme.colors.surface,
+                                  borderColor: isSelected
+                                    ? theme.colors.primary
+                                    : theme.colors.outline,
+                                },
+                              ]}
+                            >
+                              <Ionicons
+                                name="school-outline"
+                                size={13}
+                                color={isSelected ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                              />
+                              <Text
+                                style={[
+                                  styles.subFilterChipText,
+                                  {
+                                    color: isSelected ? theme.colors.primary : theme.colors.onSurfaceVariant,
+                                    fontWeight: isSelected ? "700" : "500",
+                                  },
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {cls.name}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
               </View>
             }
             ListEmptyComponent={
               <EmptyState
                 icon="checkbox-outline"
                 title={
-                  filter === "completed"
+                  priorityFilter !== "all" || classFilter !== "all"
+                    ? "Không có công việc phù hợp bộ lọc"
+                    : filter === "completed"
                     ? "Chưa có việc nào hoàn thành"
                     : filter === "overdue"
                     ? "Tuyệt vời, không có việc nào quá hạn!"
@@ -421,13 +608,18 @@ export function TasksScreen() {
                     ? "Tất cả công việc đã hoàn thành!"
                     : "Danh sách công việc trống"
                 }
-                subtitle="Bấm nút '+ Thêm việc' bên dưới để bắt đầu quản lý kế hoạch."
+                subtitle={
+                  priorityFilter !== "all" || classFilter !== "all"
+                    ? "Thử thay đổi hoặc đặt lại bộ lọc độ ưu tiên / lớp học."
+                    : "Bấm nút '+ Thêm việc' bên dưới để bắt đầu quản lý kế hoạch."
+                }
               />
             }
             renderItem={({ item, index }) => {
               const isCompleted = item.status === "completed";
               const dueInfo = formatDueDate(item.dueDate);
               const prio = getPriorityConfig(item.priority);
+              const linkedClass = item.classId ? classMap.get(item.classId) : null;
 
               return (
                 <Animated.View
@@ -561,6 +753,27 @@ export function TasksScreen() {
                               {dueInfo.isPast && !isCompleted
                                 ? `Quá hạn: ${dueInfo.label}`
                                 : dueInfo.label}
+                            </Text>
+                          </View>
+                        ) : null}
+
+                        {/* Class Badge if linked to class */}
+                        {linkedClass ? (
+                          <View
+                            style={[
+                              styles.badge,
+                              {
+                                backgroundColor: "#F0FDF4",
+                                borderColor: "#BBF7D0",
+                              },
+                            ]}
+                          >
+                            <Ionicons name="school" size={12} color="#16A34A" />
+                            <Text
+                              style={[styles.badgeText, { color: "#16A34A" }]}
+                              numberOfLines={1}
+                            >
+                              {linkedClass.name}
                             </Text>
                           </View>
                         ) : null}
@@ -749,6 +962,51 @@ const styles = StyleSheet.create({
   pillBadgeText: {
     fontSize: 10,
     fontWeight: "700",
+  },
+  secondaryFiltersWrap: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  subFilterSection: {
+    gap: 4,
+  },
+  subFilterHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+  },
+  subFilterLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  resetFilterTouch: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  resetFilterText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  subFilterScroll: {
+    flexDirection: "row",
+    gap: spacing.xs,
+    paddingVertical: 2,
+  },
+  subFilterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  subFilterChipText: {
+    fontSize: 12,
   },
   cardWrap: {
     marginBottom: spacing.sm,
