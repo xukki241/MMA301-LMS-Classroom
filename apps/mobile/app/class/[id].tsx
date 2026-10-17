@@ -20,14 +20,20 @@ function ModuleCard({
   icon,
   title,
   subtitle,
+  onPress,
 }: {
   icon: ComponentProps<typeof Ionicons>["name"];
   title: string;
   subtitle: string;
+  onPress?: () => void;
 }) {
   const theme = useTheme();
   return (
-    <View
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={title}
       style={[
         styles.module,
         elevation.card,
@@ -39,7 +45,7 @@ function ModuleCard({
         <Text style={typography.subtitle}>{title}</Text>
         <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>{subtitle}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
