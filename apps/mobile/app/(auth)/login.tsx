@@ -1,3 +1,4 @@
+// Login route - email/password authentication entry point
 import { Link, Redirect } from "expo-router";
 import { useState } from "react";
 import {
