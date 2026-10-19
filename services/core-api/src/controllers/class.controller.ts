@@ -1,3 +1,4 @@
+// Class controller - handles CRUD operations for classroom management
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";
