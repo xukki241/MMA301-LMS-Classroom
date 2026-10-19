@@ -1,3 +1,4 @@
+// ClassesWorkspace - browse, join, and manage enrolled classes
 import { useEffect, useRef, useState } from "react";
 import { Alert, RefreshControl, StyleSheet, View } from "react-native";
 import { Dialog, HelperText, Portal, SegmentedButtons, Text, TextInput, useTheme } from "react-native-paper";
