@@ -1,3 +1,4 @@
+// HomeDashboard - main landing screen with class overview and quick actions
 import { useState } from "react";
 import { StyleSheet, View, RefreshControl } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
