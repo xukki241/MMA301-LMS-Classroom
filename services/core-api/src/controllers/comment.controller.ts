@@ -1,3 +1,4 @@
+// Comment controller - threaded comments on feed posts
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";
