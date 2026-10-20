@@ -1,3 +1,4 @@
+// WorkScreen - student exercises and assignments workspace
 import { useEffect, useState } from "react";
 import { RefreshControl, StyleSheet, View } from "react-native";
 import { Chip, Text, useTheme } from "react-native-paper";
