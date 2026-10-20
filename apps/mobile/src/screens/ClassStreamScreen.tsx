@@ -1,3 +1,4 @@
+// ClassStreamScreen - real-time feed of posts and announcements in a class
 import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Redirect, useFocusEffect } from "expo-router";
