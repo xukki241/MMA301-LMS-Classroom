@@ -1,3 +1,4 @@
+// ScheduleScreen - calendar view of class schedule and upcoming events
 import { useEffect, useMemo, useState } from "react";
 import { RefreshControl, StyleSheet, View } from "react-native";
 import { SegmentedButtons, Text, useTheme } from "react-native-paper";
