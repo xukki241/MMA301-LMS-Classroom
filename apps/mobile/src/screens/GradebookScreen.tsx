@@ -1,3 +1,4 @@
+// GradebookScreen - view grades and submission scores per class
 import { useEffect, useState } from "react";
 import { RefreshControl, StyleSheet, View } from "react-native";
 import { Text, useTheme } from "react-native-paper";
