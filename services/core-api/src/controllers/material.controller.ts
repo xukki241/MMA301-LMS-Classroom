@@ -1,3 +1,4 @@
+// Material controller - class learning materials (upload, list, access control)
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";
