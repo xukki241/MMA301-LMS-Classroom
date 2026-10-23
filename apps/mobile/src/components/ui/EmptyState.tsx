@@ -1,3 +1,4 @@
+// EmptyState - placeholder illustration when a list has no items
 import { StyleSheet, View } from "react-native";
 import { Button, Text } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
