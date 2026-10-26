@@ -39,6 +39,7 @@ export async function login(email: string, password: string, signal?: AbortSigna
   });
 }
 
+/** Fetch the current user's basic profile from the core service. */
 export async function fetchMe(
   token: string,
   signal?: AbortSignal
@@ -46,10 +47,12 @@ export async function fetchMe(
   return http(`${CORE_URL}/me`, { token, signal });
 }
 
+/** Fetch the authenticated user's full profile from the auth service. */
 export async function fetchAuthProfile(token: string, signal?: AbortSignal): Promise<{ user: AuthUser }> {
   return http(`${AUTH_URL}/auth/me`, { token, signal });
 }
 
+/** Update the authenticated user's display name. */
 export async function updateAuthProfile(
   token: string,
   displayName: string,
@@ -63,6 +66,7 @@ export async function updateAuthProfile(
   });
 }
 
+/** Change the authenticated user's password. */
 export async function changePassword(
   token: string,
   input: { currentPassword: string; newPassword: string },
