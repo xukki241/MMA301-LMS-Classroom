@@ -1,3 +1,4 @@
+// HTTP error helper - standardised error responses across auth endpoints
 import type { NextFunction, Request, Response } from "express";
 
 export class HttpError extends Error {
