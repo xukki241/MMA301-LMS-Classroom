@@ -13,6 +13,7 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+/** Register a new user account with email, password, display name, and role. */
 export async function register(
   input: {
     email: string;
@@ -29,6 +30,7 @@ export async function register(
   });
 }
 
+/** Authenticate an existing user with email and password credentials. */
 export async function login(email: string, password: string, signal?: AbortSignal): Promise<AuthResponse> {
   return http<AuthResponse>(`${AUTH_URL}/auth/login`, {
     method: "POST",
