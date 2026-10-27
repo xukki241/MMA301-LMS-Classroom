@@ -1,3 +1,4 @@
+// Global error handler - catches unhandled errors and returns JSON responses
 import type { ErrorRequestHandler } from "express";
 import { HttpError } from "../lib/httpError.js";
 
