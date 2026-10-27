@@ -1,3 +1,4 @@
+// OfflineBanner - dismissable banner shown when device loses network connectivity
 import { View } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useNetworkStatus } from "../../lib/network-context";
