@@ -1,3 +1,4 @@
+// Auth guard middleware - validates JWT and attaches user to request context
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
