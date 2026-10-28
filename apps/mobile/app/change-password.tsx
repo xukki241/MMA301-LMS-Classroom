@@ -1,3 +1,4 @@
+// Change password route - secure password update form
 import { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import { Text, TextInput, useTheme } from "react-native-paper";
