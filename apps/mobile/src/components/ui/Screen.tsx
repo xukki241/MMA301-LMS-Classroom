@@ -1,3 +1,4 @@
+// Screen - base layout wrapper with safe area, scroll, and keyboard handling
 import { useContext, type ReactElement, type ReactNode } from "react";
 import { ScrollView, StyleSheet, View, type RefreshControlProps } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
