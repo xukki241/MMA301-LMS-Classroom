@@ -1,3 +1,4 @@
+// Auth service - core business logic for registration, login, and profile management
 import bcrypt from "bcryptjs";
 import { HttpError } from "../lib/httpError.js";
 import { signAccessToken } from "../lib/jwt.js";
