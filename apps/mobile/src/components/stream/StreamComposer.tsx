@@ -1,3 +1,4 @@
+// StreamComposer - rich text editor for creating new feed posts
 import { useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { HelperText, TextInput } from "react-native-paper";
