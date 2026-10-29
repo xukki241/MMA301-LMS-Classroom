@@ -1,3 +1,7 @@
+/**
+ * Maps API error codes to user-friendly Vietnamese/English messages.
+ * Centralises error UX so screens stay declarative.
+ */
 export const GENERIC_NETWORK_MESSAGE = "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.";
 
 const UNSAFE = /https?:\/\/|java\.|fetch failed|\n\s+at\s|\bat\s+\S+\(|exception|stack|ECONN|ENOTFOUND|\.kt:|\.js:\d/i;
