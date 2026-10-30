@@ -1,3 +1,4 @@
+// Stream post/comment error handling - mirrors class-errors pattern
 import { HttpError } from "./http";
 
 export function streamAccessDenied(error: unknown): boolean {
