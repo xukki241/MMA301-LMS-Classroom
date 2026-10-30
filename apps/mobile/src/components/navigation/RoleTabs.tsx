@@ -1,3 +1,4 @@
+// RoleTabs - bottom tab navigator switching between student and teacher views
 import { type ComponentProps } from "react";
 import { StyleSheet, Text } from "react-native";
 import { Tabs } from "expo-router";
