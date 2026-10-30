@@ -1,3 +1,4 @@
+// App index route - entry point with auth check and redirect
 import { Redirect } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
