@@ -1,3 +1,4 @@
+// Class-related error handling utilities for join/create/detail flows
 import { HttpError } from "./http";
 
 export type ClassOperation = "list" | "detail" | "members" | "create" | "join";
