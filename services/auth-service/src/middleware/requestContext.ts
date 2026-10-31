@@ -1,4 +1,3 @@
-// Request context middleware - injects correlation ID and timing metadata
 import { randomUUID } from "node:crypto";
 import type { RequestHandler } from "express";
 

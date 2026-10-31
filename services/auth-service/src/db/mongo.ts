@@ -1,4 +1,3 @@
-// MongoDB connection manager - handles connect, reconnect, and graceful shutdown
 import mongoose from "mongoose";
 import { env } from "../config/env.js";
 

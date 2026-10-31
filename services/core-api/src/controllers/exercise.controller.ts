@@ -1,4 +1,3 @@
-// Exercise controller - teacher creates exercises, students view and submit
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";

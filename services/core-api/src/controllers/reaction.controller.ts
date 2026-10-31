@@ -1,4 +1,3 @@
-// Reaction controller - like/dislike reactions on posts and comments
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";

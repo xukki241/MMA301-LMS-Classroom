@@ -1,4 +1,3 @@
-// Schedule controller - class timetable and calendar event management
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";

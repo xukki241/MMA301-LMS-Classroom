@@ -1,4 +1,3 @@
-// User model - Mongoose schema for authenticated users (email, password hash, role)
 import mongoose, { Schema } from "mongoose";
 
 export const USER_ROLES = ["teacher", "student"] as const;

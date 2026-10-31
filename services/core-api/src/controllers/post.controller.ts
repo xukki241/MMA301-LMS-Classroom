@@ -1,4 +1,3 @@
-// Post controller - manages feed posts lifecycle (create, read, update, delete)
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";

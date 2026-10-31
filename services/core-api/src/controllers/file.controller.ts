@@ -1,4 +1,3 @@
-// File controller - Cloudinary-backed file upload and management
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";

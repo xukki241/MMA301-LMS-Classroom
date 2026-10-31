@@ -1,4 +1,3 @@
-// Submission controller - student exercise submissions and teacher grading
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";

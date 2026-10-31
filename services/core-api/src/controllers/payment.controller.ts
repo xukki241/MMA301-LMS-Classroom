@@ -1,4 +1,3 @@
-// Payment controller - class enrollment fee processing via SePay
 import type { Request, Response } from "express";
 import { PaymentService } from "../services/payment.service.js";
 

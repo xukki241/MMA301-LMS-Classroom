@@ -1,4 +1,3 @@
-// Environment configuration - loads and validates required env vars at startup
 import dotenv from "dotenv";
 import path from "node:path";
 import { z } from "zod";
