@@ -1,4 +1,3 @@
-// Tile - generic pressable tile for dashboard quick actions
 import { type ComponentProps } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";

@@ -1,4 +1,3 @@
-// AppButton - reusable themed button component with loading and disabled states
 import { Pressable, StyleSheet } from "react-native";
 import { Button, type ButtonProps } from "react-native-paper";
 import { impactLight } from "@/src/lib/haptics";

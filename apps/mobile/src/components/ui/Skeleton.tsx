@@ -1,4 +1,3 @@
-// Skeleton - shimmer loading placeholder for content-heavy screens
 import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {

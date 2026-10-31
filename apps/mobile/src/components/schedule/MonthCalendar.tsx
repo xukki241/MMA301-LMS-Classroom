@@ -1,4 +1,3 @@
-// MonthCalendar - monthly grid calendar with event dot indicators
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { sameDay, startOfDay, WEEKDAY_LABELS } from "@/src/lib/overview-api";

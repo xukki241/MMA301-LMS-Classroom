@@ -1,4 +1,3 @@
-// FormFeedback - inline validation messages for form fields
 import { useEffect, useState, type ReactNode } from "react";
 import { Keyboard, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Dialog, HelperText, Icon, Text } from "react-native-paper";

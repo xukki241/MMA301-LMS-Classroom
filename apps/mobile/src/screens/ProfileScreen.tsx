@@ -1,4 +1,3 @@
-// ProfileScreen - user profile display with edit and settings options
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Text, useTheme } from "react-native-paper";

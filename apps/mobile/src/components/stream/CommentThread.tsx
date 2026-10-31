@@ -1,4 +1,3 @@
-// CommentThread - nested comment display with reply and reaction support
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { StyleSheet, View } from "react-native";
 import { ActivityIndicator, Divider, Text } from "react-native-paper";

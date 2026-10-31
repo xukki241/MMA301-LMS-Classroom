@@ -1,4 +1,3 @@
-// ClassCard - card component displaying class info in grid/list layouts
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
 import { Text, useTheme } from "react-native-paper";
