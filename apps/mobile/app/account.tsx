@@ -1,4 +1,3 @@
-// Account settings route - shared settings for both roles
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Text, TextInput, useTheme } from "react-native-paper";

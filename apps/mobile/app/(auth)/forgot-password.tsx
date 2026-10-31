@@ -1,4 +1,3 @@
-// Forgot password route - email-based password reset flow
 import { router } from "expo-router";
 import { useState } from "react";
 import {

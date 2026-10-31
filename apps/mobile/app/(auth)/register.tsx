@@ -1,4 +1,3 @@
-// Register route - new user signup with role selection
 import { Link, Redirect, router } from "expo-router";
 import { useState } from "react";
 import {
