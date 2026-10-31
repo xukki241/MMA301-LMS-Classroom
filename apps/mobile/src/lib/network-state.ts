@@ -1,7 +1,3 @@
-/**
- * Shared network state utilities for offline-first architecture.
- * Used by network-context and offline-data modules.
- */
 let online: boolean | null = null;
 export const networkState = {
   isOffline: () => online === false,

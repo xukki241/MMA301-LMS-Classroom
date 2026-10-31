@@ -13,7 +13,6 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-/** Register a new user account with email, password, display name, and role. */
 export async function register(
   input: {
     email: string;
@@ -30,7 +29,6 @@ export async function register(
   });
 }
 
-/** Authenticate an existing user with email and password credentials. */
 export async function login(email: string, password: string, signal?: AbortSignal): Promise<AuthResponse> {
   return http<AuthResponse>(`${AUTH_URL}/auth/login`, {
     method: "POST",
@@ -39,7 +37,6 @@ export async function login(email: string, password: string, signal?: AbortSigna
   });
 }
 
-/** Fetch the current user's basic profile from the core service. */
 export async function fetchMe(
   token: string,
   signal?: AbortSignal
@@ -47,12 +44,10 @@ export async function fetchMe(
   return http(`${CORE_URL}/me`, { token, signal });
 }
 
-/** Fetch the authenticated user's full profile from the auth service. */
 export async function fetchAuthProfile(token: string, signal?: AbortSignal): Promise<{ user: AuthUser }> {
   return http(`${AUTH_URL}/auth/me`, { token, signal });
 }
 
-/** Update the authenticated user's display name. */
 export async function updateAuthProfile(
   token: string,
   displayName: string,
@@ -66,7 +61,6 @@ export async function updateAuthProfile(
   });
 }
 
-/** Change the authenticated user's password. */
 export async function changePassword(
   token: string,
   input: { currentPassword: string; newPassword: string },

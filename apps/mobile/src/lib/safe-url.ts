@@ -9,6 +9,3 @@ export function isSafeHttpUrl(value: string): boolean {
     return false;
   }
 }
-
-// Default timeout for URL validation requests (ms)
-export const URL_VALIDATION_TIMEOUT = 5000;
