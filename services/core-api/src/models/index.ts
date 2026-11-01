@@ -7,5 +7,4 @@ export { Material } from "./Material.js";
 export { Post } from "./Post.js";
 export { Reaction } from "./Reaction.js";
 export { Submission } from "./Submission.js";
-export { Task, type ITask, type TaskPriority, type TaskStatus } from "./Task.js";
 export { syncCoreIndexes } from "./registry.js";

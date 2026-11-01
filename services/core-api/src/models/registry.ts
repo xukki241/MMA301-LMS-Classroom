@@ -7,7 +7,6 @@ import { Material } from "./Material.js";
 import { Post } from "./Post.js";
 import { Reaction } from "./Reaction.js";
 import { Submission } from "./Submission.js";
-import { Task } from "./Task.js";
 
 export const coreModels = [
   ClassModel,
@@ -19,7 +18,6 @@ export const coreModels = [
   Submission,
   Grade,
   Reaction,
-  Task,
 ];
 
 export async function syncCoreIndexes(): Promise<void> {
