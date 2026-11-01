@@ -3,9 +3,10 @@
 # Credentials via shell env only (do not commit). Typical local seed:
 #   MAESTRO_EMAIL=student@lms.local  MAESTRO_PASSWORD=Demo123!
 #
-# Optional LIVE path (assert bank/SePay UI only — never completes a real transfer):
+# Optional LIVE path (assert bank + in-app WebView CTA only — never completes a real transfer):
 #   MAESTRO_PAYMENT=live
 # LIVE UI also requires SEPAY_* on the Core API host; otherwise the demo branch runs.
+# LIVE checkout opens react-native-webview in-app (NOT Chrome / expo-web-browser).
 appId: com.mma301.lmsclassroom
 env:
   MAESTRO_EMAIL: ${MAESTRO_EMAIL}
@@ -50,9 +51,9 @@ env:
 - extendedWaitUntil:
     visible: "Mở khóa tài nguyên · SePay"
     timeout: 15000
-# Wait until checkout CTA is ready (demo confirm OR LIVE SePay QR gateway).
+# Wait until checkout CTA is ready (demo confirm OR LIVE in-app WebView QR).
 - extendedWaitUntil:
-    visible: "Tôi đã chuyển khoản|Mở cổng SePay / Quét QR"
+    visible: "Tôi đã chuyển khoản|Quét QR trong ứng dụng"
     timeout: 20000
 
 # Default / demo (no SEPAY_* on Core): confirm simulated transfer and expect unlock.
@@ -66,16 +67,31 @@ env:
           timeout: 20000
       - assertVisible: "Mở liên kết"
 
-# LIVE (SEPAY_* on Core): assert bank + gateway/QR CTA; do not open SePay / complete transfer.
+# LIVE (SEPAY_* on Core): assert bank + in-app WebView CTA; do not complete a real transfer.
+# Optional deeper check: tap CTA → assert payment-sepay-webview → close (still no Chrome).
 - runFlow:
     when:
-      visible: "Mở cổng SePay / Quét QR"
+      visible: "Quét QR trong ứng dụng"
     commands:
       - assertVisible: "STK:"
       - assertVisible: "Ngân hàng"
       - assertVisible:
           id: "payment-open-sepay"
       - assertVisible: "Đóng"
+      - runFlow:
+          when:
+            true: ${MAESTRO_PAYMENT == "live-webview"}
+          commands:
+            - tapOn:
+                id: "payment-open-sepay"
+            - extendedWaitUntil:
+                visible:
+                  id: "payment-sepay-webview"
+                timeout: 20000
+            - tapOn:
+                id: "payment-webview-close"
+            - assertNotVisible:
+                id: "payment-sepay-webview"
       - tapOn: "Đóng"
       - assertNotVisible: "Mở khóa tài nguyên · SePay"
 

@@ -50,13 +50,20 @@ npm run test:e2e:payment
 
 ### Optional LIVE assert (manual)
 
-Set `MAESTRO_PAYMENT=live` only when Core API has `SEPAY_*` configured. The flow **asserts** bank transfer UI (STK / **Mở cổng SePay / Quét QR**) and closes the dialog — it does **not** open the hosted checkout or confirm a real transfer. With LIVE keys, demo confirm is not the primary path.
+Set `MAESTRO_PAYMENT=live` only when Core API has `SEPAY_*` configured. The flow **asserts** bank transfer UI (STK / **Quét QR trong ứng dụng**) and closes the dialog — it does **not** open the hosted checkout or confirm a real transfer. LIVE checkout uses an **in-app WebView** (`payment-sepay-webview`), not Chrome / external browser.
 
 ```powershell
 $env:MAESTRO_PAYMENT = "live"
 npm run test:e2e:payment
 ```
 
-If `MAESTRO_PAYMENT` is unset/demo but the API returns LIVE checkout, the YAML still takes the LIVE assert-only branch when the “LIVE:” caption is visible.
+To also open and dismiss the in-app WebView (still no real transfer):
+
+```powershell
+$env:MAESTRO_PAYMENT = "live-webview"
+npm run test:e2e:payment
+```
+
+If `MAESTRO_PAYMENT` is unset/demo but the API returns LIVE checkout, the YAML still takes the LIVE assert-only branch when the in-app QR CTA is visible.
 
 Flows are fail-closed: missing Maestro, emulator, credentials, or backend is a failed gate.

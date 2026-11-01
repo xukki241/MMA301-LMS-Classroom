@@ -30,6 +30,10 @@ import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { AppButton } from "@/src/components/ui/AppButton";
 import { FieldError, FormDialogScroll, FormNotice, keyboardBehavior, useKeyboardLift } from "@/src/components/ui/FormFeedback";
+import {
+  SePayCheckoutWebView,
+  type SePayReturnResult,
+} from "@/src/components/payment/SePayCheckoutWebView";
 import { useAuth } from "@/src/lib/auth-context";
 import { userErrorMessage } from "@/src/lib/user-error-message";
 import {
@@ -94,6 +98,7 @@ export default function MaterialsScreen() {
   const [payOpen, setPayOpen] = useState(false);
   const [checkout, setCheckout] = useState<SePayCheckout | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
+  const [sepayWebVisible, setSepayWebVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const keyboardLift = useKeyboardLift();
 
@@ -186,9 +191,8 @@ export default function MaterialsScreen() {
       }
       const url = checkout.checkoutUrl;
       if (!url) throw new Error("Thiếu URL cổng SePay");
-      await WebBrowser.openBrowserAsync(url, {
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-      });
+      // LIVE: in-app WebView only (never Chrome / expo-web-browser).
+      setSepayWebVisible(true);
       return { mode: "live" as const };
     },
     onSuccess: async (result) => {
@@ -196,15 +200,34 @@ export default function MaterialsScreen() {
         notifySuccess();
         setPayOpen(false);
         setCheckout(null);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.materials(classId!) });
       }
-      // LIVE: user pays on SePay QR page; refresh list after browser closes (may still be pending).
-      await queryClient.invalidateQueries({ queryKey: queryKeys.materials(classId!) });
+      // LIVE: WebView stays open; materials refresh after return URL intercept.
     },
     onError: (err: unknown) => {
       notifyError();
       setPayError(userErrorMessage(err));
     },
   });
+
+  const onSePayWebClose = useCallback(
+    async (result: SePayReturnResult) => {
+      setSepayWebVisible(false);
+      setPayOpen(false);
+      setCheckout(null);
+      setPayError(null);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.materials(classId!) });
+      if (result === "success") {
+        notifySuccess();
+      } else if (result === "error") {
+        notifyError();
+        Alert.alert("Thanh toán chưa hoàn tất", "Giao dịch thất bại. Bạn có thể thử lại.");
+      } else if (result === "cancel") {
+        // User closed WebView or SePay cancel — soft refresh only.
+      }
+    },
+    [classId]
+  );
 
   // Mutation xóa tài liệu
   const deleteMutation = useMutation({
@@ -702,7 +725,7 @@ export default function MaterialsScreen() {
                 {"\n"}
                 {checkout.demo
                   ? "Chế độ demo (chưa cấu hình SEPAY): bấm xác nhận sau khi chuyển khoản giả lập."
-                  : "LIVE SePay: mở cổng thanh toán để quét QR chuyển khoản MBBank."}
+                  : "LIVE SePay: quét QR trong ứng dụng (không mở Chrome)."}
               </Text>
             ) : null}
           </Dialog.Content>
@@ -724,11 +747,20 @@ export default function MaterialsScreen() {
               disabled={!checkout}
               onPress={() => confirmPayMutation.mutate()}
             >
-              {checkout?.demo ? "Tôi đã chuyển khoản" : "Mở cổng SePay / Quét QR"}
+              {checkout?.demo ? "Tôi đã chuyển khoản" : "Quét QR trong ứng dụng"}
             </AppButton>
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      <SePayCheckoutWebView
+        visible={sepayWebVisible && Boolean(checkout?.checkoutUrl) && !checkout?.demo}
+        checkoutUrl={checkout?.checkoutUrl ?? ""}
+        title={checkout ? `SePay · ${formatVnd(checkout.amount)}` : "SePay"}
+        onClose={(result) => {
+          void onSePayWebClose(result);
+        }}
+      />
     </View>
   );
 }

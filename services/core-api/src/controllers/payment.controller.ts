@@ -53,7 +53,7 @@ h1{font-size:18px;margin:0 0 8px} p{color:#444;line-height:1.5;font-size:14px} b
 </div></body></html>`);
   }
 
-  /** Auto-POST signed form fields to SePay hosted checkout (RN WebBrowser cannot POST forms). */
+  /** Auto-POST signed form fields to SePay hosted checkout (RN WebView cannot POST forms). */
   static async hostedLaunchPage(req: Request, res: Response): Promise<void> {
     const ref = String(req.query.ref ?? "");
     const launch = await PaymentService.buildHostedLaunch(ref);
