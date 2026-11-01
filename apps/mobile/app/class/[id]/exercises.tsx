@@ -185,10 +185,10 @@ export default function ExercisesScreen() {
             subtitle={
               isTeacher
                 ? "Tạo bài tập với hạn nộp để học sinh nộp bài trực tuyến."
-                : "Giáo viên chưa giao bài tập cho lớp này."
+                : "Giáo viên chưa giao bài tập cho lớp này. Kéo xuống để làm mới hoặc quay lại lớp."
             }
-            actionLabel={isTeacher ? "Tạo bài tập" : undefined}
-            onAction={isTeacher ? () => setModalVisible(true) : undefined}
+            actionLabel={isTeacher ? "Tạo bài tập" : "Quay lại lớp"}
+            onAction={isTeacher ? () => setModalVisible(true) : () => router.back()}
           />
         </Screen>
       ) : (

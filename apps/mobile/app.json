@@ -13,6 +13,7 @@
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
+      "usesCleartextTraffic": true,
       "package": "com.mma301.lmsclassroom",
       "adaptiveIcon": {
         "backgroundColor": "#2563EB",

@@ -161,6 +161,7 @@ npm run test:api
 | `npm run test:selenium` | Auth/Core docs, health, OpenAPI bằng Chrome WebDriver | screenshots + JSON report |
 | `npm run test:performance` | Core health latency/error rate | Console/CI |
 | `npm run test:e2e` | Android auth smoke bằng Maestro | Maestro output |
+| `npm run test:e2e:payment` | Payment unlock (demo mặc định; `MAESTRO_PAYMENT=live` chỉ assert UI bank) | Maestro output |
 | `npm run test:staging` | Health/docs/dev-token lock/login | Cần QA accounts hợp lệ |
 
 Selenium staging:

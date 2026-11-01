@@ -2,6 +2,7 @@ import { expandResponseRefs } from "./expand-response-refs.js";
 import { exercisePaths, exerciseSchemas } from "./exercise.openapi.js";
 import { submissionPaths, submissionSchemas } from "./submission.openapi.js";
 import { materialPaths, materialSchemas } from "./material.openapi.js";
+import { schedulePaths, scheduleSchemas } from "./schedule.openapi.js";
 
 const coreOpenApiDocument = {
   openapi: "3.1.0",
@@ -117,6 +118,7 @@ Email: dambautv2005@gmail.com
     ...submissionPaths,
     ...exercisePaths,
     ...materialPaths,
+    ...schedulePaths,
     "/docs/tokens/teacher": {
       post: {
         tags: ["Authentication & Lấy Token"],
@@ -1393,6 +1395,7 @@ Hỗ trợ tham số query \`updatedAfter\` (định dạng ISO) để mobile cl
       ...submissionSchemas,
       ...exerciseSchemas,
       ...materialSchemas,
+      ...scheduleSchemas,
       Class: {
         type: "object",
         properties: {

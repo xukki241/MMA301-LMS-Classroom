@@ -1,7 +1,9 @@
-import { type ReactElement, type ReactNode } from "react";
+import { useContext, type ReactElement, type ReactNode } from "react";
 import { ScrollView, StyleSheet, View, type RefreshControlProps } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "react-native-paper";
+import { BottomTabBarHeightContext } from "expo-router/build/react-navigation/bottom-tabs/utils/BottomTabBarHeightContext";
+import { HeaderShownContext } from "expo-router/build/react-navigation/elements/Header/HeaderShownContext";
 import { spacing } from "@/src/theme/tokens";
 
 type Props = {
@@ -23,14 +25,21 @@ export function Screen({
   keyboardInset = true,
 }: Props) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const inTabs = useContext(BottomTabBarHeightContext) != null;
+  const headerShown = useContext(HeaderShownContext);
+  const contentBottom = (bottomInset > 0 ? bottomInset : padded ? spacing.xxxl : 0) + (inTabs ? 0 : insets.bottom);
   const body = (
-    <View style={[styles.body, padded && styles.padded, bottomInset > 0 && { paddingBottom: bottomInset }, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.body, padded && styles.padded, contentBottom > 0 && { paddingBottom: contentBottom }, { backgroundColor: theme.colors.background }]}>
       {children}
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.background }]} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: theme.colors.background }]}
+      edges={headerShown ? ["left", "right"] : ["top", "left", "right"]}
+    >
       {scroll ? (
         <ScrollView
           keyboardShouldPersistTaps="handled"

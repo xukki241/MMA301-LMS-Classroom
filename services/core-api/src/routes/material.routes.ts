@@ -10,6 +10,9 @@ materialRouter.get("/classes/:classId/materials", requireAuth, asyncHandler(Mate
 materialRouter.post("/classes/:classId/materials", requireAuth, asyncHandler(MaterialController.createMaterial));
 materialRouter.delete("/classes/:classId/materials/:materialId", requireAuth, asyncHandler(MaterialController.deleteMaterial));
 
+materialRouter.patch("/classes/:classId/materials/:materialId", requireAuth, asyncHandler(MaterialController.updateMaterial));
+
 materialRouter.get("/:classId/materials", requireAuth, asyncHandler(MaterialController.listMaterials));
 materialRouter.post("/:classId/materials", requireAuth, asyncHandler(MaterialController.createMaterial));
 materialRouter.delete("/:classId/materials/:materialId", requireAuth, asyncHandler(MaterialController.deleteMaterial));
+materialRouter.patch("/:classId/materials/:materialId", requireAuth, asyncHandler(MaterialController.updateMaterial));

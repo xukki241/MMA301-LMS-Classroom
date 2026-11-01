@@ -16,6 +16,7 @@ const schema = z.object({
   TRUST_PROXY: z.string().optional(),
   SEED_TEACHER_EMAIL: z.string().email().default("teacher@lms.local"),
   SEED_STUDENT_EMAIL: z.string().email().default("student@lms.local"),
+  SEED_STUDENT2_EMAIL: z.string().email().default("student2@lms.local"),
   SEED_PASSWORD: z.string().min(8).default("Demo123!"),
 });
 
@@ -30,6 +31,7 @@ const parsed = schema.safeParse({
   TRUST_PROXY: process.env.TRUST_PROXY,
   SEED_TEACHER_EMAIL: process.env.SEED_TEACHER_EMAIL,
   SEED_STUDENT_EMAIL: process.env.SEED_STUDENT_EMAIL,
+  SEED_STUDENT2_EMAIL: process.env.SEED_STUDENT2_EMAIL,
   SEED_PASSWORD: process.env.SEED_PASSWORD,
 });
 

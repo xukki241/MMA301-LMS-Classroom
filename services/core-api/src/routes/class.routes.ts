@@ -15,5 +15,6 @@ classRouter.post("/classes/join", requireAuth, requireRole("student"), asyncHand
 // Dynamic :id paths
 classRouter.get("/classes/:id", requireAuth, asyncHandler(ClassController.getClassDetails));
 classRouter.get("/classes/:id/members", requireAuth, asyncHandler(ClassController.getClassMembers));
+classRouter.delete("/classes/:id/members/:userId", requireAuth, requireRole("teacher"), asyncHandler(ClassController.removeMember));
 classRouter.patch("/classes/:id", requireAuth, requireRole("teacher"), asyncHandler(ClassController.updateClass));
 classRouter.delete("/classes/:id", requireAuth, requireRole("teacher"), asyncHandler(ClassController.deleteClass));
