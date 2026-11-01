@@ -22,6 +22,9 @@ services:
   - type: web
     name: mma301-lms-core
     runtime: docker
+    # Staging service mma301-lms-core-staging (srv-davt47rtqb8s73dn5al0) tracks main;
+    # payment/SePay routes must be on main for that deploy. Prefer develop→main promote.
+    branch: main
     dockerfilePath: ./services/core-api/Dockerfile
     dockerContext: ./services/core-api
     healthCheckPath: /health
