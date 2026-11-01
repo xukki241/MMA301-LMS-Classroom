@@ -40,9 +40,9 @@ export default function RootLayout() {
         <NetworkProvider>
           <AuthProvider>
             <ThemeProvider value={navTheme}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minHeight: 0 }}>
                 <OfflineBanner />
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, minHeight: 0 }}>
                   <AuthenticatedStack />
                 </View>
               </View>
@@ -75,6 +75,14 @@ function AuthenticatedStack() {
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="class/[id]" options={{ headerShown: true, title: "Chi tiết lớp", animation: "slide_from_right" }} />
         <Stack.Screen name="class/[id]/stream" options={{ headerShown: true, title: "Bảng tin", animation: "slide_from_right" }} />
+        <Stack.Screen name="class/[id]/schedule" options={{ headerShown: true, title: "Lịch của lớp", animation: "slide_from_right" }} />
+        <Stack.Screen name="class/[id]/materials" options={{ headerShown: true, title: "Tài nguyên", animation: "slide_from_right" }} />
+        <Stack.Screen name="class/[id]/exercises" options={{ headerShown: true, title: "Bài tập", animation: "slide_from_right" }} />
+        <Stack.Screen
+          name="class/[id]/exercise/[exerciseId]"
+          options={{ headerShown: true, title: "Chi tiết bài tập", animation: "slide_from_right" }}
+        />
+        <Stack.Screen name="gradebook" options={{ headerShown: true, title: "Bảng điểm", animation: "slide_from_right" }} />
       </Stack.Protected>
     </Stack>
   );

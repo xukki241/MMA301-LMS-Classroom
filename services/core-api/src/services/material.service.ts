@@ -1,12 +1,22 @@
 import mongoose from "mongoose";
 import { HttpError } from "../lib/httpError.js";
 import type { AuthUser } from "../middleware/requireAuth.js";
-import { ClassMember, ClassModel, Material } from "../models/index.js";
+import { ClassMember, ClassModel, Material, MaterialUnlock } from "../models/index.js";
 
 export interface CreateMaterialInput {
   title: string;
   url: string;
   description?: string;
+  priceVnd?: number;
+}
+
+function parsePrice(value: unknown): number {
+  if (value === undefined || value === null || value === "") return 0;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || n < 0) {
+    throw new HttpError(400, "Giá tài liệu phải là số không âm (VND)", "INVALID_PRICE");
+  }
+  return Math.round(n);
 }
 
 export class MaterialService {
@@ -36,7 +46,35 @@ export class MaterialService {
     }
 
     const materials = await Material.find({ classId }).sort({ createdAt: -1 });
-    return materials;
+    const isTeacherOfClass = cls.teacherId === userId || membership?.roleInClass === "teacher";
+    if (isTeacherOfClass) {
+      return materials.map((item) => ({
+        ...item.toObject(),
+        priceVnd: item.priceVnd ?? 0,
+        locked: false,
+        unlocked: true,
+      }));
+    }
+
+    const unlocks = await MaterialUnlock.find({
+      classId,
+      userId,
+      status: "success",
+    }).select("materialId");
+    const unlocked = new Set(unlocks.map((u) => String(u.materialId)));
+
+    return materials.map((item) => {
+      const priceVnd = item.priceVnd ?? 0;
+      const isUnlocked = priceVnd <= 0 || unlocked.has(String(item._id));
+      const raw = item.toObject();
+      return {
+        ...raw,
+        priceVnd,
+        locked: !isUnlocked,
+        unlocked: isUnlocked,
+        url: isUnlocked ? raw.url : "",
+      };
+    });
   }
 
   /**
@@ -93,9 +131,54 @@ export class MaterialService {
       title: trimmedTitle,
       description: data.description ? data.description.trim() : "",
       url: trimmedUrl,
+      priceVnd: parsePrice(data.priceVnd),
       createdBy: user.id,
     });
 
+    return material;
+  }
+
+  /**
+   * Update a material in class (Teacher owner of the class only)
+   */
+  static async updateMaterial(
+    user: AuthUser,
+    classId: string,
+    materialId: string,
+    data: Partial<CreateMaterialInput>
+  ) {
+    if (user.role !== "teacher") {
+      throw new HttpError(403, "Chỉ giáo viên mới có quyền sửa tài liệu", "FORBIDDEN");
+    }
+    if (!mongoose.isObjectIdOrHexString(classId) || !mongoose.isObjectIdOrHexString(materialId)) {
+      throw new HttpError(400, "Định dạng ID không hợp lệ", "INVALID_ID");
+    }
+    const cls = await ClassModel.findById(classId);
+    if (!cls) throw new HttpError(404, "Không tìm thấy lớp học", "CLASS_NOT_FOUND");
+    if (cls.teacherId !== user.id) {
+      throw new HttpError(403, "Chỉ giáo viên phụ trách lớp mới có quyền sửa tài liệu", "FORBIDDEN");
+    }
+    const material = await Material.findOne({ _id: materialId, classId });
+    if (!material) throw new HttpError(404, "Không tìm thấy tài liệu này trong lớp học", "MATERIAL_NOT_FOUND");
+
+    if (data.title !== undefined) {
+      const title = String(data.title).trim();
+      if (title.length < 2) throw new HttpError(400, "Tiêu đề tài liệu phải có ít nhất 2 ký tự", "INVALID_TITLE");
+      material.title = title;
+    }
+    if (data.url !== undefined) {
+      const url = String(data.url).trim();
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error();
+      } catch {
+        throw new HttpError(400, "Đường dẫn tài liệu phải là URL hợp lệ (bắt đầu bằng http:// hoặc https://)", "INVALID_URL");
+      }
+      material.url = url;
+    }
+    if (data.description !== undefined) material.description = String(data.description).trim();
+    if (data.priceVnd !== undefined) material.priceVnd = parsePrice(data.priceVnd);
+    await material.save();
     return material;
   }
 

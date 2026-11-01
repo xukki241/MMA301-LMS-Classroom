@@ -13,6 +13,14 @@ const schema = z.object({
   CORS_ORIGIN: z.string().default("*"),
   JSON_BODY_LIMIT: z.string().default("10mb"),
   TRUST_PROXY: z.string().optional(),
+  PUBLIC_CORE_URL: z.string().url().default("http://127.0.0.1:4002"),
+  // Empty compose/env values mean "unset" so demo checkout stays available.
+  SEPAY_MERCHANT_ID: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
+  SEPAY_SECRET_KEY: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
+  SEPAY_CHECKOUT_URL: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().url().optional()),
+  SEPAY_BANK_CODE: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
+  SEPAY_BANK_ACCOUNT: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
+  SEPAY_BANK_NAME: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
 });
 
 const parsed = schema.safeParse({
@@ -23,6 +31,13 @@ const parsed = schema.safeParse({
   CORS_ORIGIN: process.env.CORS_ORIGIN,
   JSON_BODY_LIMIT: process.env.JSON_BODY_LIMIT,
   TRUST_PROXY: process.env.TRUST_PROXY,
+  PUBLIC_CORE_URL: process.env.PUBLIC_CORE_URL ?? "http://127.0.0.1:4002",
+  SEPAY_MERCHANT_ID: process.env.SEPAY_MERCHANT_ID,
+  SEPAY_SECRET_KEY: process.env.SEPAY_SECRET_KEY,
+  SEPAY_CHECKOUT_URL: process.env.SEPAY_CHECKOUT_URL,
+  SEPAY_BANK_CODE: process.env.SEPAY_BANK_CODE,
+  SEPAY_BANK_ACCOUNT: process.env.SEPAY_BANK_ACCOUNT,
+  SEPAY_BANK_NAME: process.env.SEPAY_BANK_NAME,
 });
 
 if (!parsed.success) {

@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -34,12 +34,20 @@ import { useAuth } from "@/src/lib/auth-context";
 import { userErrorMessage } from "@/src/lib/user-error-message";
 import {
   createMaterial,
+  updateMaterial,
   deleteMaterial,
   listMaterials,
   type LmsMaterial,
 } from "@/src/lib/materials-api";
+import {
+  confirmDemoPayment,
+  createMaterialCheckout,
+  formatVnd,
+  type SePayCheckout,
+} from "@/src/lib/payment-api";
 import { queryClient, queryKeys } from "@/src/lib/query-client";
 import { impactLight, notifyError, notifySuccess } from "@/src/lib/haptics";
+import { isSafeHttpUrl } from "@/src/lib/safe-url";
 import { elevation, palette, radius, spacing, typography } from "@/src/theme/tokens";
 
 /**
@@ -65,6 +73,7 @@ function getUrlMeta(url: string) {
 export default function MaterialsScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
+  const router = useRouter();
   const { token, user } = useAuth();
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
   const classId = Array.isArray(id) ? id[0] : id;
@@ -74,12 +83,17 @@ export default function MaterialsScreen() {
 
   // Modal thêm tài liệu
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [description, setDescription] = useState("");
+  const [priceText, setPriceText] = useState("0");
   const [titleError, setTitleError] = useState<string | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [payOpen, setPayOpen] = useState(false);
+  const [checkout, setCheckout] = useState<SePayCheckout | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const keyboardLift = useKeyboardLift();
 
@@ -96,10 +110,23 @@ export default function MaterialsScreen() {
     enabled: Boolean(token && classId),
     queryFn: ({ signal }) => listMaterials(token!, classId!, signal),
   });
+  const { refetch } = query;
+  const [pulling, setPulling] = useState(false);
+  useFocusEffect(useCallback(() => {
+    if (token && classId) void refetch({ cancelRefetch: false });
+  }, [token, classId, refetch]));
+  const onRefresh = async () => {
+    setPulling(true);
+    try {
+      await refetch({ cancelRefetch: false });
+    } finally {
+      setPulling(false);
+    }
+  };
 
   // Mutation thêm tài liệu
   const createMutation = useMutation({
-    mutationFn: (data: { title: string; url: string; description?: string }) =>
+    mutationFn: (data: { title: string; url: string; description?: string; priceVnd?: number }) =>
       createMaterial(token!, classId!, data),
     onSuccess: () => {
       notifySuccess();
@@ -111,6 +138,64 @@ export default function MaterialsScreen() {
       setTitleError(null);
       setUrlError(null);
       setFormError(userErrorMessage(err));
+    },
+  });
+
+  // Mutation sửa tài liệu
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: string; title: string; url: string; description: string; priceVnd: number }) =>
+      updateMaterial(token!, classId!, data.id, {
+        title: data.title,
+        url: data.url,
+        description: data.description,
+        priceVnd: data.priceVnd,
+      }),
+    onSuccess: () => {
+      notifySuccess();
+      void queryClient.invalidateQueries({ queryKey: queryKeys.materials(classId!) });
+      closeModal();
+    },
+    onError: (err: unknown) => {
+      notifyError();
+      setTitleError(null);
+      setUrlError(null);
+      setFormError(userErrorMessage(err));
+    },
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: (materialId: string) => createMaterialCheckout(token!, classId!, materialId),
+    onSuccess: (data) => {
+      setCheckout(data);
+      setPayError(null);
+      setPayOpen(true);
+    },
+    onError: (err: unknown) => {
+      notifyError();
+      Alert.alert("Không tạo được thanh toán", userErrorMessage(err));
+    },
+  });
+
+  const confirmPayMutation = useMutation({
+    mutationFn: async () => {
+      if (!checkout) throw new Error("Thiếu checkout");
+      if (checkout.demo) {
+        await confirmDemoPayment(token!, checkout.transactionRef);
+        return;
+      }
+      await WebBrowser.openBrowserAsync(checkout.checkoutUrl, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+      });
+    },
+    onSuccess: async () => {
+      notifySuccess();
+      setPayOpen(false);
+      setCheckout(null);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.materials(classId!) });
+    },
+    onError: (err: unknown) => {
+      notifyError();
+      setPayError(userErrorMessage(err));
     },
   });
 
@@ -127,17 +212,36 @@ export default function MaterialsScreen() {
     },
   });
 
+  const openEdit = (item: LmsMaterial) => {
+    impactLight();
+    setEditingId(item.id);
+    setTitle(item.title);
+    setUrl(item.url);
+    setDescription(item.description ?? "");
+    setPriceText(String(item.priceVnd ?? 0));
+    setTitleError(null);
+    setUrlError(null);
+    setFormError(null);
+    setModalVisible(true);
+  };
+
   const closeModal = () => {
+    setEditingId(null);
     setModalVisible(false);
     setTitle("");
     setUrl("");
     setDescription("");
+    setPriceText("0");
     setTitleError(null);
     setUrlError(null);
     setFormError(null);
   };
 
   const handleOpenLink = async (targetUrl: string) => {
+    if (!isSafeHttpUrl(targetUrl)) {
+      Alert.alert("Liên kết không hợp lệ", "Chỉ mở được liên kết http hoặc https.");
+      return;
+    }
     impactLight();
     try {
       await WebBrowser.openBrowserAsync(targetUrl, {
@@ -149,6 +253,10 @@ export default function MaterialsScreen() {
   };
 
   const handleShareLink = async (targetUrl: string, itemTitle: string) => {
+    if (!isSafeHttpUrl(targetUrl)) {
+      Alert.alert("Liên kết không hợp lệ", "Chỉ chia sẻ được liên kết http hoặc https.");
+      return;
+    }
     impactLight();
     try {
       await Share.share({
@@ -210,14 +318,35 @@ export default function MaterialsScreen() {
       return;
     }
 
+    const priceVnd = Math.max(0, Math.round(Number(priceText.replace(/[^\d]/g, "")) || 0));
     setTitleError(null);
     setUrlError(null);
     setFormError(null);
+    if (editingId) {
+      updateMutation.mutate({
+        id: editingId,
+        title: trimmedTitle,
+        url: trimmedUrl,
+        description: description.trim(),
+        priceVnd,
+      });
+      return;
+    }
     createMutation.mutate({
       title: trimmedTitle,
       url: trimmedUrl,
       description: description.trim() || undefined,
+      priceVnd,
     });
+  };
+
+  const openOrUnlock = (item: LmsMaterial) => {
+    if (item.locked) {
+      impactLight();
+      checkoutMutation.mutate(item.id);
+      return;
+    }
+    void handleOpenLink(item.url);
   };
 
   const materials = query.data ?? [];
@@ -230,14 +359,14 @@ export default function MaterialsScreen() {
         </Screen>
       ) : query.isError ? (
         <Screen>
-          <ErrorState message={userErrorMessage(query.error)} onRetry={() => void query.refetch()} />
+          <ErrorState message={userErrorMessage(query.error)} onRetry={() => void refetch({ cancelRefetch: false })} />
         </Screen>
       ) : materials.length === 0 ? (
         <Screen
           refreshControl={
             <RefreshControl
-              refreshing={query.isRefetching}
-              onRefresh={() => void query.refetch()}
+              refreshing={pulling}
+              onRefresh={() => void onRefresh()}
             />
           }
         >
@@ -249,8 +378,8 @@ export default function MaterialsScreen() {
                 ? "Chia sẻ liên kết tài liệu, slide bài giảng hoặc bài tập tham khảo cho học sinh trong lớp."
                 : "Giáo viên phụ trách chưa đăng tải liên kết tài liệu nào cho lớp học này."
             }
-            actionLabel={isTeacher ? "Thêm tài liệu ngay" : undefined}
-            onAction={isTeacher ? () => setModalVisible(true) : undefined}
+            actionLabel={isTeacher ? "Thêm tài liệu ngay" : "Quay lại lớp"}
+            onAction={isTeacher ? () => setModalVisible(true) : () => router.back()}
           />
         </Screen>
       ) : (
@@ -262,8 +391,8 @@ export default function MaterialsScreen() {
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
-              refreshing={query.isRefetching}
-              onRefresh={() => void query.refetch()}
+              refreshing={pulling}
+              onRefresh={() => void onRefresh()}
             />
           }
         >
@@ -280,7 +409,9 @@ export default function MaterialsScreen() {
           {/* Danh sách Material Cards */}
           <View style={styles.cardList}>
             {materials.map((item, index) => {
-              const meta = getUrlMeta(item.url);
+              const meta = item.locked
+                ? { icon: "lock-closed-outline" as const, label: `Trả phí · ${formatVnd(item.priceVnd)}`, color: palette.danger }
+                : getUrlMeta(item.url || "https://example.com");
               return (
                 <Animated.View
                   key={item.id}
@@ -295,7 +426,7 @@ export default function MaterialsScreen() {
                   ]}
                 >
                   <Pressable
-                    onPress={() => handleOpenLink(item.url)}
+                    onPress={() => openOrUnlock(item)}
                     style={({ pressed }) => [styles.cardMain, pressed && styles.pressed]}
                   >
                     {/* Top Row: Icon type + Label */}
@@ -308,6 +439,18 @@ export default function MaterialsScreen() {
                           {meta.label}
                         </Text>
                       </View>
+
+                      {isTeacher && (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Sửa tài liệu ${item.title}`}
+                          onPress={() => openEdit(item)}
+                          style={({ pressed }) => [styles.deleteBtn, pressed && styles.pressed]}
+                          hitSlop={8}
+                        >
+                          <Ionicons name="create-outline" size={17} color={theme.colors.primary} />
+                        </Pressable>
+                      )}
 
                       {/* Nút Xóa (Dành cho Giáo viên) */}
                       {isTeacher && (
@@ -338,12 +481,12 @@ export default function MaterialsScreen() {
 
                     {/* URL text link */}
                     <View style={styles.linkRow}>
-                      <Ionicons name="link-outline" size={13} color={theme.colors.primary} />
+                      <Ionicons name={item.locked ? "lock-closed-outline" : "link-outline"} size={13} color={theme.colors.primary} />
                       <Text
                         numberOfLines={1}
                         style={[styles.linkUrlText, { color: theme.colors.primary }]}
                       >
-                        {item.url}
+                        {item.locked ? "Nội dung bị khóa — thanh toán SePay để mở" : item.url}
                       </Text>
                     </View>
                   </Pressable>
@@ -352,11 +495,15 @@ export default function MaterialsScreen() {
                   <View style={[styles.cardFooter, { borderTopColor: theme.colors.outline }]}>
                     <Pressable
                       style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
-                      onPress={() => handleOpenLink(item.url)}
+                      onPress={() => openOrUnlock(item)}
                     >
-                      <Ionicons name="open-outline" size={15} color={theme.colors.primary} />
+                      <Ionicons
+                        name={item.locked ? "wallet-outline" : "open-outline"}
+                        size={15}
+                        color={theme.colors.primary}
+                      />
                       <Text style={[styles.actionBtnText, { color: theme.colors.primary }]}>
-                        Mở liên kết
+                        {item.locked ? `Mở khóa · ${formatVnd(item.priceVnd)}` : "Mở liên kết"}
                       </Text>
                     </Pressable>
 
@@ -364,11 +511,15 @@ export default function MaterialsScreen() {
 
                     <Pressable
                       style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
-                      onPress={() => handleShareLink(item.url, item.title)}
+                      onPress={() => (item.locked ? openOrUnlock(item) : handleShareLink(item.url, item.title))}
                     >
-                      <Ionicons name="share-social-outline" size={15} color={theme.colors.onSurfaceVariant} />
+                      <Ionicons
+                        name={item.locked ? "card-outline" : "share-social-outline"}
+                        size={15}
+                        color={theme.colors.onSurfaceVariant}
+                      />
                       <Text style={[styles.actionBtnText, { color: theme.colors.onSurfaceVariant }]}>
-                        Chia sẻ
+                        {item.locked ? "SePay" : "Chia sẻ"}
                       </Text>
                     </Pressable>
                   </View>
@@ -403,7 +554,7 @@ export default function MaterialsScreen() {
               <View style={[styles.dialogIconBadge, { backgroundColor: theme.colors.primaryContainer }]}>
                 <Icon source="file-link-outline" size={24} color={theme.colors.primary} />
               </View>
-              <Text style={[typography.title, styles.dialogTitle]}>Thêm tài liệu mới</Text>
+              <Text style={[typography.title, styles.dialogTitle]}>{editingId ? "Sửa tài liệu" : "Thêm tài liệu mới"}</Text>
               <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
                 Chia sẻ liên kết slide bài giảng hoặc tài liệu tham khảo cho lớp
               </Text>
@@ -460,25 +611,114 @@ export default function MaterialsScreen() {
                 style={styles.dialogInput}
                 left={<TextInput.Icon icon="text" />}
               />
+              <TextInput
+                mode="outlined"
+                label="Giá mở khóa (VND, 0 = miễn phí)"
+                placeholder="0"
+                keyboardType="number-pad"
+                value={priceText}
+                onChangeText={setPriceText}
+                outlineStyle={styles.dialogInputOutline}
+                style={styles.dialogInput}
+                left={<TextInput.Icon icon="cash" />}
+              />
+              <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
+                Học sinh phải thanh toán SePay (chuyển khoản) để xem tài nguyên trả phí.
+              </Text>
             </FormDialogScroll>
             <Dialog.Actions style={styles.dialogActions}>
               <AppButton
                 mode="text"
                 onPress={closeModal}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 Hủy
               </AppButton>
               <AppButton
                 mode="contained"
-                loading={createMutation.isPending}
-                disabled={createMutation.isPending}
+                loading={createMutation.isPending || updateMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending}
                 onPress={handleCreateSubmit}
               >
-                Đăng tài liệu
+                {editingId ? "Lưu thay đổi" : "Đăng tài liệu"}
               </AppButton>
             </Dialog.Actions>
           </KeyboardAvoidingView>
+        </Dialog>
+
+        <Dialog
+          visible={payOpen}
+          onDismiss={() => {
+            setPayOpen(false);
+            setCheckout(null);
+            setPayError(null);
+          }}
+          style={[styles.dialog, { backgroundColor: theme.colors.surface }]}
+        >
+          <Dialog.Title>Mở khóa tài nguyên · SePay</Dialog.Title>
+          <Dialog.Content>
+            {payError ? <FormNotice message={payError} /> : null}
+            <Text style={[typography.body, { marginBottom: spacing.sm }]}>
+              {checkout
+                ? `Thanh toán ${formatVnd(checkout.amount)} để mở “${checkout.materialTitle}”.`
+                : "Đang chuẩn bị checkout…"}
+            </Text>
+            {checkout?.bankInfo ? (
+              <View
+                style={{
+                  marginBottom: spacing.sm,
+                  padding: spacing.md,
+                  borderRadius: radius.md,
+                  backgroundColor: theme.colors.surfaceVariant,
+                  gap: 4,
+                }}
+              >
+                <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
+                  Chuyển khoản {checkout.bankInfo.bankCode}
+                </Text>
+                <Text style={[typography.body, { fontWeight: "700" }]}>
+                  STK: {checkout.bankInfo.accountNumber}
+                </Text>
+                <Text style={typography.body}>{checkout.bankInfo.accountName}</Text>
+                <Text style={[typography.body, { fontWeight: "700" }]}>
+                  Số tiền: {formatVnd(checkout.bankInfo.amount || checkout.amount)}
+                </Text>
+              </View>
+            ) : null}
+            {checkout ? (
+              <Text
+                testID={checkout.demo ? "payment-mode-demo" : "payment-mode-live"}
+                style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}
+              >
+                Mã đơn: {checkout.transactionRef}
+                {"\n"}
+                {checkout.demo
+                  ? "Chế độ demo: bấm xác nhận sau khi chuyển khoản giả lập."
+                  : "LIVE: chuyển khoản MBBank phía trên hoặc mở cổng SePay."}
+              </Text>
+            ) : null}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <AppButton
+              mode="text"
+              testID="payment-dialog-close"
+              onPress={() => {
+                setPayOpen(false);
+                setCheckout(null);
+              }}
+              disabled={confirmPayMutation.isPending}
+            >
+              Đóng
+            </AppButton>
+            <AppButton
+              testID={checkout?.demo ? "payment-confirm-demo" : "payment-open-sepay"}
+              loading={confirmPayMutation.isPending || checkoutMutation.isPending}
+              disabled={!checkout}
+              onPress={() => confirmPayMutation.mutate()}
+            >
+              {checkout?.demo ? "Tôi đã chuyển khoản" : "Mở SePay"}
+            </AppButton>
+          </Dialog.Actions>
         </Dialog>
       </Portal>
     </View>

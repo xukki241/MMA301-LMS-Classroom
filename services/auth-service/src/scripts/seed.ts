@@ -10,12 +10,17 @@ async function seed() {
   const accounts = [
     {
       email: env.SEED_TEACHER_EMAIL,
-      displayName: "Demo Teacher",
+      displayName: "Nguyễn Lan Anh",
       role: "teacher" as const,
     },
     {
       email: env.SEED_STUDENT_EMAIL,
-      displayName: "Demo Student",
+      displayName: "Trần Minh Khôi",
+      role: "student" as const,
+    },
+    {
+      email: env.SEED_STUDENT2_EMAIL,
+      displayName: "Phạm Hà My",
       role: "student" as const,
     },
   ];

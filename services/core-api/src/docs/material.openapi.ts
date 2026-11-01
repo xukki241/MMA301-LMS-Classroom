@@ -143,6 +143,30 @@ export const materialPaths = {
         schema: { type: "string", pattern: "^[a-fA-F0-9]{24}$" },
       },
     ],
+    patch: {
+      tags: ["Material (LMS-14)"],
+      operationId: "updateMaterial",
+      summary: "Giáo viên sửa tài liệu của lớp",
+      description: "Chỉ giáo viên phụ trách lớp. Gửi một hoặc nhiều trường title, url, description.",
+      security: [{ BearerAuth: [] }],
+      requestBody: { required: true, content: jsonSchema({ $ref: "#/components/schemas/UpdateMaterial" }) },
+      responses: {
+        "200": {
+          description: "Tài liệu đã cập nhật.",
+          content: jsonSchema({
+            type: "object",
+            required: ["success", "material"],
+            properties: {
+              success: { type: "boolean" },
+              message: { type: "string" },
+              material: { $ref: "#/components/schemas/Material" },
+            },
+          }),
+        },
+        "400": error("INVALID_TITLE / INVALID_URL / INVALID_ID."),
+        ...commonErrors,
+      },
+    },
     delete: {
       tags: ["Material (LMS-14)"],
       operationId: "deleteMaterial",

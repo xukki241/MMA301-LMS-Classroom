@@ -231,7 +231,8 @@ test("exercise list shows loading, empty, and error with retry", () => {
   const studentEmpty = tree.find((node) => node.type === "EmptyState");
   assert.equal(studentEmpty.props.title, "Chưa có bài tập");
   assert.match(studentEmpty.props.subtitle, /chưa giao bài tập/);
-  assert.equal(studentEmpty.props.actionLabel, undefined);
+  assert.equal(studentEmpty.props.actionLabel, "Quay lại lớp");
+  assert.equal(typeof studentEmpty.props.onAction, "function");
 
   h.ctx.role = "teacher";
   tree = nodes(h.render());
