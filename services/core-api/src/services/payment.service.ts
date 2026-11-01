@@ -265,19 +265,126 @@ export class PaymentService {
     return { received: true, activated: txn.status === "success", transactionRef: txnRef };
   }
 
-  static async processSePayIpn(body: Record<string, unknown>) {
-    const txnRef =
-      (typeof body.order_invoice_number === "string" && body.order_invoice_number) ||
-      (typeof body.order_id === "string" && body.order_id) ||
-      (typeof body.ref === "string" && body.ref) ||
-      null;
-    if (txnRef) {
-      const txn = await MaterialUnlock.findOne({ providerRef: txnRef });
-      if (txn) {
-        // IPN log-only (giống AMS): return path mới kích hoạt unlock.
-        console.info("[SEPAY IPN]", txnRef, txn.status);
-      }
+  /**
+   * SePay PG Instant Payment Notification.
+   * Docs: POST JSON + header `X-Secret-Key` when merchant auth = Secret Key.
+   * https://developer.sepay.vn/en/cong-thanh-toan/IPN
+   */
+  static async processSePayIpn(
+    body: Record<string, unknown>,
+    headers: { secretKeyHeader?: string | null } = {}
+  ) {
+    assertSePayIpnSecret(headers.secretKeyHeader);
+
+    const notificationType =
+      typeof body.notification_type === "string" ? body.notification_type : "";
+    const order = isPlainObject(body.order) ? body.order : null;
+    const txnRef = extractIpnInvoiceNumber(body, order);
+
+    if (!txnRef) {
+      console.info("[SEPAY IPN] missing invoice number", { notificationType });
+      return { success: true, received: true, activated: false };
     }
-    return { received: true };
+
+    const txn = await MaterialUnlock.findOne({ providerRef: txnRef });
+    if (!txn) {
+      console.info("[SEPAY IPN] unknown ref", txnRef, notificationType);
+      // Acknowledge so SePay does not retry forever for stale/demo refs.
+      return { success: true, received: true, activated: false, transactionRef: txnRef };
+    }
+
+    if (notificationType === "TRANSACTION_VOID") {
+      if (txn.status !== "failed") {
+        txn.status = "failed";
+        await txn.save();
+      }
+      console.info("[SEPAY IPN] void", txnRef);
+      return { success: true, received: true, activated: false, transactionRef: txnRef };
+    }
+
+    const paid =
+      notificationType === "ORDER_PAID" ||
+      notificationType === "" ||
+      (typeof order?.order_status === "string" &&
+        ["CAPTURED", "APPROVED", "PAID", "SUCCESS"].includes(order.order_status.toUpperCase()));
+
+    if (!paid) {
+      console.info("[SEPAY IPN] ignored", txnRef, notificationType, order?.order_status);
+      return { success: true, received: true, activated: txn.status === "success", transactionRef: txnRef };
+    }
+
+    const ipnAmount = parseIpnAmount(order?.order_amount ?? body.order_amount);
+    if (ipnAmount != null && Math.round(ipnAmount) !== Math.round(txn.amount)) {
+      console.warn("[SEPAY IPN] amount mismatch", {
+        txnRef,
+        expected: txn.amount,
+        got: ipnAmount,
+      });
+      throw new HttpError(400, "Số tiền IPN không khớp đơn", "IPN_AMOUNT_MISMATCH");
+    }
+
+    if (txn.status !== "success") {
+      txn.status = "success";
+      await txn.save();
+    }
+    console.info("[SEPAY IPN] unlocked", txnRef, txn.materialId);
+    return {
+      success: true,
+      received: true,
+      activated: true,
+      transactionRef: txnRef,
+      materialId: String(txn.materialId),
+    };
   }
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function extractIpnInvoiceNumber(
+  body: Record<string, unknown>,
+  order: Record<string, unknown> | null
+): string | null {
+  const candidates = [
+    order?.order_invoice_number,
+    order?.order_id,
+    body.order_invoice_number,
+    body.order_id,
+    body.ref,
+  ];
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function parseIpnAmount(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function assertSePayIpnSecret(headerValue?: string | null) {
+  const expected = env.SEPAY_SECRET_KEY;
+  if (!expected) return; // demo / unset — accept (local smoke without LIVE keys)
+
+  const provided = headerValue?.trim() ?? "";
+  if (!provided || !timingSafeEqualString(provided, expected)) {
+    throw new HttpError(401, "IPN secret không hợp lệ", "IPN_UNAUTHORIZED");
+  }
+}
+
+function timingSafeEqualString(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Constant-time-ish reject when lengths differ.
+    crypto.timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
 }

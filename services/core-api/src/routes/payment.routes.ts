@@ -15,4 +15,5 @@ paymentRouter.get("/payments/sepay/demo-checkout", asyncHandler(PaymentControlle
 paymentRouter.get("/payments/sepay/hosted-launch", asyncHandler(PaymentController.hostedLaunchPage));
 paymentRouter.get("/payments/sepay/return", asyncHandler(PaymentController.sepayReturn));
 paymentRouter.post("/payments/sepay/return", asyncHandler(PaymentController.sepayReturn));
+/** Canonical SePay PG IPN — set this URL in SePay dashboard (not AMS/cloudflare tunnels). */
 paymentRouter.post("/payments/sepay/ipn", asyncHandler(PaymentController.sepayIpn));

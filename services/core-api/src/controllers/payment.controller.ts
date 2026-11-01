@@ -32,7 +32,9 @@ export class PaymentController {
   }
 
   static async sepayIpn(req: Request, res: Response): Promise<void> {
-    const result = await PaymentService.processSePayIpn((req.body ?? {}) as Record<string, unknown>);
+    const result = await PaymentService.processSePayIpn((req.body ?? {}) as Record<string, unknown>, {
+      secretKeyHeader: req.header("x-secret-key"),
+    });
     res.status(200).json(result);
   }
 
