@@ -5,20 +5,31 @@ import { HttpError } from "../lib/httpError.js";
 import type { AuthUser } from "../middleware/requireAuth.js";
 import { ClassMember, ClassModel, Material, MaterialUnlock } from "../models/index.js";
 
-/** Official SePay form API signed-field order (skip missing) — mirrors AMS / sepay-pg-node. */
-const SEPAY_SIGNED_FIELDS = [
-  "order_amount",
+/**
+ * Signed field allow-list from official sepay-pg-node Checkout.signFields.
+ * Order MUST follow Object.keys(fields) insertion order (not a fixed list).
+ * AMS Java used a fixed order that does not match the Node SDK / SePay verify.
+ */
+const SEPAY_SIGN_ALLOW = new Set([
   "merchant",
-  "currency",
+  "env",
   "operation",
-  "order_description",
-  "order_invoice_number",
-  "customer_id",
   "payment_method",
+  "order_amount",
+  "currency",
+  "order_invoice_number",
+  "order_description",
+  "customer_id",
+  "agreement_id",
+  "agreement_name",
+  "agreement_type",
+  "agreement_payment_frequency",
+  "agreement_amount_per_payment",
   "success_url",
   "error_url",
   "cancel_url",
-] as const;
+  "order_id",
+]);
 
 export type SePayBankInfo = {
   bankCode: string;
@@ -43,13 +54,16 @@ function sepayEnabled() {
 }
 
 /**
- * HMAC-SHA256 Base64 over `name=value` pairs joined with `,` — AMS SePay parity.
+ * HMAC-SHA256 Base64 — parity with sepay-pg-node Checkout.signFields.
+ * Walk Object.keys so insertion order matches the SDK.
  */
 function signSePay(fields: Record<string, string>, secret: string): string {
   const parts: string[] = [];
-  for (const name of SEPAY_SIGNED_FIELDS) {
+  for (const name of Object.keys(fields)) {
+    if (!SEPAY_SIGN_ALLOW.has(name)) continue;
     const value = fields[name];
-    if (value) parts.push(`${name}=${value}`);
+    if (value === undefined) continue;
+    parts.push(`${name}=${value ?? ""}`);
   }
   return crypto.createHmac("sha256", secret).update(parts.join(",")).digest("base64");
 }
@@ -76,6 +90,13 @@ async function assertMember(userId: string, classId: string) {
   return cls;
 }
 
+function returnBaseUrl(): string {
+  // Prefer public/tunnel URL for SePay-signed return callbacks when set;
+  // PUBLIC_CORE_URL stays device-reachable for hosted-launch links.
+  const base = (env.SEPAY_RETURN_BASE_URL || env.PUBLIC_CORE_URL).replace(/\/$/, "");
+  return base;
+}
+
 function buildFormFields(input: {
   txnRef: string;
   amount: number;
@@ -83,11 +104,13 @@ function buildFormFields(input: {
   customerId: string;
   demo: boolean;
 }): Record<string, string> {
-  const base = env.PUBLIC_CORE_URL.replace(/\/$/, "");
-  const successUrl = `${base}/payments/sepay/return?ref=${encodeURIComponent(input.txnRef)}&result=success`;
-  const errorUrl = `${base}/payments/sepay/return?ref=${encodeURIComponent(input.txnRef)}&result=error`;
-  const cancelUrl = `${base}/payments/sepay/return?ref=${encodeURIComponent(input.txnRef)}&result=cancel`;
+  const base = returnBaseUrl();
+  // Match AMS appendRef style: raw ref (no encode) + result on error/cancel.
+  const successUrl = `${base}/payments/sepay/return?ref=${input.txnRef}`;
+  const errorUrl = `${base}/payments/sepay/return?ref=${input.txnRef}&result=error`;
+  const cancelUrl = `${base}/payments/sepay/return?ref=${input.txnRef}&result=cancel`;
 
+  // Field insertion order = sepay-pg-node Object.keys sign order.
   const formFields: Record<string, string> = {
     merchant: env.SEPAY_MERCHANT_ID || "LMS_DEMO",
     operation: "PURCHASE",

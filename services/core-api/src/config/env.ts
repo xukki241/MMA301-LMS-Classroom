@@ -15,6 +15,8 @@ const schema = z.object({
   TRUST_PROXY: z.string().optional(),
   // Prefer device-reachable URL (Android emulator → http://10.0.2.2:4002) so hosted-launch opens.
   PUBLIC_CORE_URL: z.string().url().default("http://10.0.2.2:4002"),
+  // Optional public/tunnel base for SePay-signed success/error/cancel (defaults to PUBLIC_CORE_URL).
+  SEPAY_RETURN_BASE_URL: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().url().optional()),
   // Empty compose/env values mean "unset" so demo checkout stays available.
   SEPAY_MERCHANT_ID: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
   SEPAY_SECRET_KEY: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
@@ -33,6 +35,7 @@ const parsed = schema.safeParse({
   JSON_BODY_LIMIT: process.env.JSON_BODY_LIMIT,
   TRUST_PROXY: process.env.TRUST_PROXY,
   PUBLIC_CORE_URL: process.env.PUBLIC_CORE_URL ?? "http://10.0.2.2:4002",
+  SEPAY_RETURN_BASE_URL: process.env.SEPAY_RETURN_BASE_URL,
   SEPAY_MERCHANT_ID: process.env.SEPAY_MERCHANT_ID,
   SEPAY_SECRET_KEY: process.env.SEPAY_SECRET_KEY,
   SEPAY_CHECKOUT_URL: process.env.SEPAY_CHECKOUT_URL,
