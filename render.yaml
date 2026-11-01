@@ -41,3 +41,21 @@ services:
         sync: false
       - key: MONGO_URI
         sync: false
+      # SePay LIVE — set in Render dashboard / MCP; never commit values.
+      # IPN: https://mma301-lms-core-staging.onrender.com/payments/sepay/ipn
+      - key: SEPAY_MERCHANT_ID
+        sync: false
+      - key: SEPAY_SECRET_KEY
+        sync: false
+      - key: SEPAY_CHECKOUT_URL
+        sync: false
+      - key: SEPAY_BANK_CODE
+        sync: false
+      - key: SEPAY_BANK_ACCOUNT
+        sync: false
+      - key: SEPAY_BANK_NAME
+        sync: false
+      - key: PUBLIC_CORE_URL
+        sync: false
+      - key: SEPAY_RETURN_BASE_URL
+        sync: false
