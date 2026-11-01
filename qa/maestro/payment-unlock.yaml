@@ -50,12 +50,12 @@ env:
 - extendedWaitUntil:
     visible: "Mở khóa tài nguyên · SePay"
     timeout: 15000
-# Wait until checkout CTA is ready (demo confirm or LIVE open).
+# Wait until checkout CTA is ready (demo confirm OR LIVE SePay QR gateway).
 - extendedWaitUntil:
-    visible: "Tôi đã chuyển khoản|Mở SePay"
+    visible: "Tôi đã chuyển khoản|Mở cổng SePay / Quét QR"
     timeout: 20000
 
-# Default / demo: confirm simulated transfer and expect unlock affordance.
+# Default / demo (no SEPAY_* on Core): confirm simulated transfer and expect unlock.
 - runFlow:
     when:
       visible: "Tôi đã chuyển khoản"
@@ -66,12 +66,15 @@ env:
           timeout: 20000
       - assertVisible: "Mở liên kết"
 
-# LIVE (MAESTRO_PAYMENT=live or SEPAY_* on API): assert bank UI; do not open SePay / pay.
+# LIVE (SEPAY_* on Core): assert bank + gateway/QR CTA; do not open SePay / complete transfer.
 - runFlow:
     when:
-      visible: "Mở SePay"
+      visible: "Mở cổng SePay / Quét QR"
     commands:
       - assertVisible: "STK:"
+      - assertVisible: "Ngân hàng"
+      - assertVisible:
+          id: "payment-open-sepay"
       - assertVisible: "Đóng"
       - tapOn: "Đóng"
       - assertNotVisible: "Mở khóa tài nguyên · SePay"

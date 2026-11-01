@@ -179,18 +179,25 @@ export default function MaterialsScreen() {
   const confirmPayMutation = useMutation({
     mutationFn: async () => {
       if (!checkout) throw new Error("Thiếu checkout");
+      // Demo shortcut only when Core has no SEPAY_* (checkout.demo === true).
       if (checkout.demo) {
         await confirmDemoPayment(token!, checkout.transactionRef);
-        return;
+        return { mode: "demo" as const };
       }
-      await WebBrowser.openBrowserAsync(checkout.checkoutUrl, {
+      const url = checkout.checkoutUrl;
+      if (!url) throw new Error("Thiếu URL cổng SePay");
+      await WebBrowser.openBrowserAsync(url, {
         presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
       });
+      return { mode: "live" as const };
     },
-    onSuccess: async () => {
-      notifySuccess();
-      setPayOpen(false);
-      setCheckout(null);
+    onSuccess: async (result) => {
+      if (result?.mode === "demo") {
+        notifySuccess();
+        setPayOpen(false);
+        setCheckout(null);
+      }
+      // LIVE: user pays on SePay QR page; refresh list after browser closes (may still be pending).
       await queryClient.invalidateQueries({ queryKey: queryKeys.materials(classId!) });
     },
     onError: (err: unknown) => {
@@ -665,6 +672,7 @@ export default function MaterialsScreen() {
             </Text>
             {checkout?.bankInfo ? (
               <View
+                testID="payment-bank-info"
                 style={{
                   marginBottom: spacing.sm,
                   padding: spacing.md,
@@ -674,7 +682,7 @@ export default function MaterialsScreen() {
                 }}
               >
                 <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
-                  Chuyển khoản {checkout.bankInfo.bankCode}
+                  Ngân hàng {checkout.bankInfo.bankCode} · chuyển khoản
                 </Text>
                 <Text style={[typography.body, { fontWeight: "700" }]}>
                   STK: {checkout.bankInfo.accountNumber}
@@ -693,8 +701,8 @@ export default function MaterialsScreen() {
                 Mã đơn: {checkout.transactionRef}
                 {"\n"}
                 {checkout.demo
-                  ? "Chế độ demo: bấm xác nhận sau khi chuyển khoản giả lập."
-                  : "LIVE: chuyển khoản MBBank phía trên hoặc mở cổng SePay."}
+                  ? "Chế độ demo (chưa cấu hình SEPAY): bấm xác nhận sau khi chuyển khoản giả lập."
+                  : "LIVE SePay: mở cổng thanh toán để quét QR chuyển khoản MBBank."}
               </Text>
             ) : null}
           </Dialog.Content>
@@ -716,7 +724,7 @@ export default function MaterialsScreen() {
               disabled={!checkout}
               onPress={() => confirmPayMutation.mutate()}
             >
-              {checkout?.demo ? "Tôi đã chuyển khoản" : "Mở SePay"}
+              {checkout?.demo ? "Tôi đã chuyển khoản" : "Mở cổng SePay / Quét QR"}
             </AppButton>
           </Dialog.Actions>
         </Dialog>

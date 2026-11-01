@@ -13,7 +13,8 @@ const schema = z.object({
   CORS_ORIGIN: z.string().default("*"),
   JSON_BODY_LIMIT: z.string().default("10mb"),
   TRUST_PROXY: z.string().optional(),
-  PUBLIC_CORE_URL: z.string().url().default("http://127.0.0.1:4002"),
+  // Prefer device-reachable URL (Android emulator → http://10.0.2.2:4002) so hosted-launch opens.
+  PUBLIC_CORE_URL: z.string().url().default("http://10.0.2.2:4002"),
   // Empty compose/env values mean "unset" so demo checkout stays available.
   SEPAY_MERCHANT_ID: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
   SEPAY_SECRET_KEY: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
@@ -31,7 +32,7 @@ const parsed = schema.safeParse({
   CORS_ORIGIN: process.env.CORS_ORIGIN,
   JSON_BODY_LIMIT: process.env.JSON_BODY_LIMIT,
   TRUST_PROXY: process.env.TRUST_PROXY,
-  PUBLIC_CORE_URL: process.env.PUBLIC_CORE_URL ?? "http://127.0.0.1:4002",
+  PUBLIC_CORE_URL: process.env.PUBLIC_CORE_URL ?? "http://10.0.2.2:4002",
   SEPAY_MERCHANT_ID: process.env.SEPAY_MERCHANT_ID,
   SEPAY_SECRET_KEY: process.env.SEPAY_SECRET_KEY,
   SEPAY_CHECKOUT_URL: process.env.SEPAY_CHECKOUT_URL,

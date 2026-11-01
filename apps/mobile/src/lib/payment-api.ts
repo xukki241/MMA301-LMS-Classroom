@@ -37,6 +37,33 @@ function parseBankInfo(value: unknown): SePayBankInfo | null {
   };
 }
 
+const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "0.0.0.0", "::1", "[::1]"]);
+
+/**
+ * Hosted-launch URLs are built from core PUBLIC_CORE_URL (often 127.0.0.1).
+ * Remap loopback to EXPO_PUBLIC_CORE_URL so Android emulator / device can open SePay.
+ */
+export function resolveCheckoutUrl(checkoutUrl: string): string {
+  const raw = String(checkoutUrl ?? "").trim();
+  if (!raw) return raw;
+  try {
+    const target = new URL(raw);
+    const core = new URL(CORE_URL);
+    if (LOOPBACK_HOSTS.has(target.hostname.toLowerCase())) {
+      target.protocol = core.protocol;
+      target.hostname = core.hostname;
+      target.port = core.port;
+      return target.toString();
+    }
+    return raw;
+  } catch {
+    if (raw.startsWith("/")) {
+      return `${CORE_URL.replace(/\/$/, "")}${raw}`;
+    }
+    return raw;
+  }
+}
+
 export async function createMaterialCheckout(
   token: string,
   classId: string,
@@ -50,7 +77,7 @@ export async function createMaterialCheckout(
   const checkout = asRecord(obj?.checkout) ?? obj;
   if (!checkout) throw new Error("Checkout không hợp lệ");
   return {
-    checkoutUrl: String(checkout.checkoutUrl ?? ""),
+    checkoutUrl: resolveCheckoutUrl(String(checkout.checkoutUrl ?? "")),
     formFields: (checkout.formFields as Record<string, string>) ?? {},
     transactionRef: String(checkout.transactionRef ?? ""),
     amount: Number(checkout.amount ?? 0),

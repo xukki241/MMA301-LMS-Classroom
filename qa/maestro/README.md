@@ -50,7 +50,7 @@ npm run test:e2e:payment
 
 ### Optional LIVE assert (manual)
 
-Set `MAESTRO_PAYMENT=live` only when Core API has `SEPAY_*` configured. The flow **asserts** bank transfer UI (STK / Mở SePay) and closes the dialog — it does **not** open the hosted checkout or confirm a real transfer.
+Set `MAESTRO_PAYMENT=live` only when Core API has `SEPAY_*` configured. The flow **asserts** bank transfer UI (STK / **Mở cổng SePay / Quét QR**) and closes the dialog — it does **not** open the hosted checkout or confirm a real transfer. With LIVE keys, demo confirm is not the primary path.
 
 ```powershell
 $env:MAESTRO_PAYMENT = "live"
