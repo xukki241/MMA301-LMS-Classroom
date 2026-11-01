@@ -7,6 +7,9 @@ export type LmsMaterial = {
   title: string;
   description?: string;
   url: string;
+  priceVnd: number;
+  locked: boolean;
+  unlocked: boolean;
   createdBy: string;
   createdAt?: string;
   updatedAt?: string;
@@ -22,12 +25,17 @@ export function normalizeMaterial(raw: unknown): LmsMaterial {
   if (!inner) throw new Error("Dữ liệu tài liệu không hợp lệ");
   const id = String(inner.id ?? inner._id ?? "");
   if (!id) throw new Error("Tài liệu thiếu id");
+  const priceVnd = typeof inner.priceVnd === "number" ? inner.priceVnd : Number(inner.priceVnd ?? 0) || 0;
+  const locked = Boolean(inner.locked);
   return {
     id,
     classId: String(inner.classId ?? ""),
     title: String(inner.title ?? "Tài liệu"),
     description: inner.description ? String(inner.description) : undefined,
     url: String(inner.url ?? ""),
+    priceVnd,
+    locked,
+    unlocked: inner.unlocked === undefined ? !locked : Boolean(inner.unlocked),
     createdBy: String(inner.createdBy ?? ""),
     createdAt: inner.createdAt ? String(inner.createdAt) : undefined,
     updatedAt: inner.updatedAt ? String(inner.updatedAt) : undefined,
@@ -61,7 +69,7 @@ export async function listMaterials(
 export async function createMaterial(
   token: string,
   classId: string,
-  data: { title: string; description?: string; url: string }
+  data: { title: string; description?: string; url: string; priceVnd?: number }
 ): Promise<LmsMaterial> {
   return normalizeMaterial(
     await http(`${CORE_URL}/classes/${classId}/materials`, {
@@ -75,6 +83,22 @@ export async function createMaterial(
 /**
  * Xóa tài liệu học tập (Chỉ Giáo viên sở hữu lớp)
  */
+export async function updateMaterial(
+  token: string,
+  classId: string,
+  materialId: string,
+  data: { title?: string; description?: string; url?: string; priceVnd?: number }
+): Promise<LmsMaterial> {
+  return normalizeMaterial(
+    await http(`${CORE_URL}/classes/${classId}/materials/${materialId}`, {
+      method: "PATCH",
+      token,
+      body: data,
+    })
+  );
+}
+
+/** Xóa tài liệu học tập (chỉ giáo viên sở hữu lớp). */
 export async function deleteMaterial(
   token: string,
   classId: string,

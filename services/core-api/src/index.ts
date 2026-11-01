@@ -8,7 +8,10 @@ async function main() {
   await syncCoreIndexes();
   const app = createApp();
   app.listen(env.PORT, "0.0.0.0", () => {
-    console.log(`core-api on ${env.PORT}`);
+    const sepayLive = Boolean(env.SEPAY_MERCHANT_ID && env.SEPAY_SECRET_KEY && env.SEPAY_CHECKOUT_URL);
+    console.log(
+      `core-api on ${env.PORT} · PUBLIC_CORE_URL=${env.PUBLIC_CORE_URL} · SePay=${sepayLive ? "LIVE" : "demo"}`
+    );
   });
 }
 

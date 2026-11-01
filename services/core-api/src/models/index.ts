@@ -1,9 +1,12 @@
 export { ClassModel } from "./Class.js";
 export { ClassMember } from "./ClassMember.js";
+export { ClassSession } from "./ClassSession.js";
 export { Comment } from "./Comment.js";
+export { Exam } from "./Exam.js";
 export { Exercise } from "./Exercise.js";
 export { Grade } from "./Grade.js";
 export { Material } from "./Material.js";
+export { MaterialUnlock } from "./MaterialUnlock.js";
 export { Post } from "./Post.js";
 export { Reaction } from "./Reaction.js";
 export { Submission } from "./Submission.js";

@@ -21,6 +21,8 @@ export interface ClassMember {
   classId: string;
   userId: string;
   roleInClass: ClassRole;
+  /** Tên hiển thị; rỗng với thành viên cũ chưa mở lớp kể từ khi có tính năng này. */
+  displayName?: string;
   createdAt: string;
   updatedAt: string;
 }

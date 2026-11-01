@@ -11,6 +11,12 @@ if (!email || !password) {
   process.exit(1);
 }
 
+const paymentMode = (process.env.MAESTRO_PAYMENT || "demo").trim().toLowerCase();
+if (paymentMode !== "demo" && paymentMode !== "live") {
+  console.error('MAESTRO_PAYMENT must be "demo" (default) or "live".');
+  process.exit(1);
+}
+
 const configured = process.env.MAESTRO_BIN;
 const candidates = [
   configured,
@@ -18,14 +24,35 @@ const candidates = [
   "maestro",
 ].filter(Boolean);
 const executable = candidates[0];
-const args = process.argv.includes("--exercise")
-  ? ["test", "qa/maestro/exercise-module.yaml"]
-  : ["test", "qa/maestro/auth-and-class.yaml"];
 
-const child = spawn(executable, args, {
+const flow = process.argv.includes("--payment")
+  ? "qa/maestro/payment-unlock.yaml"
+  : process.argv.includes("--exercise")
+    ? "qa/maestro/exercise-module.yaml"
+    : "qa/maestro/auth-and-class.yaml";
+
+const env = {
+  ...process.env,
+  MAESTRO_EMAIL: email,
+  MAESTRO_PASSWORD: password,
+  MAESTRO_PAYMENT: paymentMode,
+  MAESTRO_CLASS_NAME: process.env.MAESTRO_CLASS_NAME?.trim() || "Lập trình di động",
+  MAESTRO_PAID_MATERIAL:
+    process.env.MAESTRO_PAID_MATERIAL?.trim() || "Bài giảng Premium · React Native",
+};
+
+if (flow.endsWith("payment-unlock.yaml")) {
+  console.log(
+    paymentMode === "live"
+      ? "Maestro payment flow: LIVE assert-only (bank/SePay UI; no real transfer)."
+      : "Maestro payment flow: demo (confirm-demo). Set MAESTRO_PAYMENT=live for LIVE UI assert-only.",
+  );
+}
+
+const child = spawn(executable, ["test", flow], {
   stdio: "inherit",
   shell: executable.endsWith(".bat"),
-  env: { ...process.env, MAESTRO_EMAIL: email, MAESTRO_PASSWORD: password },
+  env,
 });
 child.on("exit", (code) => process.exit(code ?? 1));
 child.on("error", (error) => {

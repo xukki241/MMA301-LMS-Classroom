@@ -17,7 +17,7 @@ function toAuthResponse(user: {
   role: UserRole;
 }): AuthResponse {
   return {
-    token: signAccessToken({ sub: user.id, email: user.email, role: user.role }),
+    token: signAccessToken({ sub: user.id, email: user.email, role: user.role, name: user.displayName }),
     user,
   };
 }

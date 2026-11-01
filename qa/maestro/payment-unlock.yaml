@@ -1,0 +1,104 @@
+# Payment unlock E2E — default is demo-safe (confirm-demo).
+# Prerequisites: local/staging stack with seed-demo (paid material locked for student).
+# Credentials via shell env only (do not commit). Typical local seed:
+#   MAESTRO_EMAIL=student@lms.local  MAESTRO_PASSWORD=Demo123!
+#
+# Optional LIVE path (assert bank + in-app WebView CTA only — never completes a real transfer):
+#   MAESTRO_PAYMENT=live
+# LIVE UI also requires SEPAY_* on the Core API host; otherwise the demo branch runs.
+# LIVE checkout opens react-native-webview in-app (NOT Chrome / expo-web-browser).
+appId: com.mma301.lmsclassroom
+env:
+  MAESTRO_EMAIL: ${MAESTRO_EMAIL}
+  MAESTRO_PASSWORD: ${MAESTRO_PASSWORD}
+  MAESTRO_CLASS_NAME: ${MAESTRO_CLASS_NAME}
+  MAESTRO_PAID_MATERIAL: ${MAESTRO_PAID_MATERIAL}
+  MAESTRO_PAYMENT: ${MAESTRO_PAYMENT}
+---
+- launchApp:
+    clearState: true
+- assertVisible: "LMS CLASSROOM"
+- tapOn:
+    id: "login-email"
+- inputText: ${MAESTRO_EMAIL}
+- tapOn:
+    id: "login-password"
+- inputText: ${MAESTRO_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "login-submit"
+- assertNotVisible:
+    text: "Đăng nhập không thành công"
+- extendedWaitUntil:
+    visible:
+      text: ${MAESTRO_CLASS_NAME}
+    timeout: 20000
+- tapOn:
+    text: ${MAESTRO_CLASS_NAME}
+- tapOn:
+    text: "Tài nguyên"
+- extendedWaitUntil:
+    visible:
+      text: ${MAESTRO_PAID_MATERIAL}
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: ${MAESTRO_PAID_MATERIAL}
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    text: ${MAESTRO_PAID_MATERIAL}
+- extendedWaitUntil:
+    visible: "Mở khóa tài nguyên · SePay"
+    timeout: 15000
+# Wait until checkout CTA is ready (demo confirm OR LIVE in-app WebView QR).
+- extendedWaitUntil:
+    visible: "Tôi đã chuyển khoản|Quét QR trong ứng dụng"
+    timeout: 20000
+
+# Default / demo (no SEPAY_* on Core): confirm simulated transfer and expect unlock.
+- runFlow:
+    when:
+      visible: "Tôi đã chuyển khoản"
+    commands:
+      - tapOn: "Tôi đã chuyển khoản"
+      - extendedWaitUntil:
+          notVisible: "Mở khóa tài nguyên · SePay"
+          timeout: 20000
+      - assertVisible: "Mở liên kết"
+
+# LIVE (SEPAY_* on Core): assert bank + in-app WebView CTA; do not complete a real transfer.
+# Optional deeper check: tap CTA → assert payment-sepay-webview → close (still no Chrome).
+- runFlow:
+    when:
+      visible: "Quét QR trong ứng dụng"
+    commands:
+      - assertVisible: "STK:"
+      - assertVisible: "Ngân hàng"
+      - assertVisible:
+          id: "payment-open-sepay"
+      - assertVisible: "Đóng"
+      - runFlow:
+          when:
+            true: ${MAESTRO_PAYMENT == "live-webview"}
+          commands:
+            - tapOn:
+                id: "payment-open-sepay"
+            - extendedWaitUntil:
+                visible:
+                  id: "payment-sepay-webview"
+                timeout: 20000
+            - tapOn:
+                id: "payment-webview-close"
+            - assertNotVisible:
+                id: "payment-sepay-webview"
+      - tapOn: "Đóng"
+      - assertNotVisible: "Mở khóa tài nguyên · SePay"
+
+# Fail closed if checkout never finished loading.
+- runFlow:
+    when:
+      visible: "Đang chuẩn bị checkout"
+    commands:
+      - evalScript: |
+          throw new Error("Payment checkout never loaded. Restart Core with payment routes and seed-demo; use demo (no SEPAY) or MAESTRO_PAYMENT=live assert-only.")

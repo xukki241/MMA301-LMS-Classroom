@@ -39,6 +39,8 @@ Các nền tảng thương mại (SHub, Google Classroom) đáp ứng tốt nhu 
 4. Tài liệu học tập (Material) theo lớp.  
 5. Bài tập (Exercise) → nộp bài (Submission) → chấm điểm (Grade).  
 6. Ứng dụng di động React Native (Expo) cho Teacher và Student.  
+7. Lịch học hằng tuần, kỳ kiểm tra của lớp, quản lý thành viên và tài nguyên lớp (RF06, RF07).  
+8. Tổng quan theo người dùng: việc cần làm, bảng điểm, bài cần chấm; 5 tab cho cả hai vai trò (RF08).  
 
 ### Ngoài phạm vi
 

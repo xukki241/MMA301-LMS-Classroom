@@ -1,5 +1,6 @@
 import { CORE_URL } from "./config";
 import { http, HttpError, isNotFound } from "./http";
+import { isSafeHttpUrl } from "./safe-url";
 
 export type LmsExercise = {
   id: string;
@@ -130,13 +131,8 @@ export function validateSubmissionPayload(content: string, url: string): { conte
   if (!trimmedContent && !trimmedUrl) {
     throw new HttpError("Nhập nội dung bài làm hoặc liên kết đính kèm.", 422, "VALIDATION_ERROR");
   }
-  if (trimmedUrl) {
-    try {
-      const parsed = new URL(trimmedUrl);
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error();
-    } catch {
-      throw new HttpError("Liên kết phải dùng http:// hoặc https://.", 422, "VALIDATION_ERROR");
-    }
+  if (trimmedUrl && !isSafeHttpUrl(trimmedUrl)) {
+    throw new HttpError("Liên kết phải dùng http:// hoặc https://.", 422, "VALIDATION_ERROR");
   }
   return { content: trimmedContent, url: trimmedUrl };
 }

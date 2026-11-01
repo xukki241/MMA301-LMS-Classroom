@@ -44,7 +44,7 @@ export class ClassController {
   static async createClass(req: Request, res: Response): Promise<void> {
     const user = req.user!;
     const { name } = parseBody(createClassSchema, req.body);
-    const newClass = await ClassService.createClass(user.id, name);
+    const newClass = await ClassService.createClass(user.id, name, user.displayName);
 
     res.status(201).json({
       message: "Class created successfully!",
@@ -79,7 +79,7 @@ export class ClassController {
   static async joinClass(req: Request, res: Response): Promise<void> {
     const user = req.user!;
     const { code } = parseBody(joinClassSchema, req.body);
-    const result = await ClassService.joinClass(user.id, code);
+    const result = await ClassService.joinClass(user.id, code, user.displayName);
 
     res.status(200).json({
       message: "Joined class successfully!",
@@ -107,8 +107,17 @@ export class ClassController {
     const user = req.user!;
     const classId = req.params.id;
 
-    const members = await ClassService.getClassMembers(user.id, classId);
+    const members = await ClassService.getClassMembers(user.id, classId, user.displayName);
     res.status(200).json({ members });
+  }
+
+  /**
+   * DELETE /classes/:id/members/:userId
+   * Teacher owner removes a student
+   */
+  static async removeMember(req: Request, res: Response): Promise<void> {
+    const result = await ClassService.removeMember(req.user!.id, req.params.id, req.params.userId);
+    res.status(200).json(result);
   }
 
   /**

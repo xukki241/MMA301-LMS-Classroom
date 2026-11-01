@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { HttpError } from "../lib/httpError.js";
 import { assertClassMembership } from "../lib/classGuards.js";
-import { ClassModel, ClassMember } from "../models/index.js";
+import { ClassModel, ClassMember, ClassSession, Exam } from "../models/index.js";
 
 // Helper function to generate a random 6-character alphanumeric uppercase code
 function generateClassCode(): string {
@@ -31,7 +31,7 @@ export class ClassService {
   /**
    * Create a new class (Teacher only)
    */
-  static async createClass(teacherId: string, name: string) {
+  static async createClass(teacherId: string, name: string, displayName = "") {
     const code = await generateUniqueClassCode();
 
     const newClass = await ClassModel.create({
@@ -45,6 +45,7 @@ export class ClassService {
       classId: newClass._id,
       userId: teacherId,
       roleInClass: "teacher",
+      displayName,
     });
 
     return newClass;
@@ -75,7 +76,7 @@ export class ClassService {
   /**
    * Join a class using class code (Student only)
    */
-  static async joinClass(studentId: string, code: string) {
+  static async joinClass(studentId: string, code: string, displayName = "") {
     const uppercaseCode = code.trim().toUpperCase();
     const cls = await ClassModel.findOne({ code: uppercaseCode });
 
@@ -97,6 +98,7 @@ export class ClassService {
       classId: cls._id,
       userId: studentId,
       roleInClass: "student",
+      displayName,
     });
 
     return { class: cls, membership };
@@ -117,11 +119,34 @@ export class ClassService {
   /**
    * Get list of members in a class (Members only)
    */
-  static async getClassMembers(userId: string, classId: string) {
-    await assertClassMembership(userId, classId);
+  static async getClassMembers(userId: string, classId: string, displayName = "") {
+    const { membership } = await assertClassMembership(userId, classId);
+    // Đồng bộ lười: thành viên cũ chưa có tên sẽ được cập nhật khi họ mở lớp.
+    if (displayName && membership.displayName !== displayName) {
+      membership.displayName = displayName;
+      await membership.save();
+    }
 
     const members = await ClassMember.find({ classId }).sort({ createdAt: 1 });
     return members;
+  }
+
+  /**
+   * Remove a student from a class (Teacher owner only)
+   */
+  static async removeMember(teacherId: string, classId: string, memberUserId: string) {
+    const { cls } = await assertClassMembership(teacherId, classId);
+    if (cls.teacherId !== teacherId) {
+      throw new HttpError(403, "Only the class owner can remove students!", "FORBIDDEN");
+    }
+    if (memberUserId === teacherId) {
+      throw new HttpError(400, "The class owner cannot be removed!", "CANNOT_REMOVE_OWNER");
+    }
+    const removed = await ClassMember.findOneAndDelete({ classId, userId: memberUserId, roleInClass: "student" });
+    if (!removed) {
+      throw new HttpError(404, "Student not found in this class!", "MEMBER_NOT_FOUND");
+    }
+    return { message: "Student removed successfully!" };
   }
 
   /**
@@ -164,8 +189,10 @@ export class ClassService {
       throw new HttpError(403, "Only the class owner can delete this class!", "FORBIDDEN");
     }
 
-    await ClassModel.deleteOne({ _id: classId });
+    await ClassSession.deleteMany({ classId });
+    await Exam.deleteMany({ classId });
     await ClassMember.deleteMany({ classId });
+    await ClassModel.deleteOne({ _id: classId });
 
     return { message: "Class deleted successfully!" };
   }

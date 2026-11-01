@@ -68,6 +68,16 @@ services:
       JSON_BODY_LIMIT: ${JSON_BODY_LIMIT:-10mb}
       JWT_SECRET: ${JWT_SECRET}
       MONGO_URI: mongodb://${MONGO_ROOT_USER:-lms}:${MONGO_ROOT_PASSWORD:-lms_dev_password}@mongo:27017/lms_core?authSource=admin
+      # Device-reachable for Android emulator WebBrowser (hosted-launch).
+      PUBLIC_CORE_URL: ${PUBLIC_CORE_URL:-http://10.0.2.2:4002}
+      # Optional public/tunnel base for SePay success/error/cancel (defaults to PUBLIC_CORE_URL).
+      SEPAY_RETURN_BASE_URL: ${SEPAY_RETURN_BASE_URL:-}
+      SEPAY_MERCHANT_ID: ${SEPAY_MERCHANT_ID:-}
+      SEPAY_SECRET_KEY: ${SEPAY_SECRET_KEY:-}
+      SEPAY_CHECKOUT_URL: ${SEPAY_CHECKOUT_URL:-}
+      SEPAY_BANK_CODE: ${SEPAY_BANK_CODE:-}
+      SEPAY_BANK_ACCOUNT: ${SEPAY_BANK_ACCOUNT:-}
+      SEPAY_BANK_NAME: ${SEPAY_BANK_NAME:-}
     depends_on:
       mongo:
         condition: service_healthy

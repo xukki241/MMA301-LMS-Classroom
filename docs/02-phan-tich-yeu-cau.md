@@ -45,6 +45,33 @@
 | RF05.3 | Teacher xem danh sách Submission và gắn Grade | Teacher |
 | RF05.4 | Student xem điểm / phản hồi của bài mình | Student |
 
+### RF06 — Lịch học và lịch kiểm tra
+
+| Mã | Mô tả | Actor |
+|----|--------|-------|
+| RF06.1 | Thêm / xóa buổi học lặp hằng tuần của lớp (thứ, giờ bắt đầu, giờ kết thúc, phòng) | Teacher (chủ lớp) |
+| RF06.2 | Thêm / xóa kỳ kiểm tra của lớp (tiêu đề, ngày giờ, thời lượng, phòng) | Teacher (chủ lớp) |
+| RF06.3 | Xem lịch học và lịch kiểm tra của từng lớp; xem gộp mọi lớp ở tab Lịch | Thành viên lớp |
+
+> **Quy ước:** kỳ kiểm tra là một mốc thời gian trên lịch, khác Exercise (hạn nộp). Thời điểm kiểm tra phải ở tương lai; giờ kết thúc buổi học phải sau giờ bắt đầu.
+
+### RF07 — Quản lý thành viên và tài nguyên lớp
+
+| Mã | Mô tả | Actor |
+|----|--------|-------|
+| RF07.1 | Danh sách thành viên hiển thị tên (lấy từ JWT của Auth Service, lưu dạng ảnh chụp trên ClassMember) | Thành viên lớp |
+| RF07.2 | Gỡ học sinh khỏi lớp; không gỡ được chủ lớp | Teacher (chủ lớp) |
+| RF07.3 | Sửa tiêu đề / liên kết / mô tả Material (bổ sung cho thêm, xem, xóa) | Teacher (chủ lớp) |
+
+### RF08 — Tổng quan theo người dùng
+
+| Mã | Mô tả | Actor |
+|----|--------|-------|
+| RF08.1 | `GET /me/overview` trả lớp, lịch học, kỳ kiểm tra sắp tới và bài tập kèm trạng thái theo vai trò | Teacher, Student |
+| RF08.2 | Student: trạng thái bài `todo / submitted / graded / overdue`, điểm và nhận xét; có bảng điểm theo lớp với điểm trung bình | Student |
+| RF08.3 | Teacher: trạng thái bài `open / needs_grading / done` kèm số bài nộp và số bài đã chấm | Teacher |
+| RF08.4 | Ứng dụng có 5 tab cho cả hai vai trò: Trang chủ, Lịch, Việc, Lớp, Tôi | Teacher, Student |
+
 ## 2.2. Yêu cầu phi chức năng
 
 | Mã | Nhóm | Mô tả |

@@ -5,6 +5,8 @@ const classMemberSchema = new Schema(
     classId: { type: Schema.Types.ObjectId, ref: "Class", required: true },
     userId: { type: String, required: true },
     roleInClass: { type: String, required: true, enum: ["teacher", "student"] },
+    // Ảnh chụp tên hiển thị lấy từ JWT (Auth Service là nguồn gốc dữ liệu người dùng).
+    displayName: { type: String, default: "", trim: true },
   },
   { timestamps: true }
 );

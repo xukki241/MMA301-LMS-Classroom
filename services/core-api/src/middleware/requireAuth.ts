@@ -7,6 +7,7 @@ export interface AuthUser {
   id: string;
   email: string;
   role: "teacher" | "student";
+  displayName?: string;
 }
 
 declare global {
@@ -21,6 +22,7 @@ interface JwtPayload {
   sub: string;
   email: string;
   role: "teacher" | "student";
+  name?: string;
 }
 
 export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
@@ -47,7 +49,12 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
       return;
     }
 
-    req.user = { id: decoded.sub, email: decoded.email, role: decoded.role };
+    req.user = {
+      id: decoded.sub,
+      email: decoded.email,
+      role: decoded.role,
+      ...(typeof decoded.name === "string" && decoded.name.trim() ? { displayName: decoded.name.trim() } : {}),
+    };
     next();
   } catch (err) {
     console.error("requireAuth JWT Error:", err);
