@@ -79,7 +79,7 @@ function PostCard({ post, session }: { post: StreamPost; session: StreamSession 
   return (
     <Card mode="outlined" style={styles.card}>
       <Card.Content style={styles.post}>
-        <Text style={typography.caption}>Tác giả: {post.authorId}</Text>
+        <Text style={typography.caption}>Tác giả: {post.authorDisplayName}</Text>
         <Text style={typography.caption}>{new Date(post.createdAt).toLocaleString("vi-VN")}</Text>
         <Text style={typography.body} selectable>{post.content}</Text>
         <AppButton mode="text" accessibilityState={{ expanded }} onPress={() => setExpanded(value => !value)}>

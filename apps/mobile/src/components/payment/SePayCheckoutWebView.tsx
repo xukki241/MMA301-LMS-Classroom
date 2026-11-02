@@ -104,14 +104,6 @@ export function SePayCheckoutWebView({ visible, checkoutUrl, title, onClose }: P
         </View>
 
         <View style={styles.webWrap}>
-          {loading ? (
-            <View style={styles.loader} pointerEvents="none">
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant, marginTop: spacing.sm }]}>
-                Đang mở cổng SePay trong ứng dụng…
-              </Text>
-            </View>
-          ) : null}
           <WebView
             source={{ uri: checkoutUrl }}
             style={styles.webview}
@@ -132,6 +124,15 @@ export function SePayCheckoutWebView({ visible, checkoutUrl, title, onClose }: P
             setSupportMultipleWindows={false}
             originWhitelist={["https://*", "http://*"]}
           />
+          {/* Overlay sau WebView để không bị WebView đè lên spinner */}
+          {loading ? (
+            <View style={[styles.loader, { backgroundColor: theme.colors.background }]} pointerEvents="none">
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant, marginTop: spacing.sm }]}>
+                Đang mở cổng SePay trong ứng dụng…
+              </Text>
+            </View>
+          ) : null}
         </View>
       </View>
     </Modal>
@@ -159,13 +160,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "700",
   },
-  webWrap: { flex: 1 },
+  webWrap: { flex: 1, position: "relative" },
   webview: { flex: 1 },
   loader: {
     ...StyleSheet.absoluteFill,
     zIndex: 2,
+    elevation: 4,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.85)",
   },
 });

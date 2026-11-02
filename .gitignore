@@ -1,6 +1,9 @@
 # IDE
 .idea/
 .vscode/
+.cursor/mcp.json
+
+# Stitch / MCP secrets (API keys) — keep local only
 
 node_modules/
 .env

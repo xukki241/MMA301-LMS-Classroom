@@ -3,8 +3,22 @@ import { http, HttpError } from "./http";
 
 export const POST_MAX_LENGTH = 2000;
 export const COMMENT_MAX_LENGTH = 1000;
-export type StreamPost = { id: string; classId: string; authorId: string; content: string; createdAt: string };
-export type StreamComment = { id: string; postId: string; authorId: string; content: string; createdAt: string };
+export type StreamPost = {
+  id: string;
+  classId: string;
+  authorId: string;
+  authorDisplayName: string;
+  content: string;
+  createdAt: string;
+};
+export type StreamComment = {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorDisplayName: string;
+  content: string;
+  createdAt: string;
+};
 
 function invalidResponse(): never {
   throw new HttpError("Dữ liệu bảng tin không hợp lệ.", 502, "INVALID_RESPONSE");
@@ -21,9 +35,17 @@ function entry(value: unknown) {
   const raw = record(value);
   const createdAt = requiredString(raw.createdAt);
   if (!Number.isFinite(Date.parse(createdAt)) || raw.isDeleted === true) return invalidResponse();
+  const authorId = requiredString(raw.authorId);
+  const authorDisplayName =
+    typeof raw.authorDisplayName === "string" && raw.authorDisplayName.trim()
+      ? raw.authorDisplayName.trim()
+      : "Thành viên lớp";
   return {
-    id: requiredString(raw._id), authorId: requiredString(raw.authorId),
-    content: requiredString(raw.content), createdAt,
+    id: requiredString(raw._id),
+    authorId,
+    authorDisplayName,
+    content: requiredString(raw.content),
+    createdAt,
   };
 }
 function parsePost(value: unknown, classId: string): StreamPost {

@@ -14,7 +14,7 @@ import { useAuth } from "@/src/lib/auth-context";
 import { getClassMembers } from "@/src/lib/classes-api";
 import { useOverviewQuery } from "@/src/lib/hooks";
 import { removeMember } from "@/src/lib/schedule-api";
-import { dueSoon, filterWork, gradedWork, upcomingExams, upcomingSessions } from "@/src/lib/overview-api";
+import { dueSoon, filterWork, gradedWork, presentWork, upcomingExams, upcomingSessions } from "@/src/lib/overview-api";
 import { ExamRow, SessionRow, WorkRow } from "@/src/components/schedule/Rows";
 import { SectionHeader } from "@/src/components/ui/Tile";
 import { userErrorMessage } from "@/src/lib/user-error-message";
@@ -102,7 +102,7 @@ export default function ClassDetailScreen() {
     ? {
         sessions: overview.sessions.filter((s) => s.classId === classId),
         exams: overview.exams.filter((e) => e.classId === classId),
-        work: overview.work.filter((w) => w.classId === classId),
+        work: presentWork(overview.work, now).filter((w) => w.classId === classId),
       }
     : undefined;
   const nextSessions = classOverview ? upcomingSessions(classOverview.sessions, now, 7).slice(0, 2) : [];

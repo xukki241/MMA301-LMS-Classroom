@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Pressable,
   RefreshControl,
@@ -18,13 +19,17 @@ import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { AppButton } from "@/src/components/ui/AppButton";
 import { FieldError, FormDialogScroll, FormNotice, keyboardBehavior, useKeyboardLift } from "@/src/components/ui/FormFeedback";
+import { CloudinaryFilePicker } from "@/src/components/ui/CloudinaryFilePicker";
 import { useAuth } from "@/src/lib/auth-context";
 import { userErrorMessage } from "@/src/lib/user-error-message";
 import {
+  canMutateExercise,
   createExercise,
   defaultDueAtIso,
+  deleteExercise,
   isExerciseOpen,
   listExercises,
+  updateExercise,
   type LmsExercise,
 } from "@/src/lib/exercises-api";
 import { queryClient, queryKeys } from "@/src/lib/query-client";
@@ -37,13 +42,20 @@ function formatDue(dueAt: string) {
 
 function ExerciseCard({
   item,
+  isTeacher,
   onPress,
+  onEdit,
+  onDelete,
 }: {
   item: LmsExercise;
+  isTeacher: boolean;
   onPress: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const theme = useTheme();
   const open = isExerciseOpen(item.dueAt);
+  const mutable = isTeacher && canMutateExercise(item);
   return (
     <Pressable
       accessibilityRole="button"
@@ -78,6 +90,24 @@ function ExerciseCard({
         <Text style={[typography.caption, { color: theme.colors.primary, marginTop: spacing.xs }]}>
           Nhấn để xem chi tiết
         </Text>
+        {isTeacher ? (
+          <View style={styles.cardActions}>
+            {mutable ? (
+              <>
+                <AppButton mode="text" compact onPress={onEdit}>
+                  Sửa
+                </AppButton>
+                <AppButton mode="text" compact textColor={theme.colors.error} onPress={onDelete}>
+                  Xóa
+                </AppButton>
+              </>
+            ) : (
+              <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
+                Không xoá/sửa được sau 1 giờ hoặc khi đã có bài nộp
+              </Text>
+            )}
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -94,8 +124,10 @@ export default function ExercisesScreen() {
   const isTeacher = user?.role === "teacher";
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [attachmentUrl, setAttachmentUrl] = useState("");
   const [dueAt, setDueAt] = useState(defaultDueAtIso());
   const [formError, setFormError] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
@@ -114,12 +146,15 @@ export default function ExercisesScreen() {
     queryFn: ({ signal }) => listExercises(token!, classId!, signal),
   });
 
+  const invalidate = () =>
+    void queryClient.invalidateQueries({ queryKey: queryKeys.exercises(user!.id, classId!) });
+
   const createMutation = useMutation({
-    mutationFn: (payload: { title: string; description: string; dueAt: string }) =>
+    mutationFn: (payload: { title: string; description: string; dueAt: string; attachmentUrl?: string }) =>
       createExercise(token!, classId!, payload),
     onSuccess: () => {
       notifySuccess();
-      void queryClient.invalidateQueries({ queryKey: queryKeys.exercises(user!.id, classId!) });
+      invalidate();
       closeModal();
     },
     onError: (err: unknown) => {
@@ -128,16 +163,77 @@ export default function ExercisesScreen() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (payload: { title: string; description: string; dueAt: string; attachmentUrl?: string }) =>
+      updateExercise(token!, classId!, editingId!, payload),
+    onSuccess: () => {
+      notifySuccess();
+      invalidate();
+      closeModal();
+    },
+    onError: (err: unknown) => {
+      notifyError();
+      setFormError(userErrorMessage(err));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (exerciseId: string) => deleteExercise(token!, classId!, exerciseId),
+    onSuccess: () => {
+      notifySuccess();
+      invalidate();
+    },
+    onError: (err: unknown) => {
+      notifyError();
+      Alert.alert("Không xoá được", userErrorMessage(err));
+    },
+  });
+
   const closeModal = () => {
     setModalVisible(false);
+    setEditingId(null);
     setTitle("");
     setDescription("");
+    setAttachmentUrl("");
     setDueAt(defaultDueAtIso());
     setFormError(null);
     setTitleError(null);
   };
 
-  const handleCreate = () => {
+  const openCreate = () => {
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setAttachmentUrl("");
+    setDueAt(defaultDueAtIso());
+    setFormError(null);
+    setTitleError(null);
+    setModalVisible(true);
+  };
+
+  const openEdit = (item: LmsExercise) => {
+    setEditingId(item.id);
+    setTitle(item.title);
+    setDescription(item.description);
+    setAttachmentUrl(item.attachmentUrl || "");
+    setDueAt(item.dueAt);
+    setFormError(null);
+    setTitleError(null);
+    setModalVisible(true);
+  };
+
+  const confirmDelete = (item: LmsExercise) => {
+    Alert.alert("Xóa bài tập?", `“${item.title}” sẽ bị xoá cứng nếu chưa có bài nộp và còn trong 1 giờ.`, [
+      { text: "Huỷ", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: () => deleteMutation.mutate(item.id),
+      },
+    ]);
+  };
+
+  const handleSubmit = () => {
     if (!title.trim()) {
       setTitleError("Vui lòng nhập tiêu đề bài tập");
       setFormError(null);
@@ -146,12 +242,17 @@ export default function ExercisesScreen() {
     }
     setTitleError(null);
     setFormError(null);
-    createMutation.mutate({
+    const payload = {
       title: title.trim(),
       description: description.trim(),
+      attachmentUrl: attachmentUrl.trim(),
       dueAt,
-    });
+    };
+    if (editingId) updateMutation.mutate(payload);
+    else createMutation.mutate(payload);
   };
+
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   if (!classId) {
     return (
@@ -188,7 +289,7 @@ export default function ExercisesScreen() {
                 : "Giáo viên chưa giao bài tập cho lớp này. Kéo xuống để làm mới hoặc quay lại lớp."
             }
             actionLabel={isTeacher ? "Tạo bài tập" : "Quay lại lớp"}
-            onAction={isTeacher ? () => setModalVisible(true) : () => router.back()}
+            onAction={isTeacher ? openCreate : () => router.back()}
           />
         </Screen>
       ) : (
@@ -207,6 +308,7 @@ export default function ExercisesScreen() {
               <Animated.View key={item.id} entering={FadeInDown.delay(index * 50).springify()}>
                 <ExerciseCard
                   item={item}
+                  isTeacher={isTeacher}
                   onPress={() => {
                     impactLight();
                     router.push({
@@ -214,6 +316,11 @@ export default function ExercisesScreen() {
                       params: { id: classId, exerciseId: item.id, title: item.title },
                     });
                   }}
+                  onEdit={() => {
+                    impactLight();
+                    openEdit(item);
+                  }}
+                  onDelete={() => confirmDelete(item)}
                 />
               </Animated.View>
             ))}
@@ -230,7 +337,7 @@ export default function ExercisesScreen() {
           color="#FFFFFF"
           onPress={() => {
             impactLight();
-            setModalVisible(true);
+            openCreate();
           }}
         />
       ) : null}
@@ -242,7 +349,7 @@ export default function ExercisesScreen() {
           style={[styles.dialog, { marginBottom: keyboardLift, backgroundColor: theme.colors.surface }]}
         >
           <KeyboardAvoidingView behavior={keyboardBehavior}>
-            <Dialog.Title>Tạo bài tập mới</Dialog.Title>
+            <Dialog.Title>{editingId ? "Sửa bài tập" : "Tạo bài tập mới"}</Dialog.Title>
             {formError ? (
               <View style={styles.noticeInset}>
                 <FormNotice message={formError} />
@@ -268,6 +375,14 @@ export default function ExercisesScreen() {
                 value={description}
                 onChangeText={setDescription}
               />
+              <CloudinaryFilePicker
+                label="File đề bài (Cloudinary)"
+                value={attachmentUrl}
+                onChange={setAttachmentUrl}
+                token={token}
+                classId={classId}
+                purpose="exercise"
+              />
               <TextInput
                 mode="outlined"
                 label="Hạn nộp (ISO UTC)"
@@ -276,15 +391,15 @@ export default function ExercisesScreen() {
                 autoCapitalize="none"
               />
               <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
-                Mặc định cộng 7 ngày. Hạn nộp phải là chuỗi ISO 8601 có múi giờ và nằm trong tương lai.
+                Sửa/xoá chỉ trong 1 giờ sau khi tạo và khi chưa có học sinh nộp bài.
               </Text>
             </FormDialogScroll>
             <Dialog.Actions>
-              <AppButton mode="text" onPress={closeModal} disabled={createMutation.isPending}>
+              <AppButton mode="text" onPress={closeModal} disabled={saving}>
                 Hủy
               </AppButton>
-              <AppButton loading={createMutation.isPending} onPress={handleCreate}>
-                Tạo
+              <AppButton loading={saving} onPress={handleSubmit}>
+                {editingId ? "Lưu" : "Tạo"}
               </AppButton>
             </Dialog.Actions>
           </KeyboardAvoidingView>
@@ -301,6 +416,7 @@ const styles = StyleSheet.create({
   cardList: { gap: spacing.md },
   card: { padding: spacing.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, gap: spacing.xs },
   cardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  cardActions: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing.xs, marginTop: spacing.sm },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
   statusText: { fontSize: 11, fontWeight: "700" },
   pressed: { opacity: 0.85 },

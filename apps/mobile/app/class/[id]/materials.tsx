@@ -19,6 +19,7 @@ import {
   FAB,
   Icon,
   Portal,
+  SegmentedButtons,
   Text,
   TextInput,
   useTheme,
@@ -91,6 +92,7 @@ export default function MaterialsScreen() {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [description, setDescription] = useState("");
+  const [tier, setTier] = useState<"free" | "paid">("free");
   const [priceText, setPriceText] = useState("0");
   const [titleError, setTitleError] = useState<string | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -192,6 +194,8 @@ export default function MaterialsScreen() {
       const url = checkout.checkoutUrl;
       if (!url) throw new Error("Thiếu URL cổng SePay");
       // LIVE: in-app WebView only (never Chrome / expo-web-browser).
+      // Đóng Dialog trước để tránh Dialog + Modal chồng lớp trên Android.
+      setPayOpen(false);
       setSepayWebVisible(true);
       return { mode: "live" as const };
     },
@@ -248,7 +252,9 @@ export default function MaterialsScreen() {
     setTitle(item.title);
     setUrl(item.url);
     setDescription(item.description ?? "");
-    setPriceText(String(item.priceVnd ?? 0));
+    const price = item.priceVnd ?? 0;
+    setTier(price > 0 ? "paid" : "free");
+    setPriceText(price > 0 ? String(price) : "0");
     setTitleError(null);
     setUrlError(null);
     setFormError(null);
@@ -261,6 +267,7 @@ export default function MaterialsScreen() {
     setTitle("");
     setUrl("");
     setDescription("");
+    setTier("free");
     setPriceText("0");
     setTitleError(null);
     setUrlError(null);
@@ -348,10 +355,13 @@ export default function MaterialsScreen() {
       return;
     }
 
-    const priceVnd = Math.max(0, Math.round(Number(priceText.replace(/[^\d]/g, "")) || 0));
     setTitleError(null);
     setUrlError(null);
     setFormError(null);
+    // Phí chỉ thu khi vào lớp — tài liệu trong lớp luôn miễn phí.
+    const priceVnd = 0;
+    void tier;
+    void priceText;
     if (editingId) {
       updateMutation.mutate({
         id: editingId,
@@ -371,11 +381,6 @@ export default function MaterialsScreen() {
   };
 
   const openOrUnlock = (item: LmsMaterial) => {
-    if (item.locked) {
-      impactLight();
-      checkoutMutation.mutate(item.id);
-      return;
-    }
     void handleOpenLink(item.url);
   };
 
@@ -439,9 +444,7 @@ export default function MaterialsScreen() {
           {/* Danh sách Material Cards */}
           <View style={styles.cardList}>
             {materials.map((item, index) => {
-              const meta = item.locked
-                ? { icon: "lock-closed-outline" as const, label: `Trả phí · ${formatVnd(item.priceVnd)}`, color: palette.danger }
-                : getUrlMeta(item.url || "https://example.com");
+              const meta = getUrlMeta(item.url || "https://example.com");
               return (
                 <Animated.View
                   key={item.id}
@@ -459,17 +462,15 @@ export default function MaterialsScreen() {
                     onPress={() => openOrUnlock(item)}
                     style={({ pressed }) => [styles.cardMain, pressed && styles.pressed]}
                   >
-                    {/* Top Row: Icon type + Label */}
                     <View style={styles.cardTopRow}>
                       <View style={[styles.iconCircle, { backgroundColor: `${meta.color}15` }]}>
                         <Ionicons name={meta.icon} size={20} color={meta.color} />
                       </View>
                       <View style={styles.typeLabelBox}>
-                        <Text style={[styles.typeLabel, { color: meta.color }]}>
+                        <Text style={[styles.typeLabel, { color: meta.color }]} numberOfLines={1}>
                           {meta.label}
                         </Text>
                       </View>
-
                       {isTeacher && (
                         <Pressable
                           accessibilityRole="button"
@@ -481,8 +482,6 @@ export default function MaterialsScreen() {
                           <Ionicons name="create-outline" size={17} color={theme.colors.primary} />
                         </Pressable>
                       )}
-
-                      {/* Nút Xóa (Dành cho Giáo viên) */}
                       {isTeacher && (
                         <Pressable
                           onPress={() => handleDeleteConfirm(item)}
@@ -494,12 +493,10 @@ export default function MaterialsScreen() {
                       )}
                     </View>
 
-                    {/* Tiêu đề tài liệu */}
                     <Text style={[typography.subtitle, styles.itemTitle, { color: theme.colors.onSurface }]}>
                       {item.title}
                     </Text>
 
-                    {/* Mô tả chi tiết nếu có */}
                     {Boolean(item.description) && (
                       <Text
                         numberOfLines={3}
@@ -509,48 +506,29 @@ export default function MaterialsScreen() {
                       </Text>
                     )}
 
-                    {/* URL text link */}
                     <View style={styles.linkRow}>
-                      <Ionicons name={item.locked ? "lock-closed-outline" : "link-outline"} size={13} color={theme.colors.primary} />
-                      <Text
-                        numberOfLines={1}
-                        style={[styles.linkUrlText, { color: theme.colors.primary }]}
-                      >
-                        {item.locked ? "Nội dung bị khóa — thanh toán SePay để mở" : item.url}
+                      <Ionicons name="link-outline" size={13} color={theme.colors.primary} />
+                      <Text numberOfLines={1} style={[styles.linkUrlText, { color: theme.colors.primary }]}>
+                        {item.url}
                       </Text>
                     </View>
                   </Pressable>
 
-                  {/* Bottom Action Bar */}
                   <View style={[styles.cardFooter, { borderTopColor: theme.colors.outline }]}>
                     <Pressable
                       style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
                       onPress={() => openOrUnlock(item)}
                     >
-                      <Ionicons
-                        name={item.locked ? "wallet-outline" : "open-outline"}
-                        size={15}
-                        color={theme.colors.primary}
-                      />
-                      <Text style={[styles.actionBtnText, { color: theme.colors.primary }]}>
-                        {item.locked ? `Mở khóa · ${formatVnd(item.priceVnd)}` : "Mở liên kết"}
-                      </Text>
+                      <Ionicons name="open-outline" size={15} color={theme.colors.primary} />
+                      <Text style={[styles.actionBtnText, { color: theme.colors.primary }]}>Mở liên kết</Text>
                     </Pressable>
-
                     <View style={styles.footerDivider} />
-
                     <Pressable
                       style={({ pressed }) => [styles.actionBtn, pressed && styles.pressed]}
-                      onPress={() => (item.locked ? openOrUnlock(item) : handleShareLink(item.url, item.title))}
+                      onPress={() => handleShareLink(item.url, item.title)}
                     >
-                      <Ionicons
-                        name={item.locked ? "card-outline" : "share-social-outline"}
-                        size={15}
-                        color={theme.colors.onSurfaceVariant}
-                      />
-                      <Text style={[styles.actionBtnText, { color: theme.colors.onSurfaceVariant }]}>
-                        {item.locked ? "SePay" : "Chia sẻ"}
-                      </Text>
+                      <Ionicons name="share-social-outline" size={15} color={theme.colors.onSurfaceVariant} />
+                      <Text style={[styles.actionBtnText, { color: theme.colors.onSurfaceVariant }]}>Chia sẻ</Text>
                     </Pressable>
                   </View>
                 </Animated.View>
@@ -641,19 +619,8 @@ export default function MaterialsScreen() {
                 style={styles.dialogInput}
                 left={<TextInput.Icon icon="text" />}
               />
-              <TextInput
-                mode="outlined"
-                label="Giá mở khóa (VND, 0 = miễn phí)"
-                placeholder="0"
-                keyboardType="number-pad"
-                value={priceText}
-                onChangeText={setPriceText}
-                outlineStyle={styles.dialogInputOutline}
-                style={styles.dialogInput}
-                left={<TextInput.Icon icon="cash" />}
-              />
               <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
-                Học sinh phải thanh toán SePay (chuyển khoản) để xem tài nguyên trả phí.
+                Thành viên lớp xem được toàn bộ tài liệu. Phí chỉ thu khi học sinh vào lớp.
               </Text>
             </FormDialogScroll>
             <Dialog.Actions style={styles.dialogActions}>
@@ -822,6 +789,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
+  tierSwitch: { marginBottom: spacing.sm },
+  tierPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  tierText: { fontSize: 11, fontWeight: "800" },
   deleteBtn: {
     minWidth: 44,
     minHeight: 44,

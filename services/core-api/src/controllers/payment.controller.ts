@@ -2,12 +2,23 @@ import type { Request, Response } from "express";
 import { PaymentService } from "../services/payment.service.js";
 
 export class PaymentController {
+  static async listMine(req: Request, res: Response): Promise<void> {
+    const payments = await PaymentService.listMyPayments(req.user!);
+    res.status(200).json({ payments });
+  }
+
   static async createMaterialCheckout(req: Request, res: Response): Promise<void> {
     const checkout = await PaymentService.createMaterialCheckout(
       req.user!,
       req.params.classId,
       req.params.materialId
     );
+    res.status(200).json({ success: true, checkout });
+  }
+
+  static async createClassJoinCheckout(req: Request, res: Response): Promise<void> {
+    const code = String(req.body?.code ?? "");
+    const checkout = await PaymentService.createClassJoinCheckout(req.user!, code);
     res.status(200).json({ success: true, checkout });
   }
 

@@ -13,6 +13,7 @@ import { submissionRouter } from "./routes/submission.routes.js";
 import { materialRouter } from "./routes/material.routes.js";
 import { paymentRouter } from "./routes/payment.routes.js";
 import { scheduleRouter } from "./routes/schedule.routes.js";
+import { fileRouter } from "./routes/file.routes.js";
 import { requestContext } from "./middleware/requestContext.js";
 
 function corsOptions(origin: string): cors.CorsOptions {
@@ -49,6 +50,7 @@ export function createApp() {
   app.use(exerciseRouter);
   app.use(submissionRouter);
   app.use(scheduleRouter);
+  app.use(fileRouter);
   app.use("/classes", materialRouter);
   app.use(materialRouter);
   app.use(paymentRouter);

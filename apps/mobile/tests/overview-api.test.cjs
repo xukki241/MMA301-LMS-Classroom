@@ -80,6 +80,22 @@ test("upcomingExams hides finished exams and sorts by start", () => {
   assert.deepEqual(o.upcomingExams(exams, now).map((e) => e.id), ["c", "a"]);
 });
 
+test("presentWork moves a passed todo to overdue and a passed empty open exercise to closed", () => {
+  const clock = new Date("2026-10-20T00:00:00.000Z");
+  const rows = o.presentWork([
+    work({ exerciseId: "soon", status: "todo", dueAt: "2026-10-21T00:00:00.000Z" }),
+    work({ exerciseId: "late", status: "todo", dueAt: "2026-10-01T00:00:00.000Z" }),
+    work({ exerciseId: "empty", status: "open", dueAt: "2026-10-01T00:00:00.000Z", submissionCount: 0 }),
+    work({ exerciseId: "grade", status: "open", dueAt: "2026-10-01T00:00:00.000Z", submissionCount: 2, gradedCount: 1 }),
+    work({ exerciseId: "kept", status: "submitted", dueAt: "2026-10-01T00:00:00.000Z" }),
+  ], clock);
+  assert.equal(rows.find((row) => row.exerciseId === "soon").status, "todo");
+  assert.equal(rows.find((row) => row.exerciseId === "late").status, "overdue");
+  assert.equal(rows.find((row) => row.exerciseId === "empty").status, "closed");
+  assert.equal(rows.find((row) => row.exerciseId === "grade").status, "needs_grading");
+  assert.equal(rows.find((row) => row.exerciseId === "kept").status, "submitted");
+});
+
 test("work helpers filter, count, rank deadlines and build a gradebook", () => {
   const rows = [
     work({ exerciseId: "1", status: "todo", dueAt: "2026-10-15T00:00:00.000Z" }),

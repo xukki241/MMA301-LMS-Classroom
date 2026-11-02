@@ -2,7 +2,7 @@ import type { AuthUser } from "../middleware/requireAuth.js";
 import { ClassMember, ClassModel, ClassSession, Exam, Exercise, Grade, Submission } from "../models/index.js";
 
 export type StudentWorkStatus = "todo" | "submitted" | "graded" | "overdue";
-export type TeacherWorkStatus = "open" | "needs_grading" | "done";
+export type TeacherWorkStatus = "open" | "needs_grading" | "done" | "closed";
 
 /** Quá khứ gần vẫn hiện để người dùng thấy kỳ kiểm tra vừa diễn ra. */
 const EXAM_GRACE_MS = 24 * 3600 * 1000;
@@ -74,8 +74,10 @@ export class OverviewService {
         const pending = mine.length - gradedCount;
         let status: TeacherWorkStatus = "open";
         const due = exercise.dueAt.getTime() <= now;
-        if (due && pending > 0) status = "needs_grading";
-        else if (due && mine.length > 0 && gradedCount === mine.length) status = "done";
+        if (!due) status = "open";
+        else if (mine.length === 0) status = "closed";
+        else if (pending > 0) status = "needs_grading";
+        else if (gradedCount === mine.length) status = "done";
         return {
           ...withClass({
             exerciseId: String(exercise._id),

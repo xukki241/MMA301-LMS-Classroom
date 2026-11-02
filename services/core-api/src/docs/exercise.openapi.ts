@@ -61,4 +61,43 @@ export const exercisePaths = {
       },
     },
   },
+  "/classes/{classId}/exercises/{exerciseId}": {
+    parameters: [
+      { name: "classId", in: "path", required: true, schema: { type: "string", pattern: "^[a-fA-F0-9]{24}$" } },
+      { name: "exerciseId", in: "path", required: true, schema: { type: "string", pattern: "^[a-fA-F0-9]{24}$" } },
+    ],
+    patch: {
+      tags: ["Bài tập (LMS-08)"],
+      operationId: "updateExercise",
+      summary: "Sửa bài tập (trong 1 giờ và chưa có bài nộp)",
+      security: [{ BearerAuth: [] }],
+      requestBody: { required: true, content: jsonSchema({ $ref: "#/components/schemas/CreateExercise" }) },
+      responses: {
+        "200": { description: "Đã cập nhật.", content: jsonSchema({ type: "object", required: ["message", "exercise"], properties: {
+          message: { type: "string" }, exercise: { $ref: "#/components/schemas/Exercise" },
+        } }) },
+        "400": error("INVALID_ID / INVALID_DUE_AT."),
+        ...commonErrors,
+        "404": error("EXERCISE_NOT_FOUND."),
+        "409": error("EXERCISE_LOCKED / EXERCISE_HAS_SUBMISSIONS."),
+        "422": error("VALIDATION_ERROR."),
+      },
+    },
+    delete: {
+      tags: ["Bài tập (LMS-08)"],
+      operationId: "deleteExercise",
+      summary: "Xoá cứng bài tập (trong 1 giờ và chưa có bài nộp)",
+      description: "Quá 1 giờ hoặc đã có submission → 409, giữ nguyên bài tập.",
+      security: [{ BearerAuth: [] }],
+      responses: {
+        "200": { description: "Đã xoá.", content: jsonSchema({ type: "object", required: ["message", "deleted", "exerciseId"], properties: {
+          message: { type: "string" }, deleted: { type: "boolean" }, exerciseId: { type: "string" },
+        } }) },
+        "400": error("INVALID_ID."),
+        ...commonErrors,
+        "404": error("EXERCISE_NOT_FOUND."),
+        "409": error("EXERCISE_LOCKED / EXERCISE_HAS_SUBMISSIONS."),
+      },
+    },
+  },
 };

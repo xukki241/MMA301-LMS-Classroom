@@ -83,6 +83,10 @@ function AuthenticatedStack() {
           options={{ headerShown: true, title: "Chi tiết bài tập", animation: "slide_from_right" }}
         />
         <Stack.Screen name="gradebook" options={{ headerShown: true, title: "Bảng điểm", animation: "slide_from_right" }} />
+        <Stack.Screen name="payments" options={{ headerShown: true, title: "Lịch sử giao dịch", animation: "slide_from_right" }} />
+        <Stack.Screen name="submissions" options={{ headerShown: true, title: "Lịch sử nộp bài", animation: "slide_from_right" }} />
+        <Stack.Screen name="account" options={{ headerShown: true, title: "Thông tin cá nhân", animation: "slide_from_right" }} />
+        <Stack.Screen name="change-password" options={{ headerShown: true, title: "Đổi mật khẩu", animation: "slide_from_right" }} />
       </Stack.Protected>
     </Stack>
   );

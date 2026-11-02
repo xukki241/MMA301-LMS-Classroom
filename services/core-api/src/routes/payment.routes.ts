@@ -10,6 +10,11 @@ paymentRouter.post(
   requireAuth,
   asyncHandler(PaymentController.createMaterialCheckout)
 );
+paymentRouter.post(
+  "/classes/join/checkout",
+  requireAuth,
+  asyncHandler(PaymentController.createClassJoinCheckout)
+);
 paymentRouter.post("/payments/sepay/confirm-demo", requireAuth, asyncHandler(PaymentController.confirmDemo));
 paymentRouter.get("/payments/sepay/demo-checkout", asyncHandler(PaymentController.demoCheckoutPage));
 paymentRouter.get("/payments/sepay/hosted-launch", asyncHandler(PaymentController.hostedLaunchPage));

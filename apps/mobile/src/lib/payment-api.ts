@@ -64,15 +64,7 @@ export function resolveCheckoutUrl(checkoutUrl: string): string {
   }
 }
 
-export async function createMaterialCheckout(
-  token: string,
-  classId: string,
-  materialId: string
-): Promise<SePayCheckout> {
-  const raw = await http<unknown>(`${CORE_URL}/classes/${classId}/materials/${materialId}/checkout`, {
-    method: "POST",
-    token,
-  });
+function parseCheckout(raw: unknown, fallbackId = ""): SePayCheckout {
   const obj = asRecord(raw);
   const checkout = asRecord(obj?.checkout) ?? obj;
   if (!checkout) throw new Error("Checkout không hợp lệ");
@@ -82,10 +74,31 @@ export async function createMaterialCheckout(
     transactionRef: String(checkout.transactionRef ?? ""),
     amount: Number(checkout.amount ?? 0),
     demo: Boolean(checkout.demo),
-    materialId: String(checkout.materialId ?? materialId),
+    materialId: String(checkout.materialId ?? fallbackId),
     materialTitle: String(checkout.materialTitle ?? ""),
     bankInfo: parseBankInfo(checkout.bankInfo),
   };
+}
+
+export async function createMaterialCheckout(
+  token: string,
+  classId: string,
+  materialId: string
+): Promise<SePayCheckout> {
+  const raw = await http<unknown>(`${CORE_URL}/classes/${classId}/materials/${materialId}/checkout`, {
+    method: "POST",
+    token,
+  });
+  return parseCheckout(raw, materialId);
+}
+
+export async function createClassJoinCheckout(token: string, code: string): Promise<SePayCheckout> {
+  const raw = await http<unknown>(`${CORE_URL}/classes/join/checkout`, {
+    method: "POST",
+    token,
+    body: { code: code.trim().toUpperCase() },
+  });
+  return parseCheckout(raw);
 }
 
 export async function confirmDemoPayment(token: string, transactionRef: string) {

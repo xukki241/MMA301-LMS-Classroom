@@ -9,6 +9,7 @@ import { AppButton } from "@/src/components/ui/AppButton";
 import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { FormDialogScroll, FormNotice, useKeyboardLift } from "@/src/components/ui/FormFeedback";
+import { TimePickerField } from "@/src/components/ui/TimePickerField";
 import { SectionHeader } from "@/src/components/ui/Tile";
 import { useAuth } from "@/src/lib/auth-context";
 import { HttpError } from "@/src/lib/http";
@@ -242,15 +243,24 @@ export default function ClassScheduleScreen() {
           <Dialog.Title>Thêm buổi học</Dialog.Title>
           {formError ? <View style={styles.notice}><FormNotice message={formError} /></View> : null}
           <FormDialogScroll>
+            <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>Chọn một ngày trong tuần</Text>
             <View style={styles.chips}>
               {[1, 2, 3, 4, 5, 6, 0].map((day) => (
-                <Chip key={day} selected={weekday === day} showSelectedCheck={false} onPress={() => setWeekday(day)}>
+                <Chip
+                  key={day}
+                  selected={weekday === day}
+                  showSelectedCheck={false}
+                  compact
+                  onPress={() => setWeekday(day)}
+                  style={weekday === day ? { backgroundColor: theme.colors.primary } : undefined}
+                  textStyle={weekday === day ? { color: theme.colors.onPrimary } : undefined}
+                >
                   {WEEKDAY_LABELS[day]}
                 </Chip>
               ))}
             </View>
-            <TextInput mode="outlined" label="Bắt đầu (HH:mm)" value={startTime} onChangeText={setStartTime} keyboardType="numbers-and-punctuation" />
-            <TextInput mode="outlined" label="Kết thúc (HH:mm)" value={endTime} onChangeText={setEndTime} keyboardType="numbers-and-punctuation" />
+            <TimePickerField label="Bắt đầu" value={startTime} onChange={setStartTime} />
+            <TimePickerField label="Kết thúc" value={endTime} onChange={setEndTime} />
             <TextInput mode="outlined" label="Phòng (tuỳ chọn)" value={room} onChangeText={setRoom} />
             <TextInput mode="outlined" label="Ghi chú (tuỳ chọn)" value={note} onChangeText={setNote} />
           </FormDialogScroll>
@@ -266,7 +276,7 @@ export default function ClassScheduleScreen() {
           <FormDialogScroll>
             <TextInput mode="outlined" label="Tiêu đề" value={title} onChangeText={setTitle} />
             <TextInput mode="outlined" label="Ngày (dd/MM/yyyy)" value={dateText} onChangeText={setDateText} keyboardType="numbers-and-punctuation" />
-            <TextInput mode="outlined" label="Giờ bắt đầu (HH:mm)" value={timeText} onChangeText={setTimeText} keyboardType="numbers-and-punctuation" />
+            <TimePickerField label="Giờ bắt đầu" value={timeText} onChange={setTimeText} />
             <TextInput mode="outlined" label="Thời lượng (phút)" value={duration} onChangeText={setDuration} keyboardType="number-pad" />
             <TextInput mode="outlined" label="Phòng (tuỳ chọn)" value={room} onChangeText={setRoom} />
             <TextInput mode="outlined" label="Ghi chú (tuỳ chọn)" value={note} onChangeText={setNote} />

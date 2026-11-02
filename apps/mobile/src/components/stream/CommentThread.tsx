@@ -28,7 +28,7 @@ export function CommentThread({ session, postId }: { session: StreamSession; pos
         {query.data.length === 0 && !query.isError ? <Text>Chưa có bình luận nào.</Text> : null}
         {query.data.map(comment => (
           <View key={comment.id} style={styles.comment}>
-            <Text style={typography.caption}>Tác giả: {comment.authorId}</Text>
+            <Text style={typography.caption}>Tác giả: {comment.authorDisplayName}</Text>
             <Text style={typography.caption}>{new Date(comment.createdAt).toLocaleString("vi-VN")}</Text>
             <Text style={typography.body} selectable>{comment.content}</Text>
             <Divider />

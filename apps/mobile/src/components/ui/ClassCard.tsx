@@ -45,6 +45,9 @@ export function ClassCard({ item, index, onPress }: Props) {
           </Text>
           <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
             Mã lớp · {item.code || "—"}
+            {(item.joinFeeVnd ?? 0) > 0
+              ? ` · Phí ${item.joinFeeVnd!.toLocaleString("vi-VN")}đ`
+              : " · Miễn phí"}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={theme.colors.onSurfaceVariant} />

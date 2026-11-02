@@ -66,7 +66,7 @@ export const scheduleSchemas = {
       exams: { type: "array", items: { type: "object", description: "Exam sắp tới (kể cả 24h gần nhất) kèm className." } },
       work: {
         type: "array",
-        description: "Học sinh: status todo|submitted|graded|overdue kèm score/feedback. Giáo viên: status open|needs_grading|done kèm submissionCount/gradedCount.",
+        description: "Học sinh: status todo|submitted|graded|overdue kèm score/feedback. Giáo viên: status open|needs_grading|done|closed (closed = đã quá hạn và chưa có bài nộp) kèm submissionCount/gradedCount. Mốc thời gian là dueAt <= giờ server.",
         items: { type: "object", required: ["exerciseId", "classId", "className", "title", "dueAt", "status"],
           properties: {
             exerciseId: { type: "string" }, classId: { type: "string" }, className: { type: "string" },
@@ -75,6 +75,43 @@ export const scheduleSchemas = {
             submissionCount: { type: "integer" }, gradedCount: { type: "integer" },
           } },
       },
+    },
+  },
+  PaymentHistoryItem: {
+    type: "object",
+    required: ["id", "classId", "className", "materialId", "materialTitle", "studentId", "amount", "provider", "transactionRef", "status", "createdAt", "updatedAt"],
+    properties: {
+      id: { type: "string" },
+      classId: { type: "string" },
+      className: { type: "string" },
+      materialId: { type: "string" },
+      materialTitle: { type: "string" },
+      studentId: { type: "string" },
+      amount: { type: "number" },
+      provider: { type: "string", enum: ["SEPAY", "SEPAY_DEMO"] },
+      transactionRef: { type: "string" },
+      status: { type: "string", enum: ["pending", "success", "failed"] },
+      createdAt: { type: "string", format: "date-time" },
+      updatedAt: { type: "string", format: "date-time" },
+    },
+  },
+  SubmissionHistoryItem: {
+    type: "object",
+    required: ["id", "exerciseId", "exerciseTitle", "classId", "className", "studentId", "content", "url", "submittedAt", "dueAt", "score", "feedback", "status"],
+    properties: {
+      id: { type: "string" },
+      exerciseId: { type: "string" },
+      exerciseTitle: { type: "string" },
+      classId: { type: "string" },
+      className: { type: "string" },
+      studentId: { type: "string" },
+      content: { type: "string" },
+      url: { type: "string" },
+      submittedAt: { type: "string", format: "date-time" },
+      dueAt: { type: "string", format: "date-time" },
+      score: { type: "number", nullable: true },
+      feedback: { type: "string" },
+      status: { type: "string", enum: ["submitted", "graded"] },
     },
   },
   UpdateMaterial: {
@@ -97,6 +134,42 @@ export const schedulePaths = {
       responses: {
         "200": { description: "Tổng quan.", content: jsonSchema({ $ref: "#/components/schemas/UserOverview" }) },
         "401": commonErrors["401"],
+      },
+    },
+  },
+  "/me/payments": {
+    get: {
+      tags: ["Tổng quan (LMS-15)"],
+      operationId: "listMyPayments",
+      summary: "Lịch sử giao dịch mở khóa tài nguyên",
+      description: "Học sinh: giao dịch của mình. Giáo viên: giao dịch trong lớp mình chủ. Mới cập nhật trước.",
+      security: [{ BearerAuth: [] }],
+      responses: {
+        "200": ok(
+          "Danh sách giao dịch.",
+          { payments: { type: "array", items: { $ref: "#/components/schemas/PaymentHistoryItem" } } },
+          ["payments"]
+        ),
+        "401": commonErrors["401"],
+        "403": error("FORBIDDEN."),
+      },
+    },
+  },
+  "/me/submissions": {
+    get: {
+      tags: ["Tổng quan (LMS-15)"],
+      operationId: "listMySubmissions",
+      summary: "Lịch sử nộp bài",
+      description: "Học sinh: bài mình đã nộp. Giáo viên: bài nộp trong lớp mình chủ (tối đa 200), kèm điểm nếu đã chấm.",
+      security: [{ BearerAuth: [] }],
+      responses: {
+        "200": ok(
+          "Danh sách bài nộp.",
+          { submissions: { type: "array", items: { $ref: "#/components/schemas/SubmissionHistoryItem" } } },
+          ["submissions"]
+        ),
+        "401": commonErrors["401"],
+        "403": error("FORBIDDEN."),
       },
     },
   },

@@ -430,11 +430,118 @@ async function ensureNeedsGradingExercise(
   }
 }
 
+async function ensureOverdueExercise(
+  teacher: SessionUser,
+  classId: string,
+  exercise: { title: string; description: string }
+): Promise<void> {
+  let found = (await listExercises(teacher, classId)).find((item) => item.title === exercise.title);
+  if (!found) {
+    const created = await api(CORE_BASE, "POST", `/classes/${classId}/exercises`, teacher.token, {
+      title: exercise.title,
+      description: exercise.description,
+      dueAt: atLocal(3, 23, 0),
+    }, [201]);
+    found = created.exercise as Json;
+  }
+  const exerciseId = idOf(found);
+  const submissions = await Submission.find({ exerciseId });
+  await Grade.deleteMany({ submissionId: { $in: submissions.map((item) => item._id) } });
+  await Submission.deleteMany({ exerciseId });
+  const past = new Date(Date.now() - 36 * 3600 * 1000);
+  await Exercise.updateOne(
+    { _id: exerciseId },
+    { $set: { dueAt: past, createdAt: new Date(Date.now() - 48 * 3600 * 1000) } }
+  );
+}
+
+async function ensureSeedPayment(
+  classId: string,
+  materialId: string,
+  userId: string,
+  row: { amount: number; status: "pending" | "success" | "failed"; ref: string; daysAgo: number }
+): Promise<void> {
+  const existing = await MaterialUnlock.findOne({ materialId, userId });
+  if (existing && !String(existing.providerRef).startsWith("SEED-")) return;
+  const when = new Date(Date.now() - row.daysAgo * 24 * 3600 * 1000);
+  await MaterialUnlock.findOneAndUpdate(
+    { materialId, userId },
+    {
+      $set: {
+        classId,
+        materialId,
+        userId,
+        amount: row.amount,
+        provider: "SEPAY_DEMO",
+        providerRef: row.ref,
+        status: row.status,
+        createdAt: when,
+        updatedAt: when,
+      },
+    },
+    { upsert: true, timestamps: false }
+  );
+}
+
 async function refreshNames(people: SessionUser[], classId: string): Promise<Json[]> {
   for (const person of people) {
     await api(CORE_BASE, "GET", `/classes/${classId}/members`, person.token);
   }
   return rows(await api(CORE_BASE, "GET", `/classes/${classId}/members`, people[0].token), "members");
+}
+
+/** Idempotent: tạo bài đăng theo nội dung nếu chưa có; thêm bình luận nếu post còn trống. */
+async function ensureClassStream(
+  teacher: SessionUser,
+  students: SessionUser[],
+  classId: string,
+  posts: { content: string; studentComment?: string; teacherComment?: string }[]
+): Promise<number> {
+  const listed = rows(await api(CORE_BASE, "GET", `/classes/${classId}/posts`, teacher.token), "posts");
+  let ensured = 0;
+  for (const wanted of posts) {
+    let post = listed.find((item) => String(item.content ?? "") === wanted.content);
+    if (!post) {
+      const created = await api(CORE_BASE, "POST", `/classes/${classId}/posts`, teacher.token, {
+        content: wanted.content,
+      }, [201]);
+      post = (created.post as Json) ?? created;
+      listed.push(post);
+    }
+    const postId = idOf(post);
+    const comments = rows(
+      await api(CORE_BASE, "GET", `/classes/${classId}/posts/${postId}/comments`, teacher.token),
+      "comments"
+    );
+    if (wanted.studentComment && students[0]) {
+      const exists = comments.some((item) => String(item.content ?? "") === wanted.studentComment);
+      if (!exists) {
+        await api(
+          CORE_BASE,
+          "POST",
+          `/classes/${classId}/posts/${postId}/comments`,
+          students[0].token,
+          { content: wanted.studentComment },
+          [201]
+        );
+      }
+    }
+    if (wanted.teacherComment) {
+      const exists = comments.some((item) => String(item.content ?? "") === wanted.teacherComment);
+      if (!exists) {
+        await api(
+          CORE_BASE,
+          "POST",
+          `/classes/${classId}/posts/${postId}/comments`,
+          teacher.token,
+          { content: wanted.teacherComment },
+          [201]
+        );
+      }
+    }
+    ensured += 1;
+  }
+  return ensured;
 }
 
 async function main(): Promise<void> {
@@ -589,10 +696,121 @@ async function main(): Promise<void> {
       content: "Tokens spacing lg/md, radius pill, typography body.",
     });
 
+    await ensureOverdueExercise(teacher, mobile.id, {
+      title: "Bài quá hạn · Lab RecyclerView",
+      description: "Hạn đã qua, không nhận nộp. Dùng để kiểm tra trạng thái quá hạn.",
+    });
+    await ensureOverdueExercise(teacher, database.id, {
+      title: "Bài quá hạn · Chuẩn hóa 3NF",
+      description: "Hạn đã qua và chưa có bài nộp.",
+    });
+    await ensureOverdueExercise(teacher, uiux.id, {
+      title: "Bài quá hạn · Moodboard",
+      description: "Hạn đã qua và chưa có bài nộp.",
+    });
+
+    const payAndroid = await ensureMaterial(teacher, mobile.id, {
+      title: "Lab Android trả phí",
+      url: "https://developer.android.com/courses",
+      description: "Tài liệu trả phí dùng cho lịch sử giao dịch thành công.",
+      priceVnd: 12000,
+    });
+    const payQuiz = await ensureMaterial(teacher, mobile.id, {
+      title: "Bộ đề quiz Navigation",
+      url: "https://developer.android.com/guide/navigation/navigation-getting-started",
+      description: "Tài liệu trả phí dùng cho giao dịch thất bại / đang chờ.",
+      priceVnd: 8000,
+    });
+    const paySql = await ensureMaterial(teacher, database.id, {
+      title: "Slide tối ưu index",
+      url: "https://www.postgresql.org/docs/current/indexes.html",
+      description: "Tài liệu trả phí CSDL.",
+      priceVnd: 18000,
+    });
+    const paySqlExam = await ensureMaterial(teacher, database.id, {
+      title: "Đề kiểm tra SQL mẫu",
+      url: "https://www.postgresql.org/docs/current/queries.html",
+      description: "Đề mẫu trả phí.",
+      priceVnd: 9000,
+    });
+    const payFigma = await ensureMaterial(teacher, uiux.id, {
+      title: "Kit Figma critique",
+      url: "https://www.figma.com/community",
+      description: "Kit trả phí, giao dịch đang chờ.",
+      priceVnd: 22000,
+    });
+    const payIcons = await ensureMaterial(teacher, uiux.id, {
+      title: "Bộ icon minh hoạ",
+      url: "https://m3.material.io/styles/icons/overview",
+      description: "Bộ icon trả phí.",
+      priceVnd: 15000,
+    });
+
+    await ensureSeedPayment(mobile.id, idOf(payAndroid), student.id, {
+      amount: 12000, status: "success", ref: "SEED-android-lab-student", daysAgo: 6,
+    });
+    await ensureSeedPayment(mobile.id, idOf(payQuiz), student.id, {
+      amount: 8000, status: "failed", ref: "SEED-quiz-nav-student", daysAgo: 2,
+    });
+    await ensureSeedPayment(mobile.id, idOf(payQuiz), student2.id, {
+      amount: 8000, status: "pending", ref: "SEED-quiz-nav-student2", daysAgo: 1,
+    });
+    await ensureSeedPayment(database.id, idOf(paySql), student.id, {
+      amount: 18000, status: "success", ref: "SEED-sql-index-student", daysAgo: 10,
+    });
+    await ensureSeedPayment(database.id, idOf(paySqlExam), student2.id, {
+      amount: 9000, status: "failed", ref: "SEED-sql-exam-student2", daysAgo: 3,
+    });
+    await ensureSeedPayment(uiux.id, idOf(payFigma), student.id, {
+      amount: 22000, status: "pending", ref: "SEED-figma-student", daysAgo: 1,
+    });
+    await ensureSeedPayment(uiux.id, idOf(payIcons), student2.id, {
+      amount: 15000, status: "success", ref: "SEED-icons-student2", daysAgo: 8,
+    });
+
+    const streamCounts: Record<string, number> = {};
+    streamCounts[mobile.name] = await ensureClassStream(teacher, students, mobile.id, [
+      {
+        content: "Chào mừng lớp Lập trình di động. Tuần này làm lab Expo Router và Navigation.",
+        studentComment: "Em đã cài Expo Go, sẵn sàng lab ạ.",
+        teacherComment: "Nhớ nộp Bài tập Navigation trước hạn.",
+      },
+      {
+        content: "Nhắc lịch: Quiz Navigation vào tuần tới. Ôn lại stack/tab navigator.",
+        studentComment: "Em xin link slide Navigation ạ.",
+      },
+      {
+        content: "Tài liệu Premium React Native đã mở trên mục Tài liệu — ai cần thì mở khóa SePay.",
+        teacherComment: "Chỉ dùng cho mục đích học trong lớp.",
+      },
+    ]);
+    streamCounts[database.name] = await ensureClassStream(teacher, students, database.id, [
+      {
+        content: "Tuần này học SQL JOIN và tối ưu index. Làm bài tập truy vấn SELECT trước buổi lab.",
+        studentComment: "Em đang luyện INNER JOIN trên schema demo.",
+        teacherComment: "Mang laptop, sẽ chấm nhanh bài JOIN.",
+      },
+      {
+        content: "Đề cương Kiểm tra SQL đã cập nhật trong mục Kỳ kiểm tra. Ôn SELECT/WHERE/JOIN.",
+      },
+    ]);
+    streamCounts[uiux.name] = await ensureClassStream(teacher, students, uiux.id, [
+      {
+        content: "Buổi critique UI: mang prototype Figma Home student. Chuẩn bị 3 điểm muốn nhận feedback.",
+        studentComment: "Em đã share link Figma trong bài Wireframe màn Home.",
+        teacherComment: "Focus vào spacing và hierarchy chữ.",
+      },
+      {
+        content: "Tham khảo Material Design 3 trong mục Tài liệu trước khi chỉnh token màu.",
+      },
+    ]);
+
     for (const cls of classes) {
       const members = await refreshNames(people, cls.id);
       const blank = members.filter((member) => !String(member.displayName ?? "").trim());
       assert(blank.length === 0, `Lớp ${cls.name} còn thành viên chưa có displayName`);
+      const posts = rows(await api(CORE_BASE, "GET", `/classes/${cls.id}/posts`, teacher.token), "posts");
+      assert(posts.length >= 2, `Lớp ${cls.name} chưa có đủ bài bảng tin`);
     }
 
     const studentOverview = await api(CORE_BASE, "GET", "/me/overview", student.token);
@@ -608,8 +826,16 @@ async function main(): Promise<void> {
     assert(todaySessions.length >= 3, "Chưa có đủ buổi học hôm nay");
     assert(futureExams.length >= 3, "Chưa có đủ kỳ kiểm tra trong tương lai");
     assert(studentWork.filter((item) => item.status === "todo").length >= 3, "Học sinh chưa có đủ bài còn hạn");
+    assert(studentWork.filter((item) => item.status === "overdue").length >= 3, "Học sinh chưa có đủ bài quá hạn");
     assert(studentWork.some((item) => item.status === "graded" && item.score === 8.5), "Học sinh chưa thấy điểm 8.5");
     assert(teacherWork.some((item) => item.status === "needs_grading"), "Giáo viên chưa thấy bài cần chấm");
+    assert(teacherWork.filter((item) => item.status === "closed").length >= 3, "Giáo viên chưa thấy bài hết hạn chưa nộp");
+    const studentPayments = rows(await api(CORE_BASE, "GET", "/me/payments", student.token), "payments");
+    const teacherPayments = rows(await api(CORE_BASE, "GET", "/me/payments", teacher.token), "payments");
+    const paymentStatuses = new Set(studentPayments.map((item) => String(item.status)));
+    assert(studentPayments.length >= 4, "Học sinh chưa có đủ lịch sử giao dịch");
+    assert(paymentStatuses.has("success") && paymentStatuses.has("failed") && paymentStatuses.has("pending"), "Thiếu đủ trạng thái giao dịch");
+    assert(teacherPayments.length >= 7, "Giáo viên chưa thấy đủ giao dịch các lớp");
     assert(lockedPaid.length >= 1, "Thiếu tài liệu trả phí còn khóa cho Maestro");
 
     const graded = studentWork.find((item) => item.status === "graded");
@@ -621,12 +847,17 @@ async function main(): Promise<void> {
       accounts: people.map((person) => ({ email: person.email, displayName: person.displayName, role: person.role })),
       classes: classes.map((cls) => ({ name: cls.name, code: cls.code })),
       studentTodo: studentWork.filter((item) => item.status === "todo").map((item) => item.title),
+      studentOverdue: studentWork.filter((item) => item.status === "overdue").map((item) => item.title),
+      teacherClosed: teacherWork.filter((item) => item.status === "closed").map((item) => item.title),
+      studentPayments: studentPayments.length,
+      teacherPayments: teacherPayments.length,
       studentSubmitted: studentWork.filter((item) => item.status === "submitted").map((item) => item.title),
       gradedTitle: graded?.title,
       gradedScore: graded?.score,
       teacherNeedsGrading: teacherWork.filter((item) => item.status === "needs_grading").map((item) => item.title),
       futureExams: futureExams.map((exam) => exam.title),
       todaySessionCount: todaySessions.length,
+      streamPosts: streamCounts,
       paidMaterial: {
         id: paidMaterial.id,
         title: paidMaterial.title,

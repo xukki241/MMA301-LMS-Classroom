@@ -23,7 +23,7 @@ import { MonthCalendar } from "@/src/components/schedule/MonthCalendar";
 import { ExamRow, Notice, SessionRow } from "@/src/components/schedule/Rows";
 import { spacing, typography } from "@/src/theme/tokens";
 
-type ScheduleView = "study" | "exams";
+type DayFilter = "all" | "study" | "exams";
 const SESSION_DAYS = 62;
 const EXAM_DAYS = 90;
 
@@ -34,13 +34,14 @@ export function ScheduleScreen() {
   const params = useLocalSearchParams<{ view?: string | string[] }>();
   const isTeacher = user?.role === "teacher";
   const rawView = Array.isArray(params.view) ? params.view[0] : params.view;
-  const routeView: ScheduleView = rawView === "exams" ? "exams" : "study";
-  const [view, setView] = useState<ScheduleView>(routeView);
+  const routeFilter: DayFilter =
+    rawView === "exams" ? "exams" : rawView === "study" ? "study" : "all";
+  const [filter, setFilter] = useState<DayFilter>(routeFilter);
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selected, setSelected] = useState(() => startOfDay(new Date()));
   useEffect(() => {
-    setView(routeView);
-  }, [rawView, routeView]);
+    setFilter(routeFilter);
+  }, [rawView, routeFilter]);
   const query = useOverviewQuery();
   const overview = query.data;
   const [pulling, setPulling] = useState(false);
@@ -58,19 +59,30 @@ export function ScheduleScreen() {
   const exams: OverviewExam[] = overview ? upcomingExams(overview.exams, now, EXAM_DAYS) : [];
   const openClass = (classId: string) => router.push({ pathname: "/class/[id]/schedule", params: { id: classId } });
 
-  const markedCounts = useMemo(() => {
+  const studyCounts = useMemo(() => {
     const counts = new Map<number, number>();
-    const bump = (ts: number) => counts.set(ts, (counts.get(ts) ?? 0) + 1);
-    if (view === "study") {
-      for (const item of sessions) bump(startOfDay(item.start).getTime());
-    } else {
-      for (const exam of exams) bump(startOfDay(new Date(exam.startsAt)).getTime());
+    for (const item of sessions) {
+      const ts = startOfDay(item.start).getTime();
+      counts.set(ts, (counts.get(ts) ?? 0) + 1);
     }
     return counts;
-  }, [view, sessions, exams]);
+  }, [sessions]);
+
+  const examCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    for (const exam of exams) {
+      const ts = startOfDay(new Date(exam.startsAt)).getTime();
+      counts.set(ts, (counts.get(ts) ?? 0) + 1);
+    }
+    return counts;
+  }, [exams]);
 
   const daySessions = sessions.filter((item) => sameDay(item.start, selected));
   const dayExams = exams.filter((exam) => sameDay(new Date(exam.startsAt), selected));
+  const showStudy = filter === "all" || filter === "study";
+  const showExams = filter === "all" || filter === "exams";
+  const dayEmpty =
+    (showStudy ? daySessions.length === 0 : true) && (showExams ? dayExams.length === 0 : true);
 
   return (
     <Screen
@@ -78,18 +90,19 @@ export function ScheduleScreen() {
         <RefreshControl refreshing={pulling} onRefresh={() => void onRefresh()} tintColor={theme.colors.primary} />
       }
     >
-      <Text style={typography.title} accessibilityRole="header">Lịch</Text>
+      <Text style={typography.title} accessibilityRole="header">
+        Lịch
+      </Text>
       <Text style={[typography.body, styles.intro, { color: theme.colors.onSurfaceVariant }]}>
-        {isTeacher
-          ? "Chọn ngày trên lịch để xem buổi dạy / kỳ kiểm tra khớp ngày đó."
-          : "Chọn ngày trên lịch để xem buổi học / kỳ kiểm tra trong ngày."}
+        Lịch tháng · chấm xanh = buổi học, đỏ = kiểm tra. Chọn ngày để xem chi tiết.
       </Text>
       <SegmentedButtons
-        value={view}
-        onValueChange={(value) => setView(value as ScheduleView)}
+        value={filter}
+        onValueChange={(value) => setFilter(value as DayFilter)}
         buttons={[
-          { value: "study", label: "Lịch học", icon: "calendar" },
-          { value: "exams", label: "Lịch kiểm tra", icon: "file-document-outline" },
+          { value: "all", label: "Tất cả" },
+          { value: "study", label: "Học", icon: "calendar" },
+          { value: "exams", label: "Thi", icon: "file-document-outline" },
         ]}
         style={styles.segment}
       />
@@ -103,49 +116,41 @@ export function ScheduleScreen() {
         <MonthCalendar
           month={month}
           selected={selected}
-          markedCounts={markedCounts}
-          mode={view}
+          studyCounts={showStudy ? studyCounts : undefined}
+          examCounts={showExams ? examCounts : undefined}
           onSelect={setSelected}
           onChangeMonth={setMonth}
         />
       ) : null}
 
-      {overview && view === "study" ? (
-        daySessions.length === 0 ? (
-          <EmptyState
-            icon="calendar-outline"
-            title={formatDayHeader(selected, now)}
-            subtitle="Không có buổi học nào vào ngày này."
-          />
-        ) : (
-          <View>
-            <SectionHeader title={formatDayHeader(selected, now)} />
-            {daySessions.map((item) => (
-              <SessionRow
-                key={`${item.session.id}-${item.start.getTime()}`}
-                session={item.session}
-                onPress={() => openClass(item.session.classId)}
-              />
-            ))}
-          </View>
-        )
+      {overview && dayEmpty ? (
+        <EmptyState
+          icon="calendar-outline"
+          title={formatDayHeader(selected, now)}
+          subtitle="Không có lịch khớp bộ lọc trong ngày này."
+        />
       ) : null}
 
-      {overview && view === "exams" ? (
-        dayExams.length === 0 ? (
-          <EmptyState
-            icon="document-text-outline"
-            title={formatDayHeader(selected, now)}
-            subtitle="Không có kỳ kiểm tra nào vào ngày này."
-          />
-        ) : (
-          <View>
-            <SectionHeader title={formatDayHeader(selected, now)} />
-            {dayExams.map((exam) => (
-              <ExamRow key={exam.id} exam={exam} onPress={() => openClass(exam.classId)} />
-            ))}
-          </View>
-        )
+      {overview && showStudy && daySessions.length > 0 ? (
+        <View>
+          <SectionHeader title={`Học · ${formatDayHeader(selected, now)}`} />
+          {daySessions.map((item) => (
+            <SessionRow
+              key={`${item.session.id}-${item.start.getTime()}`}
+              session={item.session}
+              onPress={() => openClass(item.session.classId)}
+            />
+          ))}
+        </View>
+      ) : null}
+
+      {overview && showExams && dayExams.length > 0 ? (
+        <View>
+          <SectionHeader title={`Kiểm tra · ${formatDayHeader(selected, now)}`} />
+          {dayExams.map((exam) => (
+            <ExamRow key={exam.id} exam={exam} onPress={() => openClass(exam.classId)} />
+          ))}
+        </View>
       ) : null}
 
       {overview && isTeacher ? (

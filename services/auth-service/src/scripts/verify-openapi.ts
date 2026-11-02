@@ -6,6 +6,8 @@ const expected = new Map<string, string[]>([
   ["/health", ["get"]],
   ["/auth/register", ["post"]],
   ["/auth/login", ["post"]],
+  ["/auth/me", ["get", "patch"]],
+  ["/auth/change-password", ["post"]],
 ]);
 
 for (const [path, methods] of expected) {

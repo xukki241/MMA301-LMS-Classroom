@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { HttpError } from "../lib/httpError.js";
 import { assertClassMembership } from "../lib/classGuards.js";
+import { authorNameByUserId, withAuthorDisplayName } from "../lib/authorNames.js";
 import { Post } from "../models/index.js";
 
 export class PostService {
@@ -21,7 +22,8 @@ export class PostService {
       isDeleted: false,
     });
 
-    return post;
+    const names = await authorNameByUserId(classId, [userId]);
+    return withAuthorDisplayName(post, names);
   }
 
   /**
@@ -44,7 +46,11 @@ export class PostService {
     }
 
     const posts = await Post.find(filter).sort({ createdAt: -1 });
-    return posts;
+    const names = await authorNameByUserId(
+      classId,
+      posts.map((post) => String(post.authorId)),
+    );
+    return posts.map((post) => withAuthorDisplayName(post, names));
   }
 
   /**

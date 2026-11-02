@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { HttpError } from "../lib/httpError.js";
 import { assertClassMembership } from "../lib/classGuards.js";
+import { authorNameByUserId, withAuthorDisplayName } from "../lib/authorNames.js";
 import { Post, Comment } from "../models/index.js";
 
 export class CommentService {
@@ -35,7 +36,8 @@ export class CommentService {
       isDeleted: false,
     });
 
-    return comment;
+    const names = await authorNameByUserId(classId, [userId]);
+    return withAuthorDisplayName(comment, names);
   }
 
   /**
@@ -45,7 +47,11 @@ export class CommentService {
     await this.assertMemberAndPost(userId, classId, postId);
 
     const comments = await Comment.find({ postId, isDeleted: false }).sort({ createdAt: 1 });
-    return comments;
+    const names = await authorNameByUserId(
+      classId,
+      comments.map((comment) => String(comment.authorId)),
+    );
+    return comments.map((comment) => withAuthorDisplayName(comment, names));
   }
 
   /**

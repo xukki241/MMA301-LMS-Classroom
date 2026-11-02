@@ -45,19 +45,19 @@ test("material and submission links accept only http and https", () => {
   assert.equal(urls.isSafeHttpUrl("  "), false);
 });
 
-test("home keeps the class list when overview fails and refetches without cancelling", () => {
+test("home hub refetches overview without cancelling in-flight requests", () => {
   const home = source("src/screens/HomeDashboard.tsx");
-  assert.match(home, /useClassesQuery\(\)/);
-  assert.match(home, /overview \|\| query\.isError/);
+  assert.match(home, /useOverviewQuery/);
   assert.match(home, /cancelRefetch:\s*false/);
   assert.match(home, /refreshing=\{pulling\}/);
   assert.doesNotMatch(home, /refreshing=\{query\.isRefetching\}/);
+  assert.doesNotMatch(home, /useClassesQuery/);
 });
 
 test("schedule and work follow route shortcuts instead of a stale local pick", () => {
   const schedule = source("src/screens/ScheduleScreen.tsx");
   const work = source("src/screens/WorkScreen.tsx");
-  assert.match(schedule, /setView\(routeView\)/);
+  assert.match(schedule, /setFilter\(routeFilter\)/);
   assert.match(work, /setFilter\(routeFilter\)/);
   assert.match(schedule, /cancelRefetch:\s*false/);
   assert.match(work, /cancelRefetch:\s*false/);
@@ -76,6 +76,9 @@ test("gradebook is student-only and profile surfaces overview errors", () => {
   assert.match(profile, /overviewQuery\.isError/);
   assert.match(profile, /onRetry=\{/);
   assert.match(profile, /cancelRefetch:\s*false/);
+  assert.match(profile, /\/account/);
+  assert.match(profile, /\/change-password/);
+  assert.doesNotMatch(profile, /PHIÊN LÀM VIỆC|Core xác nhận|10\.0\.2\.2/);
 });
 
 test("class schedule and materials refresh on focus and lift dialogs above the keyboard", () => {
@@ -101,8 +104,9 @@ test("stack screens with a header do not add the top safe area twice", () => {
 test("teacher overview includes owned classes and done requires a fully graded submission", () => {
   const overview = readFileSync(root("services/core-api/src/services/overview.service.ts"), "utf8");
   assert.match(overview, /teacherId: user\.id/);
-  assert.match(overview, /due && pending > 0\) status = "needs_grading"/);
-  assert.match(overview, /due && mine\.length > 0 && gradedCount === mine\.length\) status = "done"/);
+  assert.match(overview, /mine\.length === 0\) status = "closed"/);
+  assert.match(overview, /pending > 0\) status = "needs_grading"/);
+  assert.match(overview, /gradedCount === mine\.length\) status = "done"/);
 });
 
 test("deleting a class also deletes its sessions and exams", () => {

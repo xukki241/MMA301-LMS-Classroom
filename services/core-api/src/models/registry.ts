@@ -1,5 +1,7 @@
 import { ClassModel } from "./Class.js";
 import { ClassMember } from "./ClassMember.js";
+import { ClassJoinPayment } from "./ClassJoinPayment.js";
+import { ClassFile } from "./ClassFile.js";
 import { ClassSession } from "./ClassSession.js";
 import { Comment } from "./Comment.js";
 import { Exam } from "./Exam.js";
@@ -14,6 +16,8 @@ import { Submission } from "./Submission.js";
 export const coreModels = [
   ClassModel,
   ClassMember,
+  ClassJoinPayment,
+  ClassFile,
   ClassSession,
   Post,
   Comment,

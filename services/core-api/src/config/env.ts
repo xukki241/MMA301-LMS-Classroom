@@ -24,6 +24,10 @@ const schema = z.object({
   SEPAY_BANK_CODE: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
   SEPAY_BANK_ACCOUNT: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
   SEPAY_BANK_NAME: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
+  CLOUDINARY_CLOUD_NAME: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
+  CLOUDINARY_API_KEY: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
+  CLOUDINARY_API_SECRET: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.string().optional()),
+  CLOUDINARY_FOLDER: z.preprocess((v) => (v === "" || v == null ? "lms-classroom" : v), z.string().default("lms-classroom")),
 });
 
 const parsed = schema.safeParse({
@@ -42,6 +46,10 @@ const parsed = schema.safeParse({
   SEPAY_BANK_CODE: process.env.SEPAY_BANK_CODE,
   SEPAY_BANK_ACCOUNT: process.env.SEPAY_BANK_ACCOUNT,
   SEPAY_BANK_NAME: process.env.SEPAY_BANK_NAME,
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ?? process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+  CLOUDINARY_FOLDER: process.env.CLOUDINARY_FOLDER,
 });
 
 if (!parsed.success) {

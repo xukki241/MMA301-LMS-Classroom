@@ -10,6 +10,7 @@ interface ClassResponse {
   name: string;
   code: string;
   teacherId: string;
+  joinFeeVnd?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +44,7 @@ function normalizeClass(raw: ClassResponse): LmsClass {
   }
   return {
     id: raw._id, name: raw.name, code: raw.code, teacherId: raw.teacherId,
+    joinFeeVnd: typeof raw.joinFeeVnd === "number" && raw.joinFeeVnd > 0 ? raw.joinFeeVnd : 0,
     createdAt: raw.createdAt, updatedAt: raw.updatedAt,
   };
 }
@@ -74,13 +76,21 @@ export async function getClassMembers(token: string, id: string, signal?: AbortS
   return result.members;
 }
 
-export async function createClass(token: string, name: string): Promise<LmsClass> {
+export const MIN_JOIN_FEE_VND = 5_000;
+
+export async function createClass(token: string, name: string, joinFeeVnd = 0): Promise<LmsClass> {
   const value = name.trim();
   if (!value || value.length > 100) {
     throw new HttpError("Tên lớp học phải có từ 1 đến 100 ký tự.", 422, "VALIDATION_ERROR");
   }
+  const fee = Math.round(joinFeeVnd);
+  if (fee < 0 || (fee > 0 && fee < MIN_JOIN_FEE_VND)) {
+    throw new HttpError("Phí tham gia tối thiểu 5.000đ.", 422, "VALIDATION_ERROR");
+  }
   const result = await http<{ message: string; class: ClassResponse }>(`${CORE_URL}/classes`, {
-    method: "POST", token, body: { name: value },
+    method: "POST",
+    token,
+    body: fee > 0 ? { name: value, joinFeeVnd: fee } : { name: value },
   });
   return normalizeClass(result?.class);
 }

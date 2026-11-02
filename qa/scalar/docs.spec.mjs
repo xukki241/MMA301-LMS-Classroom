@@ -16,6 +16,8 @@ test("Core OpenAPI endpoint is JSON and exposes documented paths", async ({ requ
   expect(spec.openapi).toMatch(/^3\./);
   expect(Object.keys(spec.paths)).toContain("/classes");
   expect(Object.keys(spec.paths)).toContain("/classes/{classId}/exercises");
+  expect(Object.keys(spec.paths)).toContain("/me/payments");
+  expect(Object.keys(spec.paths)).toContain("/me/submissions");
 });
 
 test("Auth Scalar docs render without a browser error", async ({ browser }) => {
