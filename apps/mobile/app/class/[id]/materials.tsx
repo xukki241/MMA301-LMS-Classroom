@@ -52,6 +52,7 @@ import {
 } from "@/src/lib/payment-api";
 import { queryClient, queryKeys } from "@/src/lib/query-client";
 import { impactLight, notifyError, notifySuccess } from "@/src/lib/haptics";
+import { CloudinaryFilePicker } from "@/src/components/ui/CloudinaryFilePicker";
 import { isSafeHttpUrl } from "@/src/lib/safe-url";
 import { elevation, palette, radius, spacing, typography } from "@/src/theme/tokens";
 
@@ -336,7 +337,7 @@ export default function MaterialsScreen() {
 
     if (!trimmedUrl) {
       setTitleError(null);
-      setUrlError("Vui lòng nhập đường dẫn URL tài liệu");
+      setUrlError("Nhập link http(s) hoặc upload file tài liệu.");
       setFormError(null);
       notifyError();
       return;
@@ -591,7 +592,7 @@ export default function MaterialsScreen() {
               <FieldError message={titleError} />
               <TextInput
                 mode="outlined"
-                label="Đường dẫn liên kết (URL) *"
+                label="Link tài liệu (http/https) *"
                 placeholder="https://docs.google.com/..."
                 autoCapitalize="none"
                 keyboardType="url"
@@ -605,6 +606,18 @@ export default function MaterialsScreen() {
                 outlineStyle={styles.dialogInputOutline}
                 style={styles.dialogInput}
                 left={<TextInput.Icon icon="link-variant" />}
+              />
+              <CloudinaryFilePicker
+                label="Hoặc upload file tài liệu *"
+                value={url}
+                onChange={(next) => {
+                  setUrl(next);
+                  setUrlError(null);
+                  setFormError(null);
+                }}
+                token={token}
+                classId={classId}
+                purpose="material"
               />
               <FieldError message={urlError} />
               <TextInput

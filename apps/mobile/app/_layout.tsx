@@ -1,10 +1,12 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { useFonts } from "expo-font";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { ActivityIndicator, PaperProvider } from "react-native-paper";
 import { ThemeProvider } from "expo-router/react-navigation";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import "react-native-reanimated";
 
@@ -24,21 +26,27 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const paperTheme = colorScheme === "dark" ? darkPaperTheme : lightPaperTheme;
   const navTheme = colorScheme === "dark" ? darkNavTheme : lightNavTheme;
+  const [fontsLoaded, fontError] = useFonts({
+    ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
+  });
 
   useEffect(() => {
-    void SplashScreen.hideAsync();
-  }, []);
+    if (fontsLoaded || fontError) void SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
-      <PaperProvider
-        theme={paperTheme}
-        settings={{
-          icon: (props) => <MaterialCommunityIcons {...props} />,
-        }}
-      >
-        <NetworkProvider>
-          <AuthProvider>
+      <NetworkProvider>
+        <AuthProvider>
+          <PaperProvider
+            theme={paperTheme}
+            settings={{
+              icon: (props) => <MaterialCommunityIcons {...props} />,
+            }}
+          >
             <ThemeProvider value={navTheme}>
               <View style={{ flex: 1, minHeight: 0 }}>
                 <OfflineBanner />
@@ -47,9 +55,9 @@ export default function RootLayout() {
                 </View>
               </View>
             </ThemeProvider>
-          </AuthProvider>
-        </NetworkProvider>
-      </PaperProvider>
+          </PaperProvider>
+        </AuthProvider>
+      </NetworkProvider>
     </QueryClientProvider>
   );
 }

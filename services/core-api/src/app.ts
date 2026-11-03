@@ -36,6 +36,10 @@ export function createApp() {
   app.use(
     helmet({
       contentSecurityPolicy: false,
+      frameguard: false,
+      crossOriginEmbedderPolicy: false,
+      crossOriginOpenerPolicy: false,
+      crossOriginResourcePolicy: { policy: "cross-origin" },
     })
   );
   app.use(requestContext);

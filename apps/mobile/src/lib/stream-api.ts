@@ -9,6 +9,7 @@ export type StreamPost = {
   authorId: string;
   authorDisplayName: string;
   content: string;
+  attachmentUrl: string;
   createdAt: string;
 };
 export type StreamComment = {
@@ -45,6 +46,7 @@ function entry(value: unknown) {
     authorId,
     authorDisplayName,
     content: requiredString(raw.content),
+    attachmentUrl: typeof raw.attachmentUrl === "string" ? raw.attachmentUrl.trim() : "",
     createdAt,
   };
 }
@@ -78,10 +80,37 @@ export async function listPosts(token: string, classId: string, signal?: AbortSi
   const raw = record(await http<unknown>(postsUrl(classId), { token, signal }));
   return list(raw.posts, item => parsePost(item, classId));
 }
-export async function createPost(token: string, classId: string, content: string): Promise<StreamPost> {
-  const body = { content: validateStreamContent(content, POST_MAX_LENGTH) };
+export async function createPost(
+  token: string,
+  classId: string,
+  content: string,
+  attachmentUrl = "",
+): Promise<StreamPost> {
+  const body = {
+    content: validateStreamContent(content, POST_MAX_LENGTH),
+    attachmentUrl: attachmentUrl.trim(),
+  };
   const raw = record(await http<unknown>(postsUrl(classId), { method: "POST", token, body }));
   return parsePost(raw.post, classId);
+}
+export async function updatePost(
+  token: string,
+  classId: string,
+  postId: string,
+  content: string,
+  attachmentUrl = "",
+): Promise<StreamPost> {
+  const body = {
+    content: validateStreamContent(content, POST_MAX_LENGTH),
+    attachmentUrl: attachmentUrl.trim(),
+  };
+  const raw = record(
+    await http<unknown>(`${postsUrl(classId)}/${encodeURIComponent(postId)}`, { method: "PATCH", token, body }),
+  );
+  return parsePost(raw.post, classId);
+}
+export async function deletePost(token: string, classId: string, postId: string): Promise<void> {
+  await http<unknown>(`${postsUrl(classId)}/${encodeURIComponent(postId)}`, { method: "DELETE", token });
 }
 export async function listComments(token: string, classId: string, postId: string, signal?: AbortSignal): Promise<StreamComment[]> {
   const raw = record(await http<unknown>(commentsUrl(classId, postId), { token, signal }));

@@ -9,6 +9,12 @@ const postSchema = z.object({
     .trim()
     .min(1, "Post content cannot be empty!")
     .max(2000, "Post content must be 2000 characters or fewer!"),
+  attachmentUrl: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .refine((value) => !value || /^https?:\/\//i.test(value), "Attachment must be an http(s) URL"),
 });
 
 function parseBody<T>(schema: z.ZodSchema<T>, body: unknown): T {
@@ -28,9 +34,9 @@ export class PostController {
   static async createPost(req: Request, res: Response): Promise<void> {
     const user = req.user!;
     const { classId } = req.params;
-    const { content } = parseBody(postSchema, req.body);
+    const { content, attachmentUrl } = parseBody(postSchema, req.body);
 
-    const post = await PostService.createPost(user.id, classId, content);
+    const post = await PostService.createPost(user.id, classId, content, attachmentUrl ?? "");
 
     res.status(201).json({
       message: "Post created successfully!",
@@ -59,9 +65,9 @@ export class PostController {
   static async updatePost(req: Request, res: Response): Promise<void> {
     const user = req.user!;
     const { classId, postId } = req.params;
-    const { content } = parseBody(postSchema, req.body);
+    const { content, attachmentUrl } = parseBody(postSchema, req.body);
 
-    const post = await PostService.updatePost(user.id, classId, postId, content);
+    const post = await PostService.updatePost(user.id, classId, postId, content, attachmentUrl ?? "");
 
     res.status(200).json({
       message: "Post updated successfully!",

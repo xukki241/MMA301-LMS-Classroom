@@ -20,6 +20,7 @@ import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
 import { AppButton } from "@/src/components/ui/AppButton";
 import { FieldError, FormDialogScroll, FormNotice, keyboardBehavior, useKeyboardLift } from "@/src/components/ui/FormFeedback";
 import { CloudinaryFilePicker } from "@/src/components/ui/CloudinaryFilePicker";
+import { DeadlineField } from "@/src/components/ui/DeadlineField";
 import { useAuth } from "@/src/lib/auth-context";
 import { userErrorMessage } from "@/src/lib/user-error-message";
 import {
@@ -240,6 +241,12 @@ export default function ExercisesScreen() {
       notifyError();
       return;
     }
+    if (!/^https?:\/\//i.test(attachmentUrl.trim())) {
+      setTitleError(null);
+      setFormError("Bắt buộc đính kèm link http(s) hoặc upload file đề bài.");
+      notifyError();
+      return;
+    }
     setTitleError(null);
     setFormError(null);
     const payload = {
@@ -375,20 +382,34 @@ export default function ExercisesScreen() {
                 value={description}
                 onChangeText={setDescription}
               />
-              <CloudinaryFilePicker
-                label="File đề bài (Cloudinary)"
+              <TextInput
+                mode="outlined"
+                label="Link đề bài (http/https) *"
                 value={attachmentUrl}
-                onChange={setAttachmentUrl}
+                autoCapitalize="none"
+                keyboardType="url"
+                onChangeText={(value) => {
+                  setAttachmentUrl(value);
+                  setFormError(null);
+                }}
+              />
+              <CloudinaryFilePicker
+                label="Hoặc upload file đề bài *"
+                value={attachmentUrl}
+                onChange={(next) => {
+                  setAttachmentUrl(next);
+                  setFormError(null);
+                }}
                 token={token}
                 classId={classId}
                 purpose="exercise"
               />
-              <TextInput
-                mode="outlined"
-                label="Hạn nộp (ISO UTC)"
+              <DeadlineField
                 value={dueAt}
-                onChangeText={setDueAt}
-                autoCapitalize="none"
+                onChange={(next) => {
+                  setDueAt(next);
+                  setFormError(null);
+                }}
               />
               <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
                 Sửa/xoá chỉ trong 1 giờ sau khi tạo và khi chưa có học sinh nộp bài.

@@ -34,9 +34,11 @@ export function CloudinaryFilePicker({
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const pick = async () => {
     if (disabled || busy) return;
+    setError(null);
     try {
       const result = await DocumentPicker.getDocumentAsync({
         copyToCacheDirectory: true,
@@ -59,9 +61,9 @@ export function CloudinaryFilePicker({
         void queryClient.invalidateQueries({ queryKey: queryKeys.classFiles(user.id, classId) });
       }
       notifySuccess();
-    } catch (error) {
+    } catch (caught) {
       notifyError();
-      console.warn(userErrorMessage(error));
+      setError(userErrorMessage(caught));
     } finally {
       setBusy(false);
     }
@@ -94,6 +96,9 @@ export function CloudinaryFilePicker({
           </Text>
         </View>
       </Pressable>
+      {error ? (
+        <Text style={[typography.caption, { color: theme.colors.error }]}>{error}</Text>
+      ) : null}
       {value ? (
         <View style={[styles.chip, { borderColor: theme.colors.outline, backgroundColor: theme.colors.surfaceVariant }]}>
           <Ionicons name="document-attach-outline" size={16} color={theme.colors.primary} />

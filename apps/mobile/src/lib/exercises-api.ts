@@ -135,17 +135,18 @@ export function validateDueAtIso(dueAt: string): string {
 export function validateSubmissionPayload(content: string, url: string): { content: string; url: string } {
   const trimmedContent = content.trim();
   const trimmedUrl = url.trim();
-  if (!trimmedContent && !trimmedUrl) {
-    throw new HttpError("Nhập nội dung bài làm hoặc liên kết đính kèm.", 422, "VALIDATION_ERROR");
-  }
-  if (trimmedUrl && !isSafeHttpUrl(trimmedUrl)) {
-    throw new HttpError("Liên kết phải dùng http:// hoặc https://.", 422, "VALIDATION_ERROR");
+  if (!trimmedUrl || !isSafeHttpUrl(trimmedUrl)) {
+    throw new HttpError("Bắt buộc đính kèm link http(s) hoặc file đã upload.", 422, "VALIDATION_ERROR");
   }
   return { content: trimmedContent, url: trimmedUrl };
 }
 
 export function validateGradeScore(raw: string): number {
-  const score = Number(raw.replace(",", ".").trim());
+  const trimmed = raw.trim().replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) {
+    throw new HttpError("Chỉ nhập số từ 0 đến 10, không dùng dấu âm hoặc chữ.", 422, "VALIDATION_ERROR");
+  }
+  const score = Number(trimmed);
   if (!Number.isFinite(score) || score < 0 || score > 10) {
     throw new HttpError("Điểm phải từ 0 đến 10.", 422, "VALIDATION_ERROR");
   }

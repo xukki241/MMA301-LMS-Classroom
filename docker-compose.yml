@@ -78,6 +78,10 @@ services:
       SEPAY_BANK_CODE: ${SEPAY_BANK_CODE:-}
       SEPAY_BANK_ACCOUNT: ${SEPAY_BANK_ACCOUNT:-}
       SEPAY_BANK_NAME: ${SEPAY_BANK_NAME:-}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER:-lms-classroom}
     depends_on:
       mongo:
         condition: service_healthy

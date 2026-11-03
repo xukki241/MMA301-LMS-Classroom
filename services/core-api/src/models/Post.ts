@@ -5,6 +5,7 @@ const postSchema = new Schema(
     classId: { type: Schema.Types.ObjectId, ref: "Class", required: true },
     authorId: { type: String, required: true },
     content: { type: String, required: true, trim: true },
+    attachmentUrl: { type: String, default: "", trim: true },
     isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null },
   },

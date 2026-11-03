@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from "react-native";
+import { createElement, useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Linking, Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView, type WebViewNavigation } from "react-native-webview";
@@ -69,6 +69,31 @@ export function SePayCheckoutWebView({ visible, checkoutUrl, title, onClose }: P
     [finish]
   );
 
+  useEffect(() => {
+    if (!visible || Platform.OS !== "web" || typeof window === "undefined") return;
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; result?: string } | null;
+      if (!data || data.type !== "lms-sepay-return") return;
+      const result = data.result === "error" ? "error" : data.result === "cancel" ? "cancel" : "success";
+      finish(result);
+    };
+    window.addEventListener("message", onMessage);
+    const timer = setTimeout(() => setLoading(false), 1200);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      clearTimeout(timer);
+    };
+  }, [visible, finish, checkoutUrl]);
+
+  const openExternal = () => {
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      const popup = window.open(checkoutUrl, "lms-sepay");
+      if (!popup) void Linking.openURL(checkoutUrl);
+      return;
+    }
+    void Linking.openURL(checkoutUrl);
+  };
+
   if (!visible) return null;
 
   return (
@@ -104,6 +129,19 @@ export function SePayCheckoutWebView({ visible, checkoutUrl, title, onClose }: P
         </View>
 
         <View style={styles.webWrap}>
+          {Platform.OS === "web" ? (
+            <View style={styles.webFallback}>
+              <Pressable accessibilityRole="link" onPress={openExternal} style={styles.openLink}>
+                <Text style={[typography.subtitle, { color: theme.colors.primary }]}>Mở cổng SePay trong tab mới</Text>
+              </Pressable>
+              {createElement("iframe", {
+                src: checkoutUrl,
+                title: "SePay",
+                onLoad: () => setLoading(false),
+                style: { border: "0", width: "100%", height: "100%", flex: "1 1 auto", background: "#fff" },
+              })}
+            </View>
+          ) : (
           <WebView
             source={{ uri: checkoutUrl }}
             style={styles.webview}
@@ -118,12 +156,14 @@ export function SePayCheckoutWebView({ visible, checkoutUrl, title, onClose }: P
               }
               return true;
             }}
+            onError={() => setLoading(false)}
             startInLoadingState
             javaScriptEnabled
             domStorageEnabled
             setSupportMultipleWindows={false}
             originWhitelist={["https://*", "http://*"]}
           />
+          )}
           {/* Overlay sau WebView để không bị WebView đè lên spinner */}
           {loading ? (
             <View style={[styles.loader, { backgroundColor: theme.colors.background }]} pointerEvents="none">
@@ -162,6 +202,8 @@ const styles = StyleSheet.create({
   },
   webWrap: { flex: 1, position: "relative" },
   webview: { flex: 1 },
+  webFallback: { flex: 1 },
+  openLink: { padding: spacing.md, alignItems: "center" },
   loader: {
     ...StyleSheet.absoluteFill,
     zIndex: 2,

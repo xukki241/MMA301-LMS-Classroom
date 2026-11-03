@@ -96,6 +96,9 @@ function harness(kind) {
       },
     },
     haptics: { impactLight() {}, notifyError() {}, notifySuccess() {} },
+    CloudinaryFilePicker: { CloudinaryFilePicker: "CloudinaryFilePicker" },
+    DeadlineField: { DeadlineField: "DeadlineField" },
+    ClassFilesPanel: { ClassFilesPanel: "ClassFilesPanel" },
     FormFeedback: {
       FieldError: "FieldError",
       FormNotice: "FormNotice",
@@ -136,6 +139,7 @@ function harness(kind) {
       Keyboard: { addListener: () => ({ remove() {} }) },
       KeyboardAvoidingView: "KeyboardAvoidingView",
       Platform: { OS: "android" },
+      Linking: { openURL() {} },
       Pressable: "Pressable",
       RefreshControl: "RefreshControl",
       ScrollView: "ScrollView",

@@ -164,7 +164,7 @@ export default function ExerciseDetailScreen() {
 
   const open = isExerciseOpen(exercise.dueAt);
   const graded = Boolean(mineQuery.data?.grade);
-  const canResubmit = !isTeacher && !graded && (open || Boolean(mineQuery.data?.submission));
+  const canResubmit = !isTeacher && !graded && open;
   const dueLabel = new Date(exercise.dueAt).toLocaleString("vi-VN", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -231,7 +231,16 @@ export default function ExerciseDetailScreen() {
                         error={Boolean(submitError)}
                         blurOnSubmit={false}
                       />
+                      <TextInput
+                        mode="outlined"
+                        label="Link bài làm (http/https) *"
+                        autoCapitalize="none"
+                        keyboardType="url"
+                        value={url}
+                        onChangeText={setUrl}
+                      />
                       <CloudinaryFilePicker
+                        label="Hoặc upload file bài làm *"
                         value={url}
                         onChange={setUrl}
                         token={token}
@@ -248,14 +257,9 @@ export default function ExerciseDetailScreen() {
                       </AppButton>
                       <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
                         {mineQuery.data?.submission
-                          ? "Có thể nộp lại nếu chưa được chấm điểm."
-                          : "File lưu trên Cloudinary — không dùng link Drive."}
+                          ? "Có thể cập nhật khi bài còn mở và chưa được chấm."
+                          : "Bắt buộc link http(s) hoặc file đã upload."}
                       </Text>
-                      {!open && mineQuery.data?.submission ? (
-                        <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
-                          Hạn đã qua nhưng chưa chấm — vẫn có thể nộp đè.
-                        </Text>
-                      ) : null}
                     </>
                   ) : mineQuery.data?.submission && !mineQuery.data.grade ? (
                     <Text style={typography.body}>Đã nộp · chờ giáo viên chấm điểm.</Text>
@@ -304,7 +308,24 @@ export default function ExerciseDetailScreen() {
                           label="Điểm (0–10)"
                           keyboardType="decimal-pad"
                           value={gradeScore}
-                          onChangeText={setGradeScore}
+                          onChangeText={(value) => {
+                            const next = value.replace(",", ".").replace(/[^\d.]/g, "");
+                            const parts = next.split(".");
+                            const cleaned = parts.length <= 1 ? parts[0] : `${parts[0]}.${parts[1].slice(0, 2)}`;
+                            if (cleaned === "") {
+                              setGradeScore("");
+                              setGradeError(null);
+                              return;
+                            }
+                            const score = Number(cleaned);
+                            if (!Number.isFinite(score) || score > 10) {
+                              setGradeError("Điểm chỉ từ 0 đến 10.");
+                              setGradeScore(score > 10 ? "10" : cleaned);
+                              return;
+                            }
+                            setGradeError(null);
+                            setGradeScore(cleaned);
+                          }}
                           error={Boolean(gradeError)}
                           autoFocus
                           blurOnSubmit={false}

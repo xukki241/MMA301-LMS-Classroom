@@ -35,7 +35,8 @@ export function CommentThread({ session, postId }: { session: StreamSession; pos
           </View>
         ))}
         <StreamComposer kind="comment" maxLength={COMMENT_MAX_LENGTH}
-          pending={mutation.isPending} error={mutation.error} onSubmit={mutation.mutateAsync} />
+          pending={mutation.isPending} error={mutation.error}
+          onSubmit={async (content) => mutation.mutateAsync(content)} />
       </> : <StreamRequestError error={mutation.error} />}
       <AppButton mode="text" loading={query.isFetching} onPress={() => void refresh()}>Làm mới bình luận</AppButton>
     </View>

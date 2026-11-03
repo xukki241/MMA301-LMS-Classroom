@@ -1,5 +1,5 @@
 import { queryOptions, type QueryClient } from "@tanstack/react-query";
-import { listComments, createPost, createComment, type StreamPost, type StreamComment } from "./stream-api";
+import { listComments, createPost, createComment, deletePost, updatePost, type StreamPost, type StreamComment } from "./stream-api";
 import { cachedPosts } from "./offline-data";
 
 export type StreamSession = { userId: string; token: string; classId: string };
@@ -23,11 +23,40 @@ export function createPostOptions(client: QueryClient, session: StreamSession) {
   const { queryKey } = postsOptions(session);
   return {
     networkMode: "always" as const,
-    mutationFn: (content: string) => createPost(session.token, session.classId, content),
+    mutationFn: (input: string | { content: string; attachmentUrl?: string }) => {
+      const content = typeof input === "string" ? input : input.content;
+      const attachmentUrl = typeof input === "string" ? "" : input.attachmentUrl ?? "";
+      return createPost(session.token, session.classId, content, attachmentUrl);
+    },
     retry: false as const,
     onSuccess: async (post: StreamPost) => {
       await client.cancelQueries({ queryKey, exact: true });
       client.setQueryData<StreamPost[]>(queryKey, old => [post, ...(old ?? []).filter(item => item.id !== post.id)]);
+      await client.invalidateQueries({ queryKey, exact: true });
+    },
+  };
+}
+export function updatePostOptions(client: QueryClient, session: StreamSession) {
+  const { queryKey } = postsOptions(session);
+  return {
+    networkMode: "always" as const,
+    mutationFn: (input: { postId: string; content: string; attachmentUrl?: string }) =>
+      updatePost(session.token, session.classId, input.postId, input.content, input.attachmentUrl ?? ""),
+    retry: false as const,
+    onSuccess: async (post: StreamPost) => {
+      client.setQueryData<StreamPost[]>(queryKey, old => (old ?? []).map(item => item.id === post.id ? post : item));
+      await client.invalidateQueries({ queryKey, exact: true });
+    },
+  };
+}
+export function deletePostOptions(client: QueryClient, session: StreamSession) {
+  const { queryKey } = postsOptions(session);
+  return {
+    networkMode: "always" as const,
+    mutationFn: (postId: string) => deletePost(session.token, session.classId, postId),
+    retry: false as const,
+    onSuccess: async (_result: void, postId: string) => {
+      client.setQueryData<StreamPost[]>(queryKey, old => (old ?? []).filter(item => item.id !== postId));
       await client.invalidateQueries({ queryKey, exact: true });
     },
   };
