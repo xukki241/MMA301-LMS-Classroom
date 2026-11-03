@@ -36,6 +36,55 @@
 - [ ] API có kiểm tra quyền phù hợp (nếu là backend).  
 - [ ] Đã commit/PR lên đúng repository LMS.  
 
-## 5.5. Liên kết quản lý
+## 5.5. Đếm màn hình mobile & chia đều (19 màn)
+
+> **Ghi chú:** Số màn ≠ độ khó. Ví dụ *Lịch của lớp* (thêm buổi + time picker) và *Chi tiết bài tập* (nộp Cloudinary / chấm điểm) nặng hơn *Hồ sơ*. Tab GV/HS dùng chung shell (Home, Lớp, Work, Lịch, Profile) được **gộp 1 màn** theo trải nghiệm; vẫn kiểm tra cả hai role. Layout / `+not-found` / `+html` không tính.
+
+### Tổng inventory: **19/19** (không trùng)
+
+| # | Màn hình | Route chính |
+|---|----------|-------------|
+| 1 | Đăng nhập | `(auth)/login` |
+| 2 | Đăng ký | `(auth)/register` |
+| 3 | Quên mật khẩu | `(auth)/forgot-password` |
+| 4 | Trang chủ | `(teacher\|student)/index` |
+| 5 | Danh sách lớp (tạo / join + phí) | `(teacher\|student)/classes` |
+| 6 | Chi tiết lớp & thành viên | `class/[id]` |
+| 7 | Bảng tin lớp | `class/[id]/stream` |
+| 8 | Tài liệu lớp | `class/[id]/materials` |
+| 9 | Danh sách bài tập | `class/[id]/exercises` |
+| 10 | Chi tiết bài tập (nộp / chấm) | `class/[id]/exercise/[exerciseId]` |
+| 11 | Lịch tổng quan | `(teacher\|student)/schedule` |
+| 12 | Lịch của lớp | `class/[id]/schedule` |
+| 13 | Công việc (Work) | `(teacher\|student)/work` |
+| 14 | Hồ sơ | `(teacher\|student)/profile` |
+| 15 | Tài khoản | `account` |
+| 16 | Đổi mật khẩu | `change-password` |
+| 17 | Lịch sử thanh toán | `payments` |
+| 18 | Lịch sử nộp bài | `submissions` |
+| 19 | Sổ điểm | `gradebook` |
+
+### Phân công theo tỷ lệ **4 – 4 – 4 – 3 – 4**
+
+Người nhận **3 màn** giữ luồng lớp phức tạp (tạo/join + chi tiết + bảng tin).
+
+| Thành viên | Số màn | Màn hình được giao |
+|------------|--------|--------------------|
+| **Nguyễn Xuân Kiên** | 4 | Đăng nhập · Quên mật khẩu · Tài khoản · Đổi mật khẩu |
+| **Nguyễn Anh Tú** | 4 | Trang chủ · Lịch tổng quan · Lịch của lớp · Lịch sử thanh toán |
+| **Nguyễn Quốc Hưng** | 4 | Công việc (Work) · Danh sách bài tập · Chi tiết bài tập (nộp/chấm) · Sổ điểm |
+| **Nguyễn Quang Lộc** | 3 | Danh sách lớp (tạo/join + phí) · Chi tiết lớp & thành viên · Bảng tin lớp |
+| **Ngô Quang Huy** | 4 | Đăng ký · Hồ sơ · Tài liệu lớp · Lịch sử nộp bài |
+
+**Cộng:** 4+4+4+3+4 = **19**.
+
+### Checklist khi nhận màn
+
+1. Luồng chính + empty / loading / lỗi.  
+2. Quyền theo role (GV / HS) và membership lớp.  
+3. Contract API đúng OpenAPI; không hard-code dữ liệu demo trên UI.  
+4. Có commit/PR gắn tên mình trên GitHub cho ≥ 2 màn được giao.
+
+## 5.6. Liên kết quản lý
 
 - Tracking / Kanban: [Notion LMS](https://app.notion.com/p/3751a3267e3e8086b82ecc06d6f23e3a)
