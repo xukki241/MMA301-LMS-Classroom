@@ -85,6 +85,7 @@ test("create exercise trims input and sends only the API contract", async () => 
     assert.deepEqual(JSON.parse(options.body), {
       title: "Bài tập 1",
       description: "Mô tả",
+      attachmentUrl: "",
       dueAt: exercise.dueAt,
     });
   });
@@ -106,13 +107,13 @@ test("invalid exercise input never sends a request", async () => {
   assert.equal(calls, 0);
 });
 
-test("submission validators require content or an HTTP(S) URL", () => {
-  assert.deepEqual(api.validateSubmissionPayload(" answer ", ""), { content: "answer", url: "" });
-  assert.deepEqual(api.validateSubmissionPayload("", " https://example.test/a "), {
-    content: "", url: "https://example.test/a",
+test("submission validators require an HTTP(S) link or uploaded file", () => {
+  assert.deepEqual(api.validateSubmissionPayload(" answer ", " https://example.test/a "), {
+    content: "answer", url: "https://example.test/a",
   });
-  assert.throws(() => api.validateSubmissionPayload("", ""), /Nhập nội dung/);
-  assert.throws(() => api.validateSubmissionPayload("", "javascript:alert(1)"), /http/);
+  assert.throws(() => api.validateSubmissionPayload("answer", ""), /link|file|http/i);
+  assert.throws(() => api.validateSubmissionPayload("", ""), /link|file|http/i);
+  assert.throws(() => api.validateSubmissionPayload("", "javascript:alert(1)"), /link|file|http/i);
 });
 
 test("missing own submission is a real null result; a grade is parsed on success", async () => {
@@ -129,10 +130,10 @@ test("create and update submission use the nested endpoints and trimmed body", a
   respond({ submission }, 201, (url, options) => {
     assert.equal(url, `${CORE_URL}/classes/${classId}/exercises/${exerciseId}/submissions`);
     assert.equal(options.method, "POST");
-    assert.deepEqual(JSON.parse(options.body), { content: "Câu trả lời", url: "" });
+    assert.deepEqual(JSON.parse(options.body), { content: "Câu trả lời", url: "https://example.test/a" });
   });
   assert.equal((await api.createSubmission("session", classId, exerciseId, {
-    content: " Câu trả lời ", url: "",
+    content: " Câu trả lời ", url: " https://example.test/a ",
   })).id, submissionId);
 
   respond({ submission: { ...submission, content: "Bản sửa" } }, 200, (url, options) => {
@@ -140,7 +141,7 @@ test("create and update submission use the nested endpoints and trimmed body", a
     assert.equal(options.method, "PUT");
   });
   assert.equal((await api.updateMySubmission("session", classId, exerciseId, {
-    content: "Bản sửa", url: "",
+    content: "Bản sửa", url: "https://example.test/a",
   })).content, "Bản sửa");
 });
 
@@ -157,7 +158,12 @@ test("teacher list preserves grade and rejects duplicate or invalid submissions"
 
 test("grade validation accepts 0–10 and invalid API input never sends a request", async () => {
   assert.equal(api.validateGradeScore("8,5"), 8.5);
+  assert.equal(api.validateGradeScore("0"), 0);
+  assert.equal(api.validateGradeScore("10"), 10);
   assert.throws(() => api.validateGradeScore("11"), /0 đến 10/);
+  assert.throws(() => api.validateGradeScore("-1"), /0 đến 10|dấu âm/);
+  assert.throws(() => api.validateGradeScore("abc"), /0 đến 10|dấu âm/);
+  assert.throws(() => api.validateGradeScore("+2"), /0 đến 10|dấu âm/);
 
   let calls = 0;
   respond({ grade: { submissionId, score: 8.5, feedback: "Tốt" } }, 200, (url, options) => {

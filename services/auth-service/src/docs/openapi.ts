@@ -62,6 +62,45 @@ const authOpenApiDocument = {
         },
       },
     },
+    "/auth/me": {
+      get: {
+        tags: ["Authentication"],
+        summary: "Get current user profile",
+        operationId: "getAuthMe",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          "200": { description: "Profile", content: { "application/json": { schema: { type: "object", required: ["user"], properties: { user: { $ref: "#/components/schemas/User" } } } } } },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { description: "User not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+        },
+      },
+      patch: {
+        tags: ["Authentication"],
+        summary: "Update display name",
+        operationId: "updateAuthMe",
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/UpdateProfileRequest" } } } },
+        responses: {
+          "200": { description: "Updated (new JWT)", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthResponse" } } } },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+        },
+      },
+    },
+    "/auth/change-password": {
+      post: {
+        tags: ["Authentication"],
+        summary: "Change password for the signed-in user",
+        operationId: "changePassword",
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ChangePasswordRequest" } } } },
+        responses: {
+          "200": { description: "Password changed", content: { "application/json": { schema: { type: "object", required: ["success"], properties: { success: { type: "boolean" } } } } } },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -76,6 +115,8 @@ const authOpenApiDocument = {
         },
       },
       LoginRequest: { type: "object", required: ["email", "password"], additionalProperties: false, properties: { email: { type: "string", format: "email" }, password: { type: "string", minLength: 1 } } },
+      UpdateProfileRequest: { type: "object", required: ["displayName"], additionalProperties: false, properties: { displayName: { type: "string", minLength: 2, maxLength: 80 } } },
+      ChangePasswordRequest: { type: "object", required: ["currentPassword", "newPassword"], additionalProperties: false, properties: { currentPassword: { type: "string", minLength: 1 }, newPassword: { type: "string", minLength: 8, maxLength: 72 } } },
       User: { type: "object", required: ["id", "email", "displayName", "role"], properties: { id: { type: "string" }, email: { type: "string", format: "email" }, displayName: { type: "string" }, role: { type: "string", enum: ["teacher", "student"] } } },
       AuthResponse: { type: "object", required: ["token", "user"], properties: { token: { type: "string" }, user: { $ref: "#/components/schemas/User" } } },
       HealthResponse: { type: "object", required: ["ok", "service", "mongo"], properties: { ok: { type: "boolean" }, service: { type: "string" }, mongo: { type: "string", enum: ["up", "down"] } } },

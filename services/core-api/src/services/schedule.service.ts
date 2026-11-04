@@ -42,7 +42,7 @@ export class ScheduleService {
     const { cls, membership } = await assertClassMembership(user.id, classId);
     assertOwner(user, cls.teacherId, membership.roleInClass);
     if (input.endTime <= input.startTime) {
-      throw new HttpError(400, "endTime must be later than startTime", "INVALID_TIME_RANGE");
+      throw new HttpError(400, "Giờ kết thúc phải sau giờ bắt đầu.", "INVALID_TIME_RANGE");
     }
     return ClassSession.create({ classId: cls._id, ...input, createdBy: user.id });
   }

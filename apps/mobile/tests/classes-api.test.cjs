@@ -75,6 +75,17 @@ test("join trims and uppercases code and reads the class envelope", async () => 
   assert.equal((await api.joinClass("test-session", " a8k92z ")).id, cls._id);
 });
 
+test("paid class fee is sent only from 5000 and a lower fee never requests", async () => {
+  respond({ message: "Tạo lớp học thành công", class: { ...cls, joinFeeVnd: 5000 } }, 201, (_url, options) => {
+    assert.deepEqual(JSON.parse(options.body), { name: "MMA301", joinFeeVnd: 5000 });
+  });
+  assert.equal((await api.createClass("test-session", "MMA301", 5000)).joinFeeVnd, 5000);
+  let calls = 0;
+  respond({ class: cls }, 201, () => { calls += 1; });
+  await assert.rejects(api.createClass("test-session", "MMA301", 1000), (e) => e.status === 422);
+  assert.equal(calls, 0);
+});
+
 test("invalid form inputs never send a request", async () => {
   let calls = 0;
   respond({ class: cls }, 200, () => { calls += 1; });

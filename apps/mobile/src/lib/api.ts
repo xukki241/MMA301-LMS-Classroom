@@ -43,3 +43,33 @@ export async function fetchMe(
 ): Promise<{ user: { id: string; email: string; role: string } }> {
   return http(`${CORE_URL}/me`, { token, signal });
 }
+
+export async function fetchAuthProfile(token: string, signal?: AbortSignal): Promise<{ user: AuthUser }> {
+  return http(`${AUTH_URL}/auth/me`, { token, signal });
+}
+
+export async function updateAuthProfile(
+  token: string,
+  displayName: string,
+  signal?: AbortSignal
+): Promise<AuthResponse> {
+  return http(`${AUTH_URL}/auth/me`, {
+    method: "PATCH",
+    token,
+    body: { displayName },
+    signal,
+  });
+}
+
+export async function changePassword(
+  token: string,
+  input: { currentPassword: string; newPassword: string },
+  signal?: AbortSignal
+): Promise<{ success: boolean }> {
+  return http(`${AUTH_URL}/auth/change-password`, {
+    method: "POST",
+    token,
+    body: input,
+    signal,
+  });
+}

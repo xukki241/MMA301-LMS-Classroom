@@ -7,6 +7,7 @@ export type LmsExercise = {
   classId: string;
   title: string;
   description: string;
+  attachmentUrl: string;
   dueAt: string;
   createdBy: string;
   createdAt?: string;
@@ -16,6 +17,7 @@ export type LmsSubmission = {
   id: string;
   exerciseId: string;
   studentId: string;
+  studentDisplayName?: string;
   content: string;
   url: string;
   submittedAt?: string;
@@ -59,6 +61,7 @@ function parseExercise(value: unknown, classId: string): LmsExercise {
     classId: parsedClassId,
     title: requiredString(raw.title),
     description: typeof raw.description === "string" ? raw.description : "",
+    attachmentUrl: typeof raw.attachmentUrl === "string" ? raw.attachmentUrl : "",
     dueAt,
     createdBy: requiredString(raw.createdBy),
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : undefined,
@@ -76,6 +79,10 @@ function parseSubmission(value: unknown, exerciseId: string): LmsSubmission {
     id,
     exerciseId: parsedExerciseId,
     studentId: requiredString(raw.studentId),
+    studentDisplayName:
+      typeof raw.studentDisplayName === "string" && raw.studentDisplayName.trim()
+        ? raw.studentDisplayName.trim()
+        : undefined,
     content: typeof raw.content === "string" ? raw.content : "",
     url: typeof raw.url === "string" ? raw.url : "",
     submittedAt: typeof raw.submittedAt === "string" ? raw.submittedAt : undefined,
@@ -128,17 +135,18 @@ export function validateDueAtIso(dueAt: string): string {
 export function validateSubmissionPayload(content: string, url: string): { content: string; url: string } {
   const trimmedContent = content.trim();
   const trimmedUrl = url.trim();
-  if (!trimmedContent && !trimmedUrl) {
-    throw new HttpError("Nhập nội dung bài làm hoặc liên kết đính kèm.", 422, "VALIDATION_ERROR");
-  }
-  if (trimmedUrl && !isSafeHttpUrl(trimmedUrl)) {
-    throw new HttpError("Liên kết phải dùng http:// hoặc https://.", 422, "VALIDATION_ERROR");
+  if (!trimmedUrl || !isSafeHttpUrl(trimmedUrl)) {
+    throw new HttpError("Bắt buộc đính kèm link http(s) hoặc file đã upload.", 422, "VALIDATION_ERROR");
   }
   return { content: trimmedContent, url: trimmedUrl };
 }
 
 export function validateGradeScore(raw: string): number {
-  const score = Number(raw.replace(",", ".").trim());
+  const trimmed = raw.trim().replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) {
+    throw new HttpError("Chỉ nhập số từ 0 đến 10, không dùng dấu âm hoặc chữ.", 422, "VALIDATION_ERROR");
+  }
+  const score = Number(trimmed);
   if (!Number.isFinite(score) || score < 0 || score > 10) {
     throw new HttpError("Điểm phải từ 0 đến 10.", 422, "VALIDATION_ERROR");
   }
@@ -164,15 +172,53 @@ export async function listExercises(
 export async function createExercise(
   token: string,
   classId: string,
-  input: { title: string; description?: string; dueAt: string },
+  input: { title: string; description?: string; dueAt: string; attachmentUrl?: string },
 ): Promise<LmsExercise> {
   const body = {
     title: validateExerciseTitle(input.title),
     description: (input.description ?? "").trim(),
+    attachmentUrl: (input.attachmentUrl ?? "").trim(),
     dueAt: validateDueAtIso(input.dueAt),
   };
   const raw = record(await http<unknown>(exercisesUrl(classId), { method: "POST", token, body }));
   return parseExercise(raw.exercise, classId);
+}
+
+export async function updateExercise(
+  token: string,
+  classId: string,
+  exerciseId: string,
+  input: { title: string; description?: string; dueAt: string; attachmentUrl?: string },
+): Promise<LmsExercise> {
+  const body = {
+    title: validateExerciseTitle(input.title),
+    description: (input.description ?? "").trim(),
+    attachmentUrl: (input.attachmentUrl ?? "").trim(),
+    dueAt: validateDueAtIso(input.dueAt),
+  };
+  const raw = record(
+    await http<unknown>(`${exercisesUrl(classId)}/${encodeURIComponent(exerciseId)}`, {
+      method: "PATCH",
+      token,
+      body,
+    })
+  );
+  return parseExercise(raw.exercise, classId);
+}
+
+export async function deleteExercise(token: string, classId: string, exerciseId: string): Promise<void> {
+  await http<unknown>(`${exercisesUrl(classId)}/${encodeURIComponent(exerciseId)}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+/** Trong 1 giờ kể từ tạo → UI cho phép sửa/xoá (server còn chặn nếu đã có submission). */
+export function canMutateExercise(exercise: LmsExercise, now = Date.now()): boolean {
+  if (!exercise.createdAt) return false;
+  const created = Date.parse(exercise.createdAt);
+  if (!Number.isFinite(created)) return false;
+  return now - created <= 60 * 60 * 1000;
 }
 
 export async function getMySubmission(

@@ -31,13 +31,14 @@ export class ClassService {
   /**
    * Create a new class (Teacher only)
    */
-  static async createClass(teacherId: string, name: string, displayName = "") {
+  static async createClass(teacherId: string, name: string, displayName = "", joinFeeVnd = 0) {
     const code = await generateUniqueClassCode();
 
     const newClass = await ClassModel.create({
       name,
       code,
       teacherId,
+      joinFeeVnd,
     });
 
     // Automatically add teacher as a class member
@@ -94,6 +95,15 @@ export class ClassService {
       throw new HttpError(403, "You are already a member of this class!", "ALREADY_JOINED");
     }
 
+    const fee = Number(cls.joinFeeVnd ?? 0);
+    if (fee > 0) {
+      throw new HttpError(
+        402,
+        "Lớp có phí tham gia — thanh toán rồi mới vào lớp.",
+        "PAYMENT_REQUIRED",
+      );
+    }
+
     const membership = await ClassMember.create({
       classId: cls._id,
       userId: studentId,
@@ -101,6 +111,21 @@ export class ClassService {
       displayName,
     });
 
+    return { class: cls, membership };
+  }
+
+  /** Ghi danh sau khi thanh toán phí lớp thành công. */
+  static async enrollAfterPayment(studentId: string, classId: string, displayName = "") {
+    const cls = await ClassModel.findById(classId);
+    if (!cls) throw new HttpError(404, "No class found!", "CLASS_NOT_FOUND");
+    const existingMember = await ClassMember.findOne({ classId: cls._id, userId: studentId });
+    if (existingMember) return { class: cls, membership: existingMember };
+    const membership = await ClassMember.create({
+      classId: cls._id,
+      userId: studentId,
+      roleInClass: "student",
+      displayName,
+    });
     return { class: cls, membership };
   }
 

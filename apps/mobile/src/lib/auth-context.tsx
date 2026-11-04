@@ -19,6 +19,8 @@ interface AuthState {
     displayName: string;
     role: "teacher" | "student";
   }) => Promise<void>;
+  /** Cập nhật token/user sau đổi hồ sơ (không clear cache toàn bộ). */
+  refreshSession: (token: string, user: AuthUser) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -72,6 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(nextUser);
   }, []);
 
+  const refreshSession = useCallback(async (nextToken: string, nextUser: AuthUser) => {
+    await persist(nextToken, nextUser);
+    setToken(nextToken);
+    setUser(nextUser);
+  }, []);
+
   useEffect(() => {
     setOnUnauthorized(() => {
       void logout();
@@ -94,9 +102,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const result = await registerApi(input);
         await beginSession(result.token, result.user);
       },
+      refreshSession,
       logout,
     }),
-    [loading, token, user, logout, beginSession]
+    [loading, token, user, logout, beginSession, refreshSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

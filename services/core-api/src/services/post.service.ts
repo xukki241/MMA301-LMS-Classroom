@@ -1,13 +1,14 @@
 import mongoose from "mongoose";
 import { HttpError } from "../lib/httpError.js";
 import { assertClassMembership } from "../lib/classGuards.js";
+import { authorNameByUserId, withAuthorDisplayName } from "../lib/authorNames.js";
 import { Post } from "../models/index.js";
 
 export class PostService {
   /**
    * Create a new post in class (Teacher only)
    */
-  static async createPost(userId: string, classId: string, content: string) {
+  static async createPost(userId: string, classId: string, content: string, attachmentUrl = "") {
     const { membership } = await assertClassMembership(userId, classId);
 
     if (membership.roleInClass !== "teacher") {
@@ -18,10 +19,12 @@ export class PostService {
       classId,
       authorId: userId,
       content,
+      attachmentUrl,
       isDeleted: false,
     });
 
-    return post;
+    const names = await authorNameByUserId(classId, [userId]);
+    return withAuthorDisplayName(post, names);
   }
 
   /**
@@ -44,13 +47,23 @@ export class PostService {
     }
 
     const posts = await Post.find(filter).sort({ createdAt: -1 });
-    return posts;
+    const names = await authorNameByUserId(
+      classId,
+      posts.map((post) => String(post.authorId)),
+    );
+    return posts.map((post) => withAuthorDisplayName(post, names));
   }
 
   /**
    * Edit post (Author only)
    */
-  static async updatePost(userId: string, classId: string, postId: string, content: string) {
+  static async updatePost(
+    userId: string,
+    classId: string,
+    postId: string,
+    content: string,
+    attachmentUrl?: string,
+  ) {
     await assertClassMembership(userId, classId);
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
@@ -67,6 +80,7 @@ export class PostService {
     }
 
     post.content = content;
+    if (attachmentUrl !== undefined) post.attachmentUrl = attachmentUrl;
     await post.save();
 
     return post;

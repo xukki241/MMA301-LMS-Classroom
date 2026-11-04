@@ -68,3 +68,52 @@ export async function login(input: { email: string; password: string }): Promise
     role: user.role,
   });
 }
+
+export async function getProfile(userId: string): Promise<AuthResponse["user"]> {
+  const user = await User.findById(userId);
+  if (!user) throw new HttpError(404, "User not found", "USER_NOT_FOUND");
+  return { id: user.id, email: user.email, displayName: user.displayName, role: user.role };
+}
+
+export async function updateProfile(
+  userId: string,
+  input: { displayName: string }
+): Promise<AuthResponse> {
+  const displayName = input.displayName.trim();
+  if (displayName.length < 2 || displayName.length > 80) {
+    throw new HttpError(422, "Display name must be 2–80 characters", "VALIDATION_ERROR");
+  }
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $set: { displayName } },
+    { new: true, runValidators: true }
+  );
+  if (!user) throw new HttpError(404, "User not found", "USER_NOT_FOUND");
+  return toAuthResponse({
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    role: user.role,
+  });
+}
+
+export async function changePassword(
+  userId: string,
+  input: { currentPassword: string; newPassword: string }
+): Promise<{ success: true }> {
+  const user = await User.findById(userId);
+  if (!user) throw new HttpError(404, "User not found", "USER_NOT_FOUND");
+  const ok = await bcrypt.compare(input.currentPassword, user.passwordHash);
+  if (!ok) {
+    throw new HttpError(401, "Current password is incorrect", "INVALID_CREDENTIALS");
+  }
+  if (input.newPassword.length < 8 || input.newPassword.length > 72) {
+    throw new HttpError(422, "New password must be 8–72 characters", "VALIDATION_ERROR");
+  }
+  if (input.currentPassword === input.newPassword) {
+    throw new HttpError(422, "New password must differ from current password", "VALIDATION_ERROR");
+  }
+  user.passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
+  await user.save();
+  return { success: true };
+}

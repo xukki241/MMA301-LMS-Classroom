@@ -7,6 +7,7 @@ import { useOverviewQuery } from "@/src/lib/hooks";
 import {
   countWork,
   filterWork,
+  presentWork,
   STUDENT_STATUS_LABEL,
   TEACHER_STATUS_LABEL,
   type WorkFilter,
@@ -19,7 +20,7 @@ import { WorkRow } from "@/src/components/schedule/Rows";
 import { spacing, typography } from "@/src/theme/tokens";
 
 const STUDENT_FILTERS: WorkFilter[] = ["all", "todo", "submitted", "graded", "overdue"];
-const TEACHER_FILTERS: WorkFilter[] = ["all", "needs_grading", "open", "done"];
+const TEACHER_FILTERS: WorkFilter[] = ["all", "needs_grading", "open", "done", "closed"];
 
 function filterLabel(filter: WorkFilter): string {
   if (filter === "all") return "Tất cả";
@@ -39,6 +40,7 @@ const EMPTY_TEXT: Record<string, string> = {
   needs_grading: "Không có bài nào chờ chấm.",
   open: "Không có bài nào đang mở.",
   done: "Chưa có bài nào chấm xong.",
+  closed: "Không có bài nào đã hết hạn mà chưa có nộp.",
 };
 
 export function WorkScreen() {
@@ -68,8 +70,9 @@ export function WorkScreen() {
       setPulling(false);
     }
   };
-  const counts = overview ? countWork(overview.work) : {};
-  const rows = overview ? filterWork(overview.work, filter) : [];
+  const liveWork = overview ? presentWork(overview.work) : [];
+  const counts = overview ? countWork(liveWork) : {};
+  const rows = overview ? filterWork(liveWork, filter) : [];
 
   return (
     <Screen

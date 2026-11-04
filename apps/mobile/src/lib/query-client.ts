@@ -28,6 +28,8 @@ export const queryKeys = {
   class: (userId: string, id: string) => ["classes", userId, "detail", id] as const,
   members: (userId: string, id: string) => ["classes", userId, "members", id] as const,
   overview: (userId: string) => ["overview", userId] as const,
+  payments: (userId: string) => ["payments", userId] as const,
+  submissions: (userId: string) => ["submissions", userId] as const,
   sessions: (userId: string, classId: string) => ["schedule", userId, classId, "sessions"] as const,
   exams: (userId: string, classId: string) => ["schedule", userId, classId, "exams"] as const,
   materials: (classId: string) => ["materials", classId] as const,
@@ -36,4 +38,5 @@ export const queryKeys = {
     ["exercises", userId, classId, exerciseId, "mine"] as const,
   exerciseSubmissions: (userId: string, classId: string, exerciseId: string) =>
     ["exercises", userId, classId, exerciseId, "submissions"] as const,
+  classFiles: (userId: string, classId: string) => ["files", userId, classId] as const,
 };

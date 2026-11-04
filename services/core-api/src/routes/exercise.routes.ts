@@ -8,3 +8,15 @@ export const exerciseRouter = Router();
 
 exerciseRouter.post("/classes/:classId/exercises", requireAuth, requireRole("teacher"), asyncHandler(ExerciseController.createExercise));
 exerciseRouter.get("/classes/:classId/exercises", requireAuth, asyncHandler(ExerciseController.listExercises));
+exerciseRouter.patch(
+  "/classes/:classId/exercises/:exerciseId",
+  requireAuth,
+  requireRole("teacher"),
+  asyncHandler(ExerciseController.updateExercise)
+);
+exerciseRouter.delete(
+  "/classes/:classId/exercises/:exerciseId",
+  requireAuth,
+  requireRole("teacher"),
+  asyncHandler(ExerciseController.deleteExercise)
+);

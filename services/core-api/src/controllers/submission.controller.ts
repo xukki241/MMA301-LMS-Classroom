@@ -18,6 +18,11 @@ const gradeSchema = z.object({
 }).strict();
 
 export class SubmissionController {
+  static async listMine(req: Request, res: Response): Promise<void> {
+    const submissions = await SubmissionService.listMySubmissions(req.user!);
+    res.status(200).json({ submissions });
+  }
+
   static async putGrade(req: Request, res: Response): Promise<void> {
     const parsed = gradeSchema.safeParse(req.body);
     if (!parsed.success) throw new HttpError(422, parsed.error.errors.map(e => e.message).join(", "), "VALIDATION_ERROR");

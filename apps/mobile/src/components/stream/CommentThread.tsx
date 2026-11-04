@@ -28,14 +28,15 @@ export function CommentThread({ session, postId }: { session: StreamSession; pos
         {query.data.length === 0 && !query.isError ? <Text>Chưa có bình luận nào.</Text> : null}
         {query.data.map(comment => (
           <View key={comment.id} style={styles.comment}>
-            <Text style={typography.caption}>Tác giả: {comment.authorId}</Text>
+            <Text style={typography.caption}>Tác giả: {comment.authorDisplayName}</Text>
             <Text style={typography.caption}>{new Date(comment.createdAt).toLocaleString("vi-VN")}</Text>
             <Text style={typography.body} selectable>{comment.content}</Text>
             <Divider />
           </View>
         ))}
         <StreamComposer kind="comment" maxLength={COMMENT_MAX_LENGTH}
-          pending={mutation.isPending} error={mutation.error} onSubmit={mutation.mutateAsync} />
+          pending={mutation.isPending} error={mutation.error}
+          onSubmit={async (content) => mutation.mutateAsync(content)} />
       </> : <StreamRequestError error={mutation.error} />}
       <AppButton mode="text" loading={query.isFetching} onPress={() => void refresh()}>Làm mới bình luận</AppButton>
     </View>

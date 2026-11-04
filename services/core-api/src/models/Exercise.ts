@@ -5,6 +5,7 @@ const exerciseSchema = new Schema(
     classId: { type: Schema.Types.ObjectId, ref: "Class", required: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
+    attachmentUrl: { type: String, default: "" },
     dueAt: { type: Date, required: true },
     createdBy: { type: String, required: true },
   },

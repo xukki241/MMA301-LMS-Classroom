@@ -3,12 +3,18 @@ import { z } from "zod";
 import { HttpError } from "../lib/httpError.js";
 import { ClassService } from "../services/class.service.js";
 
+const MIN_JOIN_FEE_VND = 5_000;
+
 const createClassSchema = z.object({
   name: z
     .string({ required_error: "Class name is required!" })
     .trim()
     .min(1, "Class name cannot be empty!")
     .max(100, "Class name must be 100 characters or fewer!"),
+  joinFeeVnd: z.coerce.number().int().min(0).max(50_000_000).optional().default(0),
+}).refine((body) => body.joinFeeVnd === 0 || body.joinFeeVnd >= MIN_JOIN_FEE_VND, {
+  message: "Phí tham gia tối thiểu 5.000đ",
+  path: ["joinFeeVnd"],
 });
 
 const joinClassSchema = z.object({
@@ -43,8 +49,8 @@ export class ClassController {
    */
   static async createClass(req: Request, res: Response): Promise<void> {
     const user = req.user!;
-    const { name } = parseBody(createClassSchema, req.body);
-    const newClass = await ClassService.createClass(user.id, name, user.displayName);
+    const { name, joinFeeVnd } = parseBody(createClassSchema, req.body);
+    const newClass = await ClassService.createClass(user.id, name, user.displayName, joinFeeVnd);
 
     res.status(201).json({
       message: "Class created successfully!",

@@ -69,7 +69,14 @@ function harness(kind) {
     "auth-context": { useAuth: () => ({ token: "test-session", user: { id: "user-1", role: ctx.role, displayName: "Người dùng" } }) },
     "user-error-message": { userErrorMessage: (error) => error.message },
     "exercises-api": {
+      canMutateExercise: (item) => {
+        if (!item?.createdAt) return false;
+        const created = Date.parse(item.createdAt);
+        return Number.isFinite(created) && Date.now() - created <= 60 * 60 * 1000;
+      },
       createExercise: async () => ({}),
+      updateExercise: async () => ({}),
+      deleteExercise: async () => {},
       defaultDueAtIso: () => "2099-01-01T00:00:00.000Z",
       isExerciseOpen: (dueAt) => String(dueAt).startsWith("2099"),
       listExercises: async () => [],
@@ -89,6 +96,9 @@ function harness(kind) {
       },
     },
     haptics: { impactLight() {}, notifyError() {}, notifySuccess() {} },
+    CloudinaryFilePicker: { CloudinaryFilePicker: "CloudinaryFilePicker" },
+    DeadlineField: { DeadlineField: "DeadlineField" },
+    ClassFilesPanel: { ClassFilesPanel: "ClassFilesPanel" },
     FormFeedback: {
       FieldError: "FieldError",
       FormNotice: "FormNotice",
@@ -125,9 +135,11 @@ function harness(kind) {
       useRouter: () => ({ push() {} }),
     },
     "react-native": {
+      Alert: { alert() {} },
       Keyboard: { addListener: () => ({ remove() {} }) },
       KeyboardAvoidingView: "KeyboardAvoidingView",
       Platform: { OS: "android" },
+      Linking: { openURL() {} },
       Pressable: "Pressable",
       RefreshControl: "RefreshControl",
       ScrollView: "ScrollView",

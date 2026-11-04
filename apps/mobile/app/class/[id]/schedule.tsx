@@ -8,7 +8,9 @@ import { Screen } from "@/src/components/ui/Screen";
 import { AppButton } from "@/src/components/ui/AppButton";
 import { ClassListSkeleton } from "@/src/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/src/components/ui/EmptyState";
-import { FormDialogScroll, FormNotice, useKeyboardLift } from "@/src/components/ui/FormFeedback";
+import { FieldError, FormDialogScroll, FormNotice, useKeyboardLift } from "@/src/components/ui/FormFeedback";
+import { DateTimeField } from "@/src/components/ui/DateTimeField";
+import { TimePickerField } from "@/src/components/ui/TimePickerField";
 import { SectionHeader } from "@/src/components/ui/Tile";
 import { useAuth } from "@/src/lib/auth-context";
 import { HttpError } from "@/src/lib/http";
@@ -23,13 +25,22 @@ import {
   deleteSession,
   listExams,
   listSessions,
-  localDateTimeToIso,
   type ClassExamItem,
   type ClassSessionItem,
 } from "@/src/lib/schedule-api";
 import { elevation, radius, spacing, typography } from "@/src/theme/tokens";
 
 type Tab = "study" | "exams";
+
+function defaultExamStartIso() {
+  const next = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  next.setMinutes(0, 0, 0);
+  return next.toISOString();
+}
+
+function defaultExamEndIso(startIso: string) {
+  return new Date(Date.parse(startIso) + 60 * 60 * 1000).toISOString();
+}
 
 function Item({ icon, title, lines, canDelete, onDelete }: {
   icon: React.ComponentProps<typeof Ionicons>["name"];
@@ -68,7 +79,7 @@ export default function ClassScheduleScreen() {
   const [tab, setTab] = useState<Tab>("study");
 
   const [sessionOpen, setSessionOpen] = useState(false);
-  const [weekday, setWeekday] = useState(1);
+  const [weekdays, setWeekdays] = useState<number[]>([1]);
   const [startTime, setStartTime] = useState("07:30");
   const [endTime, setEndTime] = useState("09:30");
   const [room, setRoom] = useState("");
@@ -76,9 +87,8 @@ export default function ClassScheduleScreen() {
 
   const [examOpen, setExamOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [dateText, setDateText] = useState("");
-  const [timeText, setTimeText] = useState("08:00");
-  const [duration, setDuration] = useState("60");
+  const [examStartAt, setExamStartAt] = useState(defaultExamStartIso);
+  const [examEndAt, setExamEndAt] = useState(() => defaultExamEndIso(defaultExamStartIso()));
   const [formError, setFormError] = useState<string | null>(null);
   const [pulling, setPulling] = useState(false);
   const keyboardLift = useKeyboardLift();
@@ -131,21 +141,58 @@ export default function ClassScheduleScreen() {
     setRoom("");
     setNote("");
     setTitle("");
-    setDateText("");
+    const start = defaultExamStartIso();
+    setExamStartAt(start);
+    setExamEndAt(defaultExamEndIso(start));
+  };
+
+  const toggleWeekday = (day: number) => {
+    setWeekdays((current) =>
+      current.includes(day) ? current.filter((item) => item !== day) : [...current, day].sort((a, b) => a - b),
+    );
   };
 
   const sessionMutation = useMutation({
-    mutationFn: () => createSession(token!, classId!, { weekday, startTime: startTime.trim(), endTime: endTime.trim(), room, note }),
+    mutationFn: async () => {
+      if (weekdays.length === 0) {
+        throw new HttpError("Chọn ít nhất một ngày trong tuần.", 422, "VALIDATION_ERROR");
+      }
+      const created = [];
+      for (const weekday of weekdays) {
+        created.push(await createSession(token!, classId!, {
+          weekday,
+          startTime: startTime.trim(),
+          endTime: endTime.trim(),
+          room,
+          note,
+        }));
+      }
+      return created;
+    },
     onSuccess: () => { notifySuccess(); refreshAll(); closeForms(); },
     onError: (error) => { notifyError(); setFormError(userErrorMessage(error)); },
   });
 
   const examMutation = useMutation({
     mutationFn: () => {
-      const iso = localDateTimeToIso(dateText, timeText);
-      if (!iso) throw new HttpError("Nhập ngày dạng dd/MM/yyyy và giờ dạng HH:mm.", 422, "VALIDATION_ERROR");
+      const startMs = Date.parse(examStartAt);
+      const endMs = Date.parse(examEndAt);
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) {
+        throw new HttpError("Chọn ngày giờ bắt đầu và kết thúc trên lịch.", 422, "VALIDATION_ERROR");
+      }
+      if (endMs <= startMs) {
+        throw new HttpError("Giờ kết thúc phải sau giờ bắt đầu.", 422, "VALIDATION_ERROR");
+      }
+      const durationMinutes = Math.round((endMs - startMs) / 60_000);
+      if (durationMinutes < 1 || durationMinutes > 600) {
+        throw new HttpError("Thời lượng kỳ kiểm tra từ 1 đến 600 phút.", 422, "VALIDATION_ERROR");
+      }
       return createExam(token!, classId!, {
-        title, startsAt: iso, durationMinutes: Number.parseInt(duration, 10), room, note,
+        title,
+        startsAt: new Date(startMs).toISOString(),
+        durationMinutes,
+        room,
+        note,
       });
     },
     onSuccess: () => { notifySuccess(); refreshAll(); closeForms(); },
@@ -167,6 +214,19 @@ export default function ClassScheduleScreen() {
 
   if (!classId) return <Screen><ErrorState message="Không tìm thấy lớp học." /></Screen>;
 
+  const timeOrderError =
+    startTime.trim() && endTime.trim() && endTime.trim() <= startTime.trim()
+      ? "Giờ kết thúc phải sau giờ bắt đầu."
+      : null;
+  const examWindowError = (() => {
+    const startMs = Date.parse(examStartAt);
+    const endMs = Date.parse(examEndAt);
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return "Chọn ngày giờ bắt đầu và kết thúc.";
+    if (endMs <= startMs) return "Giờ kết thúc phải sau giờ bắt đầu.";
+    const minutes = Math.round((endMs - startMs) / 60_000);
+    if (minutes < 1 || minutes > 600) return "Thời lượng kỳ kiểm tra từ 1 đến 600 phút.";
+    return null;
+  })();
   const sessions: ClassSessionItem[] = sessionsQuery.data ?? [];
   const exams: ClassExamItem[] = (examsQuery.data ?? []).slice().sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
   const week = sessionsByWeekday(sessions.map((s) => ({ ...s, className: "" })));
@@ -242,21 +302,49 @@ export default function ClassScheduleScreen() {
           <Dialog.Title>Thêm buổi học</Dialog.Title>
           {formError ? <View style={styles.notice}><FormNotice message={formError} /></View> : null}
           <FormDialogScroll>
+            <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>Chọn một hoặc nhiều ngày trong tuần</Text>
             <View style={styles.chips}>
-              {[1, 2, 3, 4, 5, 6, 0].map((day) => (
-                <Chip key={day} selected={weekday === day} showSelectedCheck={false} onPress={() => setWeekday(day)}>
-                  {WEEKDAY_LABELS[day]}
-                </Chip>
-              ))}
+              {[1, 2, 3, 4, 5, 6, 0].map((day) => {
+                const selected = weekdays.includes(day);
+                return (
+                  <Chip
+                    key={day}
+                    selected={selected}
+                    showSelectedCheck={false}
+                    compact
+                    onPress={() => toggleWeekday(day)}
+                    style={selected ? { backgroundColor: theme.colors.primary } : undefined}
+                    textStyle={selected ? { color: theme.colors.onPrimary } : undefined}
+                  >
+                    {WEEKDAY_LABELS[day]}
+                  </Chip>
+                );
+              })}
             </View>
-            <TextInput mode="outlined" label="Bắt đầu (HH:mm)" value={startTime} onChangeText={setStartTime} keyboardType="numbers-and-punctuation" />
-            <TextInput mode="outlined" label="Kết thúc (HH:mm)" value={endTime} onChangeText={setEndTime} keyboardType="numbers-and-punctuation" />
+            <TimePickerField label="Bắt đầu" value={startTime} onChange={setStartTime} />
+            <TimePickerField label="Kết thúc" value={endTime} onChange={setEndTime} />
+            <FieldError message={timeOrderError} />
             <TextInput mode="outlined" label="Phòng (tuỳ chọn)" value={room} onChangeText={setRoom} />
             <TextInput mode="outlined" label="Ghi chú (tuỳ chọn)" value={note} onChangeText={setNote} />
           </FormDialogScroll>
           <Dialog.Actions>
             <AppButton mode="text" onPress={closeForms}>Hủy</AppButton>
-            <AppButton style={styles.save} loading={sessionMutation.isPending} onPress={() => { setFormError(null); sessionMutation.mutate(); }}>Lưu</AppButton>
+            <AppButton
+              style={styles.save}
+              loading={sessionMutation.isPending}
+              disabled={Boolean(timeOrderError) || sessionMutation.isPending}
+              onPress={() => {
+                if (timeOrderError) {
+                  notifyError();
+                  setFormError(timeOrderError);
+                  return;
+                }
+                setFormError(null);
+                sessionMutation.mutate();
+              }}
+            >
+              Lưu
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
 
@@ -265,15 +353,52 @@ export default function ClassScheduleScreen() {
           {formError ? <View style={styles.notice}><FormNotice message={formError} /></View> : null}
           <FormDialogScroll>
             <TextInput mode="outlined" label="Tiêu đề" value={title} onChangeText={setTitle} />
-            <TextInput mode="outlined" label="Ngày (dd/MM/yyyy)" value={dateText} onChangeText={setDateText} keyboardType="numbers-and-punctuation" />
-            <TextInput mode="outlined" label="Giờ bắt đầu (HH:mm)" value={timeText} onChangeText={setTimeText} keyboardType="numbers-and-punctuation" />
-            <TextInput mode="outlined" label="Thời lượng (phút)" value={duration} onChangeText={setDuration} keyboardType="number-pad" />
+            <DateTimeField
+              label="Bắt đầu"
+              value={examStartAt}
+              minimumDate={new Date()}
+              onChange={(next) => {
+                setExamStartAt(next);
+                if (Date.parse(examEndAt) <= Date.parse(next)) {
+                  setExamEndAt(defaultExamEndIso(next));
+                }
+                setFormError(null);
+              }}
+            />
+            <DateTimeField
+              label="Kết thúc"
+              value={examEndAt}
+              minimumDate={new Date(examStartAt)}
+              onChange={(next) => {
+                setExamEndAt(next);
+                setFormError(null);
+              }}
+            />
+            <FieldError message={examWindowError} />
+            <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>
+              Thời lượng sẽ tính từ khoảng bắt đầu → kết thúc.
+            </Text>
             <TextInput mode="outlined" label="Phòng (tuỳ chọn)" value={room} onChangeText={setRoom} />
             <TextInput mode="outlined" label="Ghi chú (tuỳ chọn)" value={note} onChangeText={setNote} />
           </FormDialogScroll>
           <Dialog.Actions>
             <AppButton mode="text" onPress={closeForms}>Hủy</AppButton>
-            <AppButton style={styles.save} loading={examMutation.isPending} onPress={() => { setFormError(null); examMutation.mutate(); }}>Lưu</AppButton>
+            <AppButton
+              style={styles.save}
+              loading={examMutation.isPending}
+              disabled={Boolean(examWindowError) || examMutation.isPending}
+              onPress={() => {
+                if (examWindowError) {
+                  notifyError();
+                  setFormError(examWindowError);
+                  return;
+                }
+                setFormError(null);
+                examMutation.mutate();
+              }}
+            >
+              Lưu
+            </AppButton>
           </Dialog.Actions>
         </Dialog>
       </Portal>

@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 import { env } from "../config/env.js";
 import { HttpError } from "../lib/httpError.js";
 import type { AuthUser } from "../middleware/requireAuth.js";
-import { ClassMember, ClassModel, Material, MaterialUnlock } from "../models/index.js";
+import { ClassService } from "./class.service.js";
+import { ClassJoinPayment, ClassMember, ClassModel, Material, MaterialUnlock } from "../models/index.js";
 
 /**
  * Signed field allow-list from official sepay-pg-node Checkout.signFields.
@@ -130,54 +131,124 @@ function buildFormFields(input: {
   return formFields;
 }
 
+export type PaymentHistoryItem = {
+  id: string;
+  classId: string;
+  className: string;
+  materialId: string;
+  materialTitle: string;
+  studentId: string;
+  amount: number;
+  provider: string;
+  transactionRef: string;
+  status: "pending" | "success" | "failed";
+  createdAt: string;
+  updatedAt: string;
+};
+
 export class PaymentService {
+  /**
+   * Học sinh: giao dịch của chính mình.
+   * Giáo viên: mọi giao dịch mở khóa trong lớp mình chủ.
+   */
+  static async listMyPayments(user: AuthUser): Promise<PaymentHistoryItem[]> {
+    let rows;
+    if (user.role === "student") {
+      rows = await MaterialUnlock.find({ userId: user.id }).sort({ updatedAt: -1, _id: -1 }).lean();
+    } else if (user.role === "teacher") {
+      const owned = await ClassModel.find({ teacherId: user.id }).select("_id").lean();
+      const classIds = owned.map((c) => c._id);
+      if (classIds.length === 0) return [];
+      rows = await MaterialUnlock.find({ classId: { $in: classIds } }).sort({ updatedAt: -1, _id: -1 }).lean();
+    } else {
+      throw new HttpError(403, "Không có quyền xem lịch sử giao dịch", "FORBIDDEN");
+    }
+    if (rows.length === 0) return [];
+
+    const materialIds = [...new Set(rows.map((r) => String(r.materialId)))];
+    const classIds = [...new Set(rows.map((r) => String(r.classId)))];
+    const [materials, classes] = await Promise.all([
+      Material.find({ _id: { $in: materialIds } }).select("_id title").lean(),
+      ClassModel.find({ _id: { $in: classIds } }).select("_id name").lean(),
+    ]);
+    const materialTitle = new Map(materials.map((m) => [String(m._id), m.title]));
+    const className = new Map(classes.map((c) => [String(c._id), c.name]));
+
+    return rows.map((row) => ({
+      id: String(row._id),
+      classId: String(row.classId),
+      className: className.get(String(row.classId)) ?? "",
+      materialId: String(row.materialId),
+      materialTitle: materialTitle.get(String(row.materialId)) ?? "Tài liệu đã xóa",
+      studentId: String(row.userId),
+      amount: Number(row.amount ?? 0),
+      provider: String(row.provider),
+      transactionRef: String(row.providerRef),
+      status: row.status as PaymentHistoryItem["status"],
+      createdAt: (row.createdAt as Date).toISOString(),
+      updatedAt: (row.updatedAt as Date).toISOString(),
+    }));
+  }
+
   static async createMaterialCheckout(
-    user: AuthUser,
-    classId: string,
-    materialId: string
+    _user: AuthUser,
+    _classId: string,
+    _materialId: string
   ): Promise<SePayCheckout> {
+    throw new HttpError(
+      400,
+      "Tài liệu trong lớp không còn thu phí riêng — chỉ trả phí khi vào lớp.",
+      "MATERIAL_UNLOCK_DISABLED",
+    );
+  }
+
+  /** Thanh toán phí vào lớp (joinFeeVnd) trước khi ghi danh. */
+  static async createClassJoinCheckout(user: AuthUser, code: string): Promise<SePayCheckout & { classId: string }> {
     if (user.role !== "student") {
-      throw new HttpError(403, "Chỉ học sinh cần mở khóa tài nguyên trả phí", "FORBIDDEN");
+      throw new HttpError(403, "Chỉ học sinh mới tham gia lớp", "FORBIDDEN");
     }
-    await assertMember(user.id, classId);
-    if (!mongoose.isObjectIdOrHexString(materialId)) {
-      throw new HttpError(400, "Định dạng ID tài liệu không hợp lệ", "INVALID_ID");
-    }
-    const material = await Material.findOne({ _id: materialId, classId });
-    if (!material) throw new HttpError(404, "Không tìm thấy tài liệu", "MATERIAL_NOT_FOUND");
+    const uppercaseCode = code.trim().toUpperCase();
+    const cls = await ClassModel.findOne({ code: uppercaseCode });
+    if (!cls) throw new HttpError(404, "Không tìm thấy lớp với mã này", "CLASS_NOT_FOUND");
 
-    const amount = Number(material.priceVnd ?? 0);
+    const existingMember = await ClassMember.findOne({ classId: cls._id, userId: user.id });
+    if (existingMember) {
+      throw new HttpError(403, "Bạn đã là thành viên của lớp này", "ALREADY_JOINED");
+    }
+
+    const amount = Number(cls.joinFeeVnd ?? 0);
     if (!Number.isFinite(amount) || amount <= 0) {
-      throw new HttpError(400, "Tài liệu này miễn phí, không cần thanh toán", "FREE_MATERIAL");
+      throw new HttpError(400, "Lớp miễn phí — dùng API join thông thường", "FREE_CLASS");
     }
 
-    const existing = await MaterialUnlock.findOne({ materialId, userId: user.id, status: "success" });
-    if (existing) {
-      throw new HttpError(400, "Bạn đã mở khóa tài liệu này", "ALREADY_UNLOCKED");
+    const paid = await ClassJoinPayment.findOne({ classId: cls._id, userId: user.id, status: "success" });
+    if (paid) {
+      await ClassService.enrollAfterPayment(user.id, String(cls._id), user.displayName ?? "");
+      throw new HttpError(400, "Bạn đã thanh toán — hãy mở lại danh sách lớp", "ALREADY_PAID");
     }
 
-    const txnRef = `SEPAY${Date.now()}-${materialId.slice(-6)}-${user.id.slice(-4)}`;
+    const txnRef = `JOIN${Date.now()}-${String(cls._id).slice(-6)}-${user.id.slice(-4)}`;
     const demo = !sepayEnabled();
     const formFields = buildFormFields({
       txnRef,
       amount,
-      description: `Mở khóa tài nguyên: ${material.title}`,
+      description: `Phí vào lớp: ${cls.name}`,
       customerId: user.id,
       demo,
     });
 
-    await MaterialUnlock.findOneAndUpdate(
-      { materialId, userId: user.id },
+    await ClassJoinPayment.findOneAndUpdate(
+      { classId: cls._id, userId: user.id },
       {
-        classId,
-        materialId,
+        classId: cls._id,
         userId: user.id,
         amount,
+        displayName: user.displayName ?? "",
         provider: demo ? "SEPAY_DEMO" : "SEPAY",
         providerRef: txnRef,
         status: "pending",
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
     const base = env.PUBLIC_CORE_URL.replace(/\/$/, "");
@@ -191,10 +262,19 @@ export class PaymentService {
       transactionRef: txnRef,
       amount,
       demo,
-      materialId: String(material._id),
-      materialTitle: material.title,
+      materialId: String(cls._id),
+      materialTitle: cls.name,
+      classId: String(cls._id),
       bankInfo: demo ? null : bankInfoFor(amount),
     };
+  }
+
+  private static async activateClassJoin(txn: InstanceType<typeof ClassJoinPayment>) {
+    if (txn.status !== "success") {
+      txn.status = "success";
+      await txn.save();
+    }
+    await ClassService.enrollAfterPayment(txn.userId, String(txn.classId), txn.displayName ?? "");
   }
 
   /** Rebuild signed SePay form for a pending LIVE txn (auto-POST HTML launch page). */
@@ -208,6 +288,27 @@ export class PaymentService {
       throw new HttpError(400, "SePay LIVE chưa được cấu hình", "SEPAY_DISABLED");
     }
     if (!txnRef) throw new HttpError(400, "Thiếu mã giao dịch", "MISSING_REF");
+
+    const joinTxn = await ClassJoinPayment.findOne({ providerRef: txnRef, provider: "SEPAY" });
+    if (joinTxn) {
+      if (joinTxn.status === "success") {
+        throw new HttpError(400, "Giao dịch đã hoàn tất", "ALREADY_UNLOCKED");
+      }
+      const cls = await ClassModel.findById(joinTxn.classId);
+      const formFields = buildFormFields({
+        txnRef,
+        amount: joinTxn.amount,
+        description: `Phí vào lớp: ${cls?.name ?? "lớp học"}`,
+        customerId: joinTxn.userId,
+        demo: false,
+      });
+      return {
+        checkoutUrl: env.SEPAY_CHECKOUT_URL!,
+        formFields,
+        materialTitle: cls?.name ?? "Phí vào lớp",
+        amount: joinTxn.amount,
+      };
+    }
 
     const txn = await MaterialUnlock.findOne({ providerRef: txnRef, provider: "SEPAY" });
     if (!txn) throw new HttpError(404, "Không tìm thấy giao dịch", "TXN_NOT_FOUND");
@@ -233,6 +334,18 @@ export class PaymentService {
   }
 
   static async confirmDemoPayment(user: AuthUser, transactionRef: string) {
+    const joinTxn = await ClassJoinPayment.findOne({ providerRef: transactionRef });
+    if (joinTxn) {
+      if (joinTxn.userId !== user.id && user.role !== "teacher") {
+        throw new HttpError(403, "Không thể xác nhận giao dịch của người khác", "FORBIDDEN");
+      }
+      if (joinTxn.provider !== "SEPAY_DEMO") {
+        throw new HttpError(400, "Chỉ xác nhận được giao dịch demo", "NOT_DEMO");
+      }
+      await this.activateClassJoin(joinTxn);
+      return { success: true, classId: String(joinTxn.classId), kind: "class_join", transactionRef };
+    }
+
     const txn = await MaterialUnlock.findOne({ providerRef: transactionRef });
     if (!txn) throw new HttpError(404, "Không tìm thấy giao dịch", "TXN_NOT_FOUND");
     if (txn.userId !== user.id && user.role !== "teacher") {
@@ -243,13 +356,26 @@ export class PaymentService {
     }
     txn.status = "success";
     await txn.save();
-    return { success: true, materialId: String(txn.materialId), transactionRef };
+    return { success: true, materialId: String(txn.materialId), kind: "material", transactionRef };
   }
 
   static async processSePayReturn(params: Record<string, string | undefined>) {
     const txnRef = params.ref || params.order_invoice_number || params.order_id;
     const result = params.result || "success";
     if (!txnRef) return { received: true, activated: false };
+
+    const joinTxn = await ClassJoinPayment.findOne({ providerRef: txnRef });
+    if (joinTxn) {
+      if (result === "error" || result === "cancel") {
+        if (joinTxn.status !== "success") {
+          joinTxn.status = "failed";
+          await joinTxn.save();
+        }
+        return { received: true, activated: false, transactionRef: txnRef };
+      }
+      await this.activateClassJoin(joinTxn);
+      return { received: true, activated: true, transactionRef: txnRef };
+    }
 
     const txn = await MaterialUnlock.findOne({ providerRef: txnRef });
     if (!txn) return { received: true, activated: false };
@@ -284,6 +410,22 @@ export class PaymentService {
     if (!txnRef) {
       console.info("[SEPAY IPN] missing invoice number", { notificationType });
       return { success: true, received: true, activated: false };
+    }
+
+    const joinTxn = await ClassJoinPayment.findOne({ providerRef: txnRef });
+    if (joinTxn) {
+      if (notificationType === "TRANSACTION_VOID") {
+        if (joinTxn.status !== "failed") {
+          joinTxn.status = "failed";
+          await joinTxn.save();
+        }
+        return { success: true, received: true, activated: false, transactionRef: txnRef };
+      }
+      if (joinTxn.status !== "success") {
+        await this.activateClassJoin(joinTxn);
+      }
+      console.info("[SEPAY IPN] class join", txnRef, joinTxn.classId);
+      return { success: true, received: true, activated: true, transactionRef: txnRef };
     }
 
     const txn = await MaterialUnlock.findOne({ providerRef: txnRef });

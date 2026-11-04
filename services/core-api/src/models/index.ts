@@ -1,5 +1,7 @@
 export { ClassModel } from "./Class.js";
 export { ClassMember } from "./ClassMember.js";
+export { ClassJoinPayment } from "./ClassJoinPayment.js";
+export { ClassFile } from "./ClassFile.js";
 export { ClassSession } from "./ClassSession.js";
 export { Comment } from "./Comment.js";
 export { Exam } from "./Exam.js";

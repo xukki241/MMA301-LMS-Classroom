@@ -33,15 +33,17 @@ test("stack registers class schedule and gradebook screens", () => {
   assert.ok(existsSync(root("app/gradebook.tsx")));
 });
 
-test("home dashboard is a grouped shortcut grid fed by the overview query", () => {
+test("home dashboard is a tile hub (no inline schedule/work lists)", () => {
   const home = source("src/screens/HomeDashboard.tsx");
   assert.match(home, /useOverviewQuery/);
-  for (const group of ["Truy cập thông tin", "Báo cáo", "Việc cần làm", "Cần chấm", "Lớp gần đây"]) {
-    assert.ok(home.includes(group), `missing group: ${group}`);
-  }
-  for (const tile of ["Lịch học", "Lịch kiểm tra", "Bảng điểm", "Chấm bài"]) {
+  assert.match(home, /Tổng quan của tôi/);
+  for (const tile of ["Lớp học", "Lịch học", "Giao dịch", "Nộp bài", "Bảng điểm"]) {
     assert.ok(home.includes(tile), `missing tile: ${tile}`);
   }
+  assert.doesNotMatch(home, /SessionRow/);
+  assert.doesNotMatch(home, /ExamRow/);
+  assert.doesNotMatch(home, /WorkRow/);
+  assert.doesNotMatch(home, /Lớp gần đây/);
 });
 
 test("class workspace lets teachers manage students, schedule and resources", () => {
@@ -67,19 +69,21 @@ test("schedule and work screens use role-specific filters and empty states", () 
   assert.doesNotMatch(work, /isTeacher \? "needs_grading" : "todo"/);
   assert.doesNotMatch(work, /"Việc của tôi"/);
   const schedule = source("src/screens/ScheduleScreen.tsx");
-  assert.match(schedule, /Lịch học/);
-  assert.match(schedule, /Lịch kiểm tra/);
+  assert.match(schedule, /studyCounts/);
+  assert.match(schedule, /examCounts/);
+  assert.match(schedule, /showStudy \? studyCounts : undefined/);
+  assert.match(schedule, /showExams \? examCounts : undefined/);
   assert.match(schedule, /Quản lý lịch theo lớp/);
-  assert.match(schedule, /markedCounts/);
-  assert.match(schedule, /mode=\{view\}/);
+  assert.match(schedule, /Tất cả/);
   assert.doesNotMatch(schedule, /markedDays/);
 });
 
-test("month calendar renders count badges instead of faint dots", () => {
+test("month calendar shows green study and red exam dots", () => {
   const calendar = source("src/components/schedule/MonthCalendar.tsx");
-  assert.match(calendar, /markedCounts/);
-  assert.match(calendar, /mode === "exams"/);
-  assert.match(calendar, /styles\.badge/);
-  assert.doesNotMatch(calendar, /styles\.dot\b/);
+  assert.match(calendar, /studyCounts/);
+  assert.match(calendar, /examCounts/);
+  assert.match(calendar, /palette\.success/);
+  assert.match(calendar, /palette\.danger/);
+  assert.match(calendar, /styles\.dot/);
   assert.doesNotMatch(calendar, /markedDays/);
 });

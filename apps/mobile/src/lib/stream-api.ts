@@ -3,8 +3,23 @@ import { http, HttpError } from "./http";
 
 export const POST_MAX_LENGTH = 2000;
 export const COMMENT_MAX_LENGTH = 1000;
-export type StreamPost = { id: string; classId: string; authorId: string; content: string; createdAt: string };
-export type StreamComment = { id: string; postId: string; authorId: string; content: string; createdAt: string };
+export type StreamPost = {
+  id: string;
+  classId: string;
+  authorId: string;
+  authorDisplayName: string;
+  content: string;
+  attachmentUrl: string;
+  createdAt: string;
+};
+export type StreamComment = {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorDisplayName: string;
+  content: string;
+  createdAt: string;
+};
 
 function invalidResponse(): never {
   throw new HttpError("Dữ liệu bảng tin không hợp lệ.", 502, "INVALID_RESPONSE");
@@ -21,9 +36,18 @@ function entry(value: unknown) {
   const raw = record(value);
   const createdAt = requiredString(raw.createdAt);
   if (!Number.isFinite(Date.parse(createdAt)) || raw.isDeleted === true) return invalidResponse();
+  const authorId = requiredString(raw.authorId);
+  const authorDisplayName =
+    typeof raw.authorDisplayName === "string" && raw.authorDisplayName.trim()
+      ? raw.authorDisplayName.trim()
+      : "Thành viên lớp";
   return {
-    id: requiredString(raw._id), authorId: requiredString(raw.authorId),
-    content: requiredString(raw.content), createdAt,
+    id: requiredString(raw._id),
+    authorId,
+    authorDisplayName,
+    content: requiredString(raw.content),
+    attachmentUrl: typeof raw.attachmentUrl === "string" ? raw.attachmentUrl.trim() : "",
+    createdAt,
   };
 }
 function parsePost(value: unknown, classId: string): StreamPost {
@@ -56,10 +80,37 @@ export async function listPosts(token: string, classId: string, signal?: AbortSi
   const raw = record(await http<unknown>(postsUrl(classId), { token, signal }));
   return list(raw.posts, item => parsePost(item, classId));
 }
-export async function createPost(token: string, classId: string, content: string): Promise<StreamPost> {
-  const body = { content: validateStreamContent(content, POST_MAX_LENGTH) };
+export async function createPost(
+  token: string,
+  classId: string,
+  content: string,
+  attachmentUrl = "",
+): Promise<StreamPost> {
+  const body = {
+    content: validateStreamContent(content, POST_MAX_LENGTH),
+    attachmentUrl: attachmentUrl.trim(),
+  };
   const raw = record(await http<unknown>(postsUrl(classId), { method: "POST", token, body }));
   return parsePost(raw.post, classId);
+}
+export async function updatePost(
+  token: string,
+  classId: string,
+  postId: string,
+  content: string,
+  attachmentUrl = "",
+): Promise<StreamPost> {
+  const body = {
+    content: validateStreamContent(content, POST_MAX_LENGTH),
+    attachmentUrl: attachmentUrl.trim(),
+  };
+  const raw = record(
+    await http<unknown>(`${postsUrl(classId)}/${encodeURIComponent(postId)}`, { method: "PATCH", token, body }),
+  );
+  return parsePost(raw.post, classId);
+}
+export async function deletePost(token: string, classId: string, postId: string): Promise<void> {
+  await http<unknown>(`${postsUrl(classId)}/${encodeURIComponent(postId)}`, { method: "DELETE", token });
 }
 export async function listComments(token: string, classId: string, postId: string, signal?: AbortSignal): Promise<StreamComment[]> {
   const raw = record(await http<unknown>(commentsUrl(classId, postId), { token, signal }));

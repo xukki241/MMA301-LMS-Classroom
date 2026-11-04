@@ -1,27 +1,25 @@
 import { StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { Divider, Text, useTheme } from "react-native-paper";
+import { Text, useTheme } from "react-native-paper";
 import { Screen } from "@/src/components/ui/Screen";
 import { AppButton } from "@/src/components/ui/AppButton";
 import { CachedAvatar } from "@/src/components/ui/CachedAvatar";
 import { useAuth } from "@/src/lib/auth-context";
 import { useRouter } from "expo-router";
-import { useMeQuery, useOverviewQuery } from "@/src/lib/hooks";
-import { countWork, gradedWork } from "@/src/lib/overview-api";
+import { useOverviewQuery } from "@/src/lib/hooks";
+import { countWork, gradedWork, presentWork } from "@/src/lib/overview-api";
 import { SectionHeader, Tile, TileGrid } from "@/src/components/ui/Tile";
 import { ClassRequestError } from "@/src/components/ui/ClassRequestError";
-import { AUTH_URL, CORE_URL } from "@/src/lib/config";
 import { notifySuccess } from "@/src/lib/haptics";
 import { spacing, typography } from "@/src/theme/tokens";
 
 export function ProfileScreen() {
   const theme = useTheme();
   const { user, logout } = useAuth();
-  const meQuery = useMeQuery();
   const router = useRouter();
   const overviewQuery = useOverviewQuery();
   const overview = overviewQuery.data;
-  const counts = overview ? countWork(overview.work) : {};
+  const counts = overview ? countWork(presentWork(overview.work)) : {};
   const scores = overview ? gradedWork(overview.work).map((item) => item.score as number) : [];
   const average = scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : null;
   const go = (name: string) =>
@@ -31,8 +29,12 @@ export function ProfileScreen() {
     <Screen>
       <Animated.View entering={FadeInDown.springify()} style={styles.hero}>
         <CachedAvatar label={user?.displayName ?? "U"} size={72} />
-        <Text style={typography.title}>{user?.displayName}</Text>
-        <Text style={[typography.body, { color: theme.colors.onSurfaceVariant }]}>{user?.email}</Text>
+        <Text style={typography.title} numberOfLines={2}>
+          {user?.displayName}
+        </Text>
+        <Text style={[typography.body, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
+          {user?.email}
+        </Text>
         <Text style={typography.caption}>
           {user?.role === "teacher" ? "Vai trò giáo viên" : "Vai trò học sinh"}
         </Text>
@@ -46,9 +48,25 @@ export function ProfileScreen() {
         />
       ) : null}
 
+      <SectionHeader title="Tài khoản" />
+      <TileGrid>
+        <Tile
+          icon="person-outline"
+          label="Thông tin"
+          hint="Xem / sửa tên hiển thị"
+          onPress={() => router.push("/account" as never)}
+        />
+        <Tile
+          icon="lock-closed-outline"
+          label="Đổi mật khẩu"
+          hint="Cập nhật mật khẩu"
+          onPress={() => router.push("/change-password" as never)}
+        />
+      </TileGrid>
+
       {overview ? (
         <>
-          <SectionHeader title="Tổng quan của tôi" />
+          <SectionHeader title="Lối tắt" />
           <TileGrid>
             <Tile icon="albums-outline" label="Lớp học" hint={`${overview.classes.length} lớp`} onPress={() => go("classes")} />
             <Tile
@@ -58,48 +76,53 @@ export function ProfileScreen() {
               hint="Mở tab Việc"
               onPress={() => go("work")}
             />
-            <Tile icon="calendar-outline" label="Lịch học" hint={`${overview.sessions.length} buổi/tuần`} onPress={() => go("schedule")} />
+            <Tile
+              icon="card-outline"
+              label="Giao dịch"
+              hint={user?.role === "teacher" ? "Mở khóa trong lớp" : "Mở khóa SePay"}
+              onPress={() => router.push("/payments" as never)}
+            />
+            <Tile
+              icon="document-attach-outline"
+              label="Nộp bài"
+              hint={user?.role === "teacher" ? "Bài học sinh nộp" : "Bài đã nộp"}
+              onPress={() => router.push("/submissions" as never)}
+            />
             {user?.role === "student" ? (
               <Tile
                 icon="stats-chart-outline"
                 label="Bảng điểm"
-                hint={average === null ? "Chưa có điểm" : `Trung bình ${average}/10`}
+                hint={average === null ? "Chưa có điểm" : `TB ${average}/10`}
                 onPress={() => router.push("/gradebook")}
               />
-            ) : null}
+            ) : (
+              <Tile
+                icon="calendar-outline"
+                label="Lịch"
+                hint={`${overview.sessions.length} buổi/tuần`}
+                onPress={() => go("schedule")}
+              />
+            )}
           </TileGrid>
         </>
       ) : null}
 
-      <View style={styles.block}>
-        <Text style={typography.label}>PHIÊN LÀM VIỆC</Text>
-        <Text style={typography.body}>
-          {meQuery.isPending
-            ? "Đang xác thực /me…"
-            : meQuery.isError
-              ? meQuery.error.message
-              : `Core xác nhận: ${meQuery.data?.user.email ?? user?.email}`}
-        </Text>
-        <Divider style={styles.divider} />
-        <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>Auth · {AUTH_URL}</Text>
-        <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant }]}>Core · {CORE_URL}</Text>
+      <View style={styles.logoutWrap}>
+        <AppButton
+          mode="contained-tonal"
+          onPress={() => {
+            notifySuccess();
+            void logout();
+          }}
+        >
+          Đăng xuất
+        </AppButton>
       </View>
-
-      <AppButton
-        mode="contained-tonal"
-        onPress={() => {
-          notifySuccess();
-          void logout();
-        }}
-      >
-        Đăng xuất
-      </AppButton>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   hero: { alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xxl },
-  block: { gap: spacing.sm, marginBottom: spacing.xxl },
-  divider: { marginVertical: spacing.sm },
+  logoutWrap: { marginTop: spacing.xxl, marginBottom: spacing.xl },
 });

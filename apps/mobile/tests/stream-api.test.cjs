@@ -44,7 +44,7 @@ test("create Post sends only trimmed content and reads post envelope", async () 
   respond({ message: "OK", post }, 201, (url, options) => {
     assert.equal(url, CORE_URL + "/classes/" + classId + "/posts");
     assert.equal(options.method, "POST");
-    assert.deepEqual(JSON.parse(options.body), { content: "Thông báo" });
+    assert.deepEqual(JSON.parse(options.body), { content: "Thông báo", attachmentUrl: "" });
   });
   assert.equal((await api.createPost("session", classId, "  Thông báo \n")).id, post._id);
 });

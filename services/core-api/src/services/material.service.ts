@@ -1,22 +1,13 @@
 import mongoose from "mongoose";
 import { HttpError } from "../lib/httpError.js";
 import type { AuthUser } from "../middleware/requireAuth.js";
-import { ClassMember, ClassModel, Material, MaterialUnlock } from "../models/index.js";
+import { ClassMember, ClassModel, Material } from "../models/index.js";
 
 export interface CreateMaterialInput {
   title: string;
   url: string;
   description?: string;
   priceVnd?: number;
-}
-
-function parsePrice(value: unknown): number {
-  if (value === undefined || value === null || value === "") return 0;
-  const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(n) || n < 0) {
-    throw new HttpError(400, "Giá tài liệu phải là số không âm (VND)", "INVALID_PRICE");
-  }
-  return Math.round(n);
 }
 
 export class MaterialService {
@@ -45,36 +36,14 @@ export class MaterialService {
       throw new HttpError(403, "Bạn không phải là thành viên của lớp học này", "FORBIDDEN");
     }
 
+    // Thành viên lớp xem toàn bộ tài liệu — phí chỉ thu khi vào lớp (joinFeeVnd).
     const materials = await Material.find({ classId }).sort({ createdAt: -1 });
-    const isTeacherOfClass = cls.teacherId === userId || membership?.roleInClass === "teacher";
-    if (isTeacherOfClass) {
-      return materials.map((item) => ({
-        ...item.toObject(),
-        priceVnd: item.priceVnd ?? 0,
-        locked: false,
-        unlocked: true,
-      }));
-    }
-
-    const unlocks = await MaterialUnlock.find({
-      classId,
-      userId,
-      status: "success",
-    }).select("materialId");
-    const unlocked = new Set(unlocks.map((u) => String(u.materialId)));
-
-    return materials.map((item) => {
-      const priceVnd = item.priceVnd ?? 0;
-      const isUnlocked = priceVnd <= 0 || unlocked.has(String(item._id));
-      const raw = item.toObject();
-      return {
-        ...raw,
-        priceVnd,
-        locked: !isUnlocked,
-        unlocked: isUnlocked,
-        url: isUnlocked ? raw.url : "",
-      };
-    });
+    return materials.map((item) => ({
+      ...item.toObject(),
+      priceVnd: 0,
+      locked: false,
+      unlocked: true,
+    }));
   }
 
   /**
@@ -131,7 +100,7 @@ export class MaterialService {
       title: trimmedTitle,
       description: data.description ? data.description.trim() : "",
       url: trimmedUrl,
-      priceVnd: parsePrice(data.priceVnd),
+      priceVnd: 0,
       createdBy: user.id,
     });
 
@@ -177,7 +146,8 @@ export class MaterialService {
       material.url = url;
     }
     if (data.description !== undefined) material.description = String(data.description).trim();
-    if (data.priceVnd !== undefined) material.priceVnd = parsePrice(data.priceVnd);
+    // Bỏ giới hạn tài nguyên theo file — luôn miễn phí sau khi vào lớp.
+    material.priceVnd = 0;
     await material.save();
     return material;
   }

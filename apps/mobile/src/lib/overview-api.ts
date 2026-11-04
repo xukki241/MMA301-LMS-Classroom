@@ -3,7 +3,7 @@ import { http, HttpError } from "./http";
 
 export type Role = "teacher" | "student";
 export type StudentStatus = "todo" | "submitted" | "graded" | "overdue";
-export type TeacherStatus = "open" | "needs_grading" | "done";
+export type TeacherStatus = "open" | "needs_grading" | "done" | "closed";
 
 export type OverviewClass = { id: string; name: string; code: string };
 
@@ -178,7 +178,25 @@ export function sessionsByWeekday(sessions: OverviewSession[]): { weekday: numbe
   }));
 }
 
-export type WorkFilter = "all" | "todo" | "submitted" | "graded" | "overdue" | "needs_grading" | "open" | "done";
+export type WorkFilter = "all" | "todo" | "submitted" | "graded" | "overdue" | "needs_grading" | "open" | "done" | "closed";
+
+/**
+ * Áp lại trạng thái theo dueAt tại thời điểm xem.
+ * Server đã tính lúc fetch; hàm này bắt kịp hạn vừa qua khi cache chưa refetch.
+ * Chỉ đổi todo → overdue và open (chưa có nộp / đã nộp) sau hạn.
+ */
+export function presentWork(work: OverviewWork[], now = new Date()): OverviewWork[] {
+  const ts = now.getTime();
+  return work.map((item) => {
+    const due = Date.parse(item.dueAt);
+    if (!Number.isFinite(due) || due > ts) return item;
+    if (item.status === "todo") return { ...item, status: "overdue" };
+    if (item.status !== "open") return item;
+    if (item.submissionCount <= 0) return { ...item, status: "closed" };
+    if (item.gradedCount >= item.submissionCount) return { ...item, status: "done" };
+    return { ...item, status: "needs_grading" };
+  });
+}
 
 export function filterWork(work: OverviewWork[], filter: WorkFilter): OverviewWork[] {
   const rows = filter === "all" ? work : work.filter((item) => item.status === filter);
@@ -245,4 +263,5 @@ export const TEACHER_STATUS_LABEL: Record<TeacherStatus, string> = {
   open: "Đang mở",
   needs_grading: "Cần chấm",
   done: "Đã chấm xong",
+  closed: "Hết hạn",
 };

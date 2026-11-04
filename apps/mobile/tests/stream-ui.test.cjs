@@ -27,7 +27,8 @@ function harness(kind, status = 403, classRole = "teacher") {
     "expo-router": { Redirect: "Redirect", useFocusEffect: () => {} },
     "expo-router/react-navigation": { useHeaderHeight: () => 0 },
     "react-native": { KeyboardAvoidingView: "KeyboardAvoidingView", RefreshControl: "RefreshControl",
-      View: "View", Platform: { OS: "ios" }, StyleSheet: { create: value => value } },
+      View: "View", Pressable: "Pressable", Linking: { openURL() {} }, Alert: { alert() {} },
+      Platform: { OS: "ios" }, StyleSheet: { create: value => value } },
     "react-native-paper": { ActivityIndicator: "ActivityIndicator", Card: Object.assign(() => {}, { Content: "CardContent" }),
       Text: "Text", Divider: "Divider" },
   };
@@ -40,7 +41,14 @@ function harness(kind, status = 403, classRole = "teacher") {
     "classes-api": { getClass: () => Promise.resolve(detail.data) },
     "offline-data": { cachedClassDetail: () => Promise.resolve(detail.data) },
     "query-client": { queryKeys: { class: () => ["classes", "teacher", "detail", "class-a"] } },
-    "stream-query": { postsOptions: () => ({}), commentsOptions: () => ({}), createPostOptions: () => ({}), createCommentOptions: () => ({}) },
+    "stream-query": {
+      postsOptions: () => ({}),
+      commentsOptions: () => ({}),
+      createPostOptions: () => ({}),
+      updatePostOptions: () => ({}),
+      deletePostOptions: () => ({}),
+      createCommentOptions: () => ({}),
+    },
     tokens: { spacing: {}, typography: {} },
   };
   const filename = resolve(__dirname, kind === "feed" ? "../src/screens/ClassStreamScreen.tsx" : "../src/components/stream/CommentThread.tsx");

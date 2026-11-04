@@ -35,7 +35,9 @@ function Pill({ text, tone }: { text: string; tone: "ok" | "warn" | "bad" | "neu
   const color = tone === "ok" ? palette.success : tone === "warn" ? palette.warning : tone === "bad" ? theme.colors.error : theme.colors.onSurfaceVariant;
   return (
     <View style={[styles.pill, { borderColor: color }]}>
-      <Text style={[styles.pillText, { color }]}>{text}</Text>
+      <Text style={[styles.pillText, { color }]} numberOfLines={1}>
+        {text}
+      </Text>
     </View>
   );
 }
@@ -52,6 +54,7 @@ export function statusTone(status: OverviewWork["status"]): "ok" | "warn" | "bad
       return "warn";
     case "overdue":
     case "needs_grading":
+    case "closed":
       return "bad";
     default:
       return "neutral";
@@ -69,7 +72,7 @@ export function WorkRow({ item, role, onPress }: { item: OverviewWork; role: Rol
   return (
     <Card onPress={onPress} label={`Mở bài tập ${item.title}`}>
       <View style={styles.rowTop}>
-        <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant, flex: 1 }]} numberOfLines={1}>
+        <Text style={[typography.caption, styles.rowLabel, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
           {item.className}
         </Text>
         <Pill text={statusLabel(role, item.status)} tone={statusTone(item.status)} />
@@ -110,7 +113,7 @@ export function ExamRow({ exam, onPress }: { exam: OverviewExam; onPress?: () =>
   return (
     <Card onPress={onPress} label={`Kỳ kiểm tra ${exam.title}`}>
       <View style={styles.rowTop}>
-        <Text style={[typography.caption, { color: theme.colors.onSurfaceVariant, flex: 1 }]} numberOfLines={1}>
+        <Text style={[typography.caption, styles.rowLabel, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
           {exam.className}
         </Text>
         <Pill text="Kiểm tra" tone="bad" />
@@ -141,9 +144,10 @@ export function Notice({ icon, text }: { icon: React.ComponentProps<typeof Ionic
 
 const styles = StyleSheet.create({
   card: { gap: spacing.xs, padding: spacing.lg, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, marginBottom: spacing.md },
-  rowTop: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  rowTop: { flexDirection: "row", alignItems: "center", gap: spacing.sm, minHeight: 22 },
+  rowLabel: { flex: 1, flexShrink: 1, minWidth: 0 },
   line: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  pill: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
+  pill: { flexShrink: 0, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   pillText: { fontSize: 11, fontWeight: "700" },
   notice: { flexDirection: "row", alignItems: "center", gap: spacing.sm, padding: spacing.md, borderRadius: radius.md, marginBottom: spacing.md },
 });

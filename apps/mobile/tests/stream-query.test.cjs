@@ -38,7 +38,11 @@ test("created Post uses server row once and invalidates only this account/class 
   c.setQueryData(other, []);
   respond(post, "post");
   await c.getMutationCache().build(c, queries.createPostOptions(c, session)).execute("Thông báo");
-  assert.deepEqual(c.getQueryData(key), [post]);
+  assert.deepEqual(c.getQueryData(key), [{
+    ...post,
+    authorDisplayName: "Thành viên lớp",
+    attachmentUrl: "",
+  }]);
   assert.equal(c.getQueryState(key).isInvalidated, true);
   assert.equal(c.getQueryState(other).isInvalidated, false);
   c.clear();
@@ -53,7 +57,11 @@ test("Comment creation appends server result once and invalidates only its threa
   const options = queries.createCommentOptions(c, session, "post-a");
   await c.getMutationCache().build(c, options).execute("Em đã đọc");
   await c.getMutationCache().build(c, options).execute("Em đã đọc");
-  assert.deepEqual(c.getQueryData(key), [comment]);
+  assert.deepEqual(c.getQueryData(key), [{
+    ...comment,
+    authorDisplayName: "Thành viên lớp",
+    attachmentUrl: "",
+  }]);
   assert.equal(c.getQueryState(key).isInvalidated, true);
   assert.equal(c.getQueryState(other).isInvalidated, false);
   c.clear();

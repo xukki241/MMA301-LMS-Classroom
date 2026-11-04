@@ -2,12 +2,23 @@ import type { Request, Response } from "express";
 import { PaymentService } from "../services/payment.service.js";
 
 export class PaymentController {
+  static async listMine(req: Request, res: Response): Promise<void> {
+    const payments = await PaymentService.listMyPayments(req.user!);
+    res.status(200).json({ payments });
+  }
+
   static async createMaterialCheckout(req: Request, res: Response): Promise<void> {
     const checkout = await PaymentService.createMaterialCheckout(
       req.user!,
       req.params.classId,
       req.params.materialId
     );
+    res.status(200).json({ success: true, checkout });
+  }
+
+  static async createClassJoinCheckout(req: Request, res: Response): Promise<void> {
+    const code = String(req.body?.code ?? "");
+    const checkout = await PaymentService.createClassJoinCheckout(req.user!, code);
     res.status(200).json({ success: true, checkout });
   }
 
@@ -28,7 +39,9 @@ export class PaymentController {
 <style>body{font-family:system-ui,sans-serif;padding:24px;background:#f6f4ef;color:#1a1a1a} .card{background:#fff;border-radius:16px;padding:24px;max-width:420px;margin:40px auto;box-shadow:0 8px 24px #0001} h1{font-size:20px;margin:0 0 8px} p{color:#555;line-height:1.5}</style></head>
 <body><div class="card"><h1>${ok ? "Thanh toán thành công" : "Thanh toán chưa hoàn tất"}</h1>
 <p>${ok ? "Tài nguyên đã được mở khóa. Bạn có thể đóng trang này và quay lại ứng dụng." : "Giao dịch bị hủy hoặc thất bại. Hãy thử lại trong ứng dụng."}</p>
-<p style="font-size:12px;color:#888">Ref: ${result.transactionRef ?? "—"}</p></div></body></html>`);
+<p style="font-size:12px;color:#888">Ref: ${result.transactionRef ?? "—"}</p></div>
+<script>try{var payload={type:"lms-sepay-return",result:${JSON.stringify(ok ? "success" : "error")}};if(window.parent&&window.parent!==window)window.parent.postMessage(payload,"*");if(window.opener)window.opener.postMessage(payload,"*");}catch(e){}</script>
+</body></html>`);
   }
 
   static async sepayIpn(req: Request, res: Response): Promise<void> {
